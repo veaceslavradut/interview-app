@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getQuestion } from '../data/questions';
 import Breadcrumbs from '../components/Breadcrumbs';
+import SpeechPlayer from '../components/SpeechPlayer';
 
 export default function QuestionPage() {
   const { categoryId, questionId } = useParams();
@@ -29,6 +30,7 @@ export default function QuestionPage() {
           <span className="answer-category-icon">{category.icon}</span>
           {question.question}
         </h1>
+        <SpeechPlayer title={question.question} text={question.answer} />
         <div className="answer-body">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{question.answer}</ReactMarkdown>
         </div>
