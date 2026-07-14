@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../i18n/LanguageContext';
+import { t } from '../i18n/translations';
 
 export default function Breadcrumbs({ items }) {
+  const { lang } = useLanguage();
   return (
-    <nav className="breadcrumbs" aria-label="Хлебные крошки">
+    <nav className="breadcrumbs" aria-label={t(lang, 'breadcrumbsLabel')}>
       {items.map((item, index) => (
         <span key={index} className="breadcrumb-item">
           {index > 0 && <span className="breadcrumb-separator">/</span>}

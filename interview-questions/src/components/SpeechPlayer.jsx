@@ -1,10 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLanguage } from '../i18n/LanguageContext';
+import { t } from '../i18n/translations';
+
+const CODE_PHRASE = {
+  ru: ' Далее следует пример кода, смотрите его на экране. ',
+  en: ' A code example follows, see it on the screen. ',
+};
 
 // Преобразует markdown-ответ в чистый текст, пригодный для озвучивания
-function markdownToSpeechText(markdown) {
+function markdownToSpeechText(markdown, contentLang) {
   return markdown
     // блоки кода заменяем на короткую фразу
-    .replace(/```[\s\S]*?```/g, ' Далее следует пример кода, смотрите его на экране. ')
+    .replace(/```[\s\S]*?```/g, CODE_PHRASE[contentLang] || CODE_PHRASE.ru)
     // строки таблиц убираем (плохо звучат)
     .replace(/^\|.*\|$/gm, ' ')
     // инлайн-код — оставляем содержимое
@@ -58,27 +65,28 @@ function friendlyVoiceName(voice) {
     .replace(/^Microsoft\s+/i, '')
     .replace(/\s*Online\s*/i, ' ')
     .replace(/\s*\(Natural\)\s*/i, ' ')
-    .replace(/\s*[-—]\s*Russian.*$/i, '')
+    .replace(/\s*[-—]\s*(Russian|English).*$/i, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
 
-function getRussianVoices() {
+function getVoicesFor(contentLang) {
   return window.speechSynthesis
     .getVoices()
-    .filter((v) => v.lang.toLowerCase().startsWith('ru'))
+    .filter((v) => v.lang.toLowerCase().startsWith(contentLang))
     .sort((a, b) => voiceScore(b) - voiceScore(a));
 }
 
 const RATES = [0.75, 1, 1.25, 1.5];
-const VOICE_STORAGE_KEY = 'interview-hub-voice';
 
-export default function SpeechPlayer({ title, text }) {
+export default function SpeechPlayer({ title, text, contentLang = 'ru' }) {
+  const { lang } = useLanguage();
+  const voiceStorageKey = `interview-hub-voice-${contentLang}`;
   const [status, setStatus] = useState('idle'); // idle | playing | paused
   const [rate, setRate] = useState(1);
   const [voices, setVoices] = useState([]);
   const [voiceName, setVoiceName] = useState(
-    () => localStorage.getItem(VOICE_STORAGE_KEY) || ''
+    () => localStorage.getItem(voiceStorageKey) || ''
   );
   const supported = typeof window !== 'undefined' && 'speechSynthesis' in window;
   const queueRef = useRef({ cancelled: false });
@@ -86,11 +94,12 @@ export default function SpeechPlayer({ title, text }) {
   // голоса подгружаются асинхронно
   useEffect(() => {
     if (!supported) return undefined;
-    const load = () => setVoices(getRussianVoices());
+    const load = () => setVoices(getVoicesFor(contentLang));
     load();
+    setVoiceName(localStorage.getItem(`interview-hub-voice-${contentLang}`) || '');
     window.speechSynthesis.addEventListener('voiceschanged', load);
     return () => window.speechSynthesis.removeEventListener('voiceschanged', load);
-  }, [supported]);
+  }, [supported, contentLang]);
 
   // останавливаем озвучку при уходе со страницы / смене вопроса
   useEffect(() => {
@@ -118,12 +127,12 @@ export default function SpeechPlayer({ title, text }) {
     queueRef.current.cancelled = true;
     queueRef.current = queue;
 
-    const chunks = splitIntoChunks(`${title}. ${markdownToSpeechText(text)}`);
+    const chunks = splitIntoChunks(`${title}. ${markdownToSpeechText(text, contentLang)}`);
     let remaining = chunks.length;
 
     chunks.forEach((chunk) => {
       const utterance = new SpeechSynthesisUtterance(chunk);
-      utterance.lang = 'ru-RU';
+      utterance.lang = contentLang === 'en' ? 'en-US' : 'ru-RU';
       utterance.rate = speechRate;
       if (voice) utterance.voice = voice;
       utterance.onend = () => {
@@ -165,7 +174,7 @@ export default function SpeechPlayer({ title, text }) {
   const handleVoiceChange = (event) => {
     const name = event.target.value;
     setVoiceName(name);
-    localStorage.setItem(VOICE_STORAGE_KEY, name);
+    localStorage.setItem(voiceStorageKey, name);
     if (status !== 'idle') {
       const voice = voices.find((v) => v.name === name) || null;
       start(rate, voice);
@@ -173,20 +182,20 @@ export default function SpeechPlayer({ title, text }) {
   };
 
   return (
-    <div className="speech-player" role="group" aria-label="Озвучивание ответа">
+    <div className="speech-player" role="group" aria-label={t(lang, 'speechGroupLabel')}>
       <button type="button" className="speech-button speech-main" onClick={handlePlayPause}>
-        {status === 'playing' ? '⏸ Пауза' : status === 'paused' ? '▶ Продолжить' : '🔊 Слушать ответ'}
+        {status === 'playing' ? t(lang, 'pause') : status === 'paused' ? t(lang, 'resume') : t(lang, 'listen')}
       </button>
       {status !== 'idle' && (
         <button type="button" className="speech-button" onClick={handleStop}>
-          ⏹ Стоп
+          {t(lang, 'stop')}
         </button>
       )}
       <button
         type="button"
         className="speech-button speech-rate"
         onClick={handleRate}
-        title="Скорость воспроизведения"
+        title={t(lang, 'speedTitle')}
       >
         {rate}×
       </button>
@@ -195,8 +204,8 @@ export default function SpeechPlayer({ title, text }) {
           className="speech-voice-select"
           value={selectedVoice ? selectedVoice.name : ''}
           onChange={handleVoiceChange}
-          title="Голос озвучивания"
-          aria-label="Голос озвучивания"
+          title={t(lang, 'voiceTitle')}
+          aria-label={t(lang, 'voiceTitle')}
         >
           {voices.map((voice) => (
             <option key={voice.name} value={voice.name}>

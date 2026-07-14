@@ -1,18 +1,20 @@
 import { Link } from 'react-router-dom';
-import { categories } from '../data/questions';
+import { getCategories } from '../data/localized';
+import { useLanguage } from '../i18n/LanguageContext';
+import { t } from '../i18n/translations';
 
 export default function HomePage() {
+  const { lang } = useLanguage();
+  const categories = getCategories(lang);
   const totalQuestions = categories.reduce((sum, c) => sum + c.questions.length, 0);
 
   return (
     <div className="page">
       <header className="hero">
-        <h1 className="hero-title">Java Interview Hub</h1>
-        <p className="hero-subtitle">
-          Подготовка к интервью на позицию Senior Java Developer
-        </p>
+        <h1 className="hero-title">{t(lang, 'heroTitle')}</h1>
+        <p className="hero-subtitle">{t(lang, 'heroSubtitle')}</p>
         <p className="hero-stats">
-          {categories.length} тем · {totalQuestions} вопросов
+          {categories.length} {t(lang, 'topics')} · {totalQuestions} {t(lang, 'questionsCount')}
         </p>
       </header>
 
