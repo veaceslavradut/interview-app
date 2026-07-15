@@ -1,5 +1,6 @@
 import { Link, useParams, Navigate } from 'react-router-dom';
 import { getCategory } from '../data/localized';
+import { hasQuiz } from '../data/quizzes';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
@@ -40,6 +41,12 @@ export default function CategoryPage() {
           </Link>
         ))}
       </main>
+
+      {hasQuiz(category.id) && (
+        <Link to={`/category/${category.id}/quiz`} className="quiz-start-link">
+          🎯 {t(lang, 'quizStart')}
+        </Link>
+      )}
     </div>
   );
 }
