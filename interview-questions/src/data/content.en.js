@@ -3652,4 +3652,254 @@ Ecosystem: Helm (packages/manifest templates), ArgoCD (GitOps), Prometheus + Gra
       },
     },
   },
+  aws: {
+    title: 'AWS',
+    description: 'EC2, ELB, ECS, S3, VPC',
+    questions: {
+      'what-is-ec2': {
+        question: 'What is Amazon EC2? What instance types and pricing models exist?',
+        answer: `**Amazon EC2 (Elastic Compute Cloud)** is a virtual server (instance) service in the AWS cloud: you rent compute capacity with full control over the OS, networking, and storage.
+
+**Key concepts:**
+
+- **AMI (Amazon Machine Image)** — an image with an OS and pre-installed software from which an instance is launched;
+- **Instance Type** — a CPU/RAM/network configuration (e.g., \`t3.medium\`, \`m5.large\`);
+- **EBS (Elastic Block Store)** — network-attached disks that survive instance stops; **Instance Store** — local ephemeral disks;
+- **Security Group** — the instance's virtual firewall;
+- **Key Pair** — SSH keys for access.
+
+**Instance type families:**
+
+- **General Purpose (t, m)** — balanced: web servers, microservices;
+- **Compute Optimized (c)** — CPU-intensive workloads: batch, encoding;
+- **Memory Optimized (r, x)** — databases, caches, in-memory analytics;
+- **Storage Optimized (i, d)** — high disk I/O;
+- **Accelerated Computing (p, g)** — GPU: ML, graphics.
+
+**Pricing models:**
+
+- **On-Demand** — hourly/per-second billing with no commitment: unpredictable workloads;
+- **Reserved Instances / Savings Plans** — up to 72% discount for a 1–3 year commitment: steady workloads;
+- **Spot Instances** — up to 90% discount for unused capacity, but AWS can reclaim the instance with a 2-minute notice: fault-tolerant batch jobs;
+- **Dedicated Hosts** — dedicated physical hardware: licensing/compliance requirements.`,
+      },
+      'ec2-autoscaling': {
+        question: 'How does Auto Scaling work in EC2?',
+        answer: `**Auto Scaling Group (ASG)** — a mechanism for automatically managing the number of EC2 instances: it maintains the desired number of healthy instances and scales it based on load.
+
+**Main parameters:**
+
+- **Min / Max / Desired capacity** — the minimum, maximum, and desired number of instances;
+- **Launch Template** — the launch blueprint: AMI, instance type, security groups, user data;
+- **Health checks** — EC2 status and/or ELB checks; an unhealthy instance is replaced automatically.
+
+**Scaling policies:**
+
+- **Target Tracking** — maintaining a target metric (e.g., CPU 60%) — the recommended option;
+- **Step Scaling** — adding/removing instances in steps based on CloudWatch alarm thresholds;
+- **Scheduled Scaling** — on a schedule (e.g., more instances during business hours);
+- **Predictive Scaling** — ML-based load forecasting.
+
+**Benefits:**
+
+- fault tolerance: failed instances are replaced, distribution across Availability Zones;
+- cost savings: you pay only for the capacity you need;
+- ELB integration: new instances are automatically registered with the load balancer.
+
+Best practices: stateless applications (state in a DB/cache/S3), graceful shutdown via lifecycle hooks, warm-up via warm pools, combining On-Demand + Spot in one ASG (mixed instances policy).`,
+      },
+      'what-is-elb': {
+        question: 'What is Elastic Load Balancing? What load balancer types does AWS offer?',
+        answer: `**Elastic Load Balancing (ELB)** — a managed load balancing service: it distributes incoming traffic across multiple targets (EC2, containers, IP addresses, Lambda) in one or more Availability Zones.
+
+**Load balancer types:**
+
+- **Application Load Balancer (ALB)** — layer 7 (HTTP/HTTPS):
+  - routing by path (\`/api/*\`), host, headers, query parameters;
+  - support for WebSocket, HTTP/2, gRPC;
+  - targets: EC2, ECS containers, Lambda, IP;
+  - the default choice for web applications and microservices;
+- **Network Load Balancer (NLB)** — layer 4 (TCP/UDP/TLS):
+  - millions of requests per second, ultra-low latency;
+  - static IP / Elastic IP per AZ;
+  - client IP preservation;
+  - the choice for high-load TCP services;
+- **Gateway Load Balancer (GWLB)** — layer 3: deploying network virtual appliances (firewalls, IDS/IPS);
+- **Classic Load Balancer (CLB)** — legacy, not used for new projects.
+
+**Key mechanisms:**
+
+- **Target Group** — a group of targets with health check settings;
+- **Health Checks** — traffic goes only to healthy targets;
+- **Cross-Zone Load Balancing** — even distribution across AZs;
+- **Sticky Sessions** — pinning a client to a target via a cookie (for stateful applications);
+- TLS termination with certificates from **ACM**.`,
+      },
+      'what-is-ecs': {
+        question: 'What is Amazon ECS? Main components.',
+        answer: `**Amazon ECS (Elastic Container Service)** — AWS's managed container orchestrator: running, scaling, and managing Docker containers without installing your own orchestrator.
+
+**Main components:**
+
+- **Cluster** — a logical group of compute resources;
+- **Task Definition** — the launch "recipe" (similar to docker-compose): images, CPU/memory, ports, environment variables, volumes, IAM role;
+- **Task** — a running instance of a Task Definition (one or more containers);
+- **Service** — maintains the desired number of tasks, integrates with ELB, performs rolling deployments and auto scaling;
+- **Container Agent** — an agent on EC2 instances communicating with the control plane.
+
+**Launch types (where containers run):**
+
+- **Fargate** — serverless: AWS manages the servers, you pay for the task's CPU/memory; simpler to operate;
+- **EC2** — containers on your own EC2 instances: more control, cheaper at high density, GPUs available;
+- **ECS Anywhere** — running on your own servers (on-premises).
+
+**Integrations:**
+
+- **ECR (Elastic Container Registry)** — Docker image registry;
+- **ALB** — load balancing with dynamic port mapping;
+- **CloudWatch** — logs and metrics;
+- **IAM Task Role** — separate access permissions for each task;
+- **Service Auto Scaling** — scaling the number of tasks based on metrics.`,
+      },
+      'ecs-vs-eks-fargate': {
+        question: 'ECS vs EKS: which one to choose? What is Fargate?',
+        answer: `**ECS vs EKS:**
+
+- **ECS** — AWS's proprietary orchestrator:
+  - simpler: fewer concepts, native AWS integration (IAM, ALB, CloudWatch);
+  - the control plane itself is free;
+  - vendor lock-in: works only in AWS;
+  - the choice for teams fully invested in AWS without Kubernetes expertise;
+- **EKS (Elastic Kubernetes Service)** — managed Kubernetes:
+  - standard K8s API: portability, a huge ecosystem (Helm, ArgoCD, Istio);
+  - control plane fee (~$73/month per cluster);
+  - higher entry barrier and operational complexity;
+  - the choice for a multi-cloud strategy, complex scenarios, teams with K8s expertise.
+
+**Fargate** — a serverless container execution engine that works with both ECS and EKS:
+
+- no EC2 instances to manage: patching, scaling, capacity are AWS's responsibility;
+- billing per vCPU and memory requested by the task, per second;
+- isolation: each task runs in its own micro-VM;
+- limitations: no GPU (in ECS), more expensive than EC2 at consistently high utilization, no DaemonSet-like scenarios.
+
+**Rule of thumb:**
+
+- small team, everything in AWS, just need to run containers → **ECS + Fargate**;
+- need the Kubernetes stack and portability → **EKS**;
+- high steady load, cost optimization → **ECS/EKS on EC2** (+ Spot).`,
+      },
+      'what-is-s3': {
+        question: 'What is Amazon S3? Storage classes and the consistency model.',
+        answer: `**Amazon S3 (Simple Storage Service)** — object storage with virtually unlimited capacity: files (objects) are stored in **buckets** and accessed via an HTTP API.
+
+**Key characteristics:**
+
+- an **object** = data + metadata + key (a unique name within the bucket); up to 5 TB in size;
+- flat structure: "folders" are just key prefixes;
+- bucket names are globally unique;
+- **11 nines** durability (99.999999999%) — data is replicated across at least 3 AZs;
+- **strong read-after-write consistency** — since 2020, reads immediately after a write/overwrite/delete return the latest data.
+
+**Storage classes:**
+
+- **S3 Standard** — frequent access, the default;
+- **S3 Intelligent-Tiering** — automatic movement between tiers based on access patterns;
+- **S3 Standard-IA / One Zone-IA** — infrequent access: cheaper storage, paid retrieval;
+- **S3 Glacier Instant / Flexible Retrieval / Deep Archive** — archival: from milliseconds to 12+ hours for retrieval, the lowest storage cost.
+
+**Features:**
+
+- **Versioning** — keeping all versions of an object, protection against accidental deletion;
+- **Lifecycle Policies** — automatic transition to cheaper classes and age-based deletion;
+- **Replication (CRR/SRR)** — replication to another region/bucket;
+- **Presigned URLs** — temporary links to private objects;
+- static website hosting, event notifications (S3 → Lambda/SQS/SNS).
+
+Typical use cases: static assets and media, backups, data lakes, build artifacts, logs.`,
+      },
+      's3-security': {
+        question: 'How is data secured in S3?',
+        answer: `**Access control:**
+
+- a bucket is **private** by default — only the owner has access;
+- **IAM Policies** — user/role permissions for S3 actions (identity-based);
+- **Bucket Policies** — a JSON policy on the bucket itself (resource-based): cross-account access, IP restrictions, requiring HTTPS;
+- **Block Public Access** — a "kill switch" overriding any public settings (recommended to keep enabled);
+- **ACLs** — a legacy mechanism, AWS recommends disabling them (Object Ownership: Bucket owner enforced);
+- **Presigned URLs** — temporary access to an object without exposing credentials.
+
+**Encryption:**
+
+- **at rest** (enabled by default):
+  - **SSE-S3** — keys managed by S3 (AES-256);
+  - **SSE-KMS** — keys in AWS KMS: auditing via CloudTrail, key access control;
+  - **SSE-C** — customer-provided keys;
+- **in transit** — TLS; a policy can deny non-HTTPS requests (\`aws:SecureTransport\`).
+
+**Data protection:**
+
+- **Versioning** — recovery from accidental overwrite/deletion;
+- **MFA Delete** — deleting versions only with MFA;
+- **Object Lock (WORM)** — preventing deletion/modification for a set period (compliance);
+- **Replication** — geographic redundancy.
+
+**Audit and monitoring:** CloudTrail (API calls), S3 Server Access Logs, Access Analyzer (finding unintentionally public buckets), Macie (sensitive data discovery).`,
+      },
+      'what-is-vpc': {
+        question: 'What is a VPC? What components make up networking in AWS?',
+        answer: `**VPC (Virtual Private Cloud)** — a logically isolated virtual network in AWS where your resources run. You fully control addressing, subnets, routing, and access.
+
+**Main components:**
+
+- **CIDR block** — the VPC's IP address range (e.g., \`10.0.0.0/16\`);
+- **Subnet** — a subnetwork within a single Availability Zone:
+  - **public** — has a route to an Internet Gateway (web servers, ALB);
+  - **private** — no direct access from the internet (databases, backends);
+- **Route Table** — routing rules, attached to subnets;
+- **Internet Gateway (IGW)** — the VPC's exit to the internet;
+- **NAT Gateway** — outbound internet for private subnets (inbound traffic is blocked); placed in a public subnet;
+- **Elastic IP** — a static public IP.
+
+**Connectivity:**
+
+- **VPC Peering** — a private connection between two VPCs (not transitive);
+- **Transit Gateway** — a hub for connecting many VPCs and on-premises networks;
+- **VPC Endpoints** — private access to AWS services without going to the internet:
+  - **Gateway Endpoint** — for S3 and DynamoDB (free);
+  - **Interface Endpoint (PrivateLink)** — an ENI with a private IP for other services;
+- **Site-to-Site VPN / Direct Connect** — connecting a corporate network.
+
+**Typical architecture**: a VPC across 2–3 AZs; in each AZ — a public subnet (ALB, NAT) and private subnets (applications, databases); inter-tier access restricted with security groups.`,
+      },
+      'security-group-vs-nacl': {
+        question: 'What is the difference between a Security Group and a Network ACL?',
+        answer: `Both mechanisms are virtual firewalls in a VPC, but they operate at different levels.
+
+**Security Group (SG):**
+
+- applied at the **ENI/instance** level;
+- **stateful** — return traffic is allowed automatically;
+- **allow** rules only (you cannot explicitly deny);
+- all rules are evaluated together;
+- a rule's source can reference another SG (e.g., "the database accepts traffic only from the application's SG") — the foundation of microsegmentation;
+- by default: all inbound denied, all outbound allowed.
+
+**Network ACL (NACL):**
+
+- applied at the **subnet** level — to all resources within it;
+- **stateless** — return traffic must be allowed explicitly (including ephemeral ports 1024–65535);
+- both **allow and deny** rules;
+- rules are evaluated **in numeric order** until the first match;
+- by default (default NACL): all traffic allowed;
+- use cases: explicitly blocking IPs/ranges, an extra layer of subnet protection.
+
+**In practice:**
+
+- the primary tool is **Security Groups**: flexible, stateful, can reference each other;
+- NACLs — an additional "coarse" layer (defense in depth) and for deny rules;
+- traffic passes through **both** levels: the NACL at the subnet boundary, then the SG at the instance.`,
+      },
+    },
+  },
 };
