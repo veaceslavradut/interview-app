@@ -1,0 +1,107 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { getCategories } from '../data/localized';
+import { getSuggestions } from '../data/suggestions';
+import Breadcrumbs from '../components/Breadcrumbs';
+import { useLanguage } from '../i18n/LanguageContext';
+import { t } from '../i18n/translations';
+
+export default function SuggestionsPage() {
+  const { lang } = useLanguage();
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [status, setStatus] = useState('loading'); // loading | ready | error
+
+  // грузим один раз за монтирование: список общий и от языка не зависит
+  useEffect(() => {
+    let cancelled = false;
+    getSuggestions()
+      .then((loaded) => {
+        if (cancelled) return;
+        setSuggestions(loaded);
+        setStatus('ready');
+      })
+      .catch(() => {
+        if (!cancelled) setStatus('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const categoriesById = useMemo(
+    () => new Map(getCategories(lang).map((c) => [c.id, c])),
+    [lang]
+  );
+
+  return (
+    <div className="page">
+      <Breadcrumbs
+        items={[{ label: t(lang, 'home'), to: '/' }, { label: t(lang, 'suggestionsTitle') }]}
+      />
+
+      <header className="category-header">
+        <span className="category-header-icon">💡</span>
+        <div>
+          <h1 className="category-header-title">{t(lang, 'suggestionsTitle')}</h1>
+          {status === 'ready' && (
+            <p className="category-header-subtitle">
+              {suggestions.length} {t(lang, 'suggestionsCount')}
+            </p>
+          )}
+        </div>
+      </header>
+
+      <p className="untranslated-note">{t(lang, 'suggestionsSharedNote')}</p>
+
+      {status === 'loading' ? (
+        <div className="suggest-card suggest-empty">
+          <p className="suggest-empty-text">{t(lang, 'suggestionsLoading')}</p>
+        </div>
+      ) : status === 'error' ? (
+        <div className="suggest-card suggest-empty">
+          <p className="suggest-error">{t(lang, 'suggestionsLoadError')}</p>
+        </div>
+      ) : suggestions.length === 0 ? (
+        <div className="suggest-card suggest-empty">
+          <p className="suggest-empty-text">{t(lang, 'suggestionsEmpty')}</p>
+          <Link to="/suggest" className="quiz-button">
+            {t(lang, 'suggestionsEmptyCta')}
+          </Link>
+        </div>
+      ) : (
+        <>
+          <main className="question-list">
+            {suggestions.map((suggestion) => {
+              // тема существующей категории берётся из data-слоя, чтобы
+              // заголовок следовал выбранному языку; своя тема — как ввели
+              const category = suggestion.categoryId
+                ? categoriesById.get(suggestion.categoryId)
+                : null;
+              const label = category ? category.title : suggestion.customTopic;
+              const icon = category ? category.icon : '💬';
+
+              return (
+                <article key={suggestion.id} className="suggestion-item">
+                  <div className="suggestion-meta">
+                    <span className="suggest-topic-badge">
+                      {icon} {label}
+                    </span>
+                    <time className="suggestion-date" dateTime={suggestion.createdAt}>
+                      {new Date(suggestion.createdAt).toLocaleDateString(lang)}
+                    </time>
+                  </div>
+                  <p className="suggestion-question">{suggestion.question}</p>
+                </article>
+              );
+            })}
+          </main>
+
+          <Link to="/suggest" className="quiz-start-link">
+            {t(lang, 'suggestionsAddMore')}
+          </Link>
+        </>
+      )}
+    </div>
+  );
+}
