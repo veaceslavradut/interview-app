@@ -3,6 +3,8 @@ import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
 import QuestionPage from './pages/QuestionPage';
 import QuizPage from './pages/QuizPage';
+import SuggestPage from './pages/SuggestPage';
+import SuggestionsPage from './pages/SuggestionsPage';
 import ScrollToTop from './components/ScrollToTop';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import { LanguageProvider } from './i18n/LanguageContext';
@@ -19,6 +21,8 @@ function App() {
           <Route path="/category/:categoryId" element={<CategoryPage />} />
           <Route path="/category/:categoryId/question/:questionId" element={<QuestionPage />} />
           <Route path="/category/:categoryId/quiz" element={<QuizPage />} />
+          <Route path="/suggest" element={<SuggestPage />} />
+          <Route path="/suggestions" element={<SuggestionsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

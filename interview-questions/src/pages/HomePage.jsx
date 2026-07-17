@@ -30,6 +30,18 @@ export default function HomePage() {
           </Link>
         ))}
       </main>
+
+      <section className="suggest-banner">
+        <p className="suggest-banner-text">{t(lang, 'suggestSubtitle')}</p>
+        <div className="suggest-banner-actions">
+          <Link to="/suggest" className="quiz-button">
+            {t(lang, 'suggestCta')}
+          </Link>
+          <Link to="/suggestions" className="quiz-button quiz-button-secondary">
+            {t(lang, 'suggestViewAll')}
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
