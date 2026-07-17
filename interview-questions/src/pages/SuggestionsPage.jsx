@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCategories } from '../data/localized';
-import { getSuggestions } from '../data/suggestions';
+import { getSuggestions, deleteSuggestion } from '../data/suggestions';
 import Breadcrumbs from '../components/Breadcrumbs';
+import { useAuth } from '../auth/AuthContext';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
 
 export default function SuggestionsPage() {
   const { lang } = useLanguage();
+  const { isAdmin, getToken } = useAuth();
 
   const [suggestions, setSuggestions] = useState([]);
   const [status, setStatus] = useState('loading'); // loading | ready | error
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
   // грузим один раз за монтирование: список общий и от языка не зависит
   useEffect(() => {
@@ -33,6 +37,22 @@ export default function SuggestionsPage() {
     () => new Map(getCategories(lang).map((c) => [c.id, c])),
     [lang]
   );
+
+  const handleDelete = async (id) => {
+    if (!window.confirm(t(lang, 'suggestionDeleteConfirm'))) return;
+    setDeleteError('');
+    setDeletingId(id);
+    try {
+      const token = await getToken();
+      await deleteSuggestion(id, token);
+      setSuggestions((current) => current.filter((s) => s.id !== id));
+    } catch {
+      // истёкшая сессия или отказ Firestore — список не трогаем
+      setDeleteError(t(lang, 'suggestionDeleteError'));
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="page">
@@ -71,6 +91,7 @@ export default function SuggestionsPage() {
         </div>
       ) : (
         <>
+          {deleteError && <p className="suggest-error">{deleteError}</p>}
           <main className="question-list">
             {suggestions.map((suggestion) => {
               // тема существующей категории берётся из data-слоя, чтобы
@@ -92,6 +113,18 @@ export default function SuggestionsPage() {
                     </time>
                   </div>
                   <p className="suggestion-question">{suggestion.question}</p>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      className="suggestion-delete"
+                      disabled={deletingId === suggestion.id}
+                      onClick={() => handleDelete(suggestion.id)}
+                    >
+                      {deletingId === suggestion.id
+                        ? t(lang, 'suggestionDeleting')
+                        : t(lang, 'suggestionDelete')}
+                    </button>
+                  )}
                 </article>
               );
             })}

@@ -783,6 +783,27 @@
   overflow-wrap: anywhere;
 }
 
+.suggestion-delete {
+  align-self: flex-start;
+  padding: 0.35rem 0.8rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: #b4292d;
+  background: #fdeced;
+  border: 1px solid #f3c2c4;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.suggestion-delete:hover {
+  background: #fbdcde;
+}
+
+.suggestion-delete:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* ---------- Адаптивность ---------- */
 
 @media (max-width: 640px) {

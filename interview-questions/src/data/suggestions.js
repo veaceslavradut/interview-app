@@ -5,13 +5,13 @@
 // намеренно: полей всего четыре, а sdk весит сотни килобайт и потянул бы за
 // собой ещё одну зависимость в и без того расползшийся package.json.
 //
-// apiKey ниже — не секрет. У Firebase это идентификатор проекта, он и должен
-// лежать в бандле; доступ режут правила на стороне Firestore (читать может
-// любой, создавать — любой с валидной формой, менять и удалять — никто).
-// Модерация — руками через консоль Firebase.
+// Доступ режут правила Firestore: читать и создавать может любой (create — с
+// валидной формой), а удалять — только админ, вошедший через Firebase Auth
+// (см. auth.js). Правило проверяет uid из токена, поэтому подделать удаление
+// с клиента нельзя.
 
-const PROJECT_ID = 'java-interview-app';
-const API_KEY = 'AIzaSyDCw796wRGzwRcXJMHJa6ivzv0AkTEnjr0';
+import { API_KEY, PROJECT_ID } from './firebaseConfig';
+
 const BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/suggestions`;
 
 // Firestore отдаёт и принимает значения в типизированной обёртке
@@ -71,4 +71,16 @@ export async function addSuggestion({ categoryId, customTopic, question }) {
     throw new Error(`Firestore ответил ${response.status}`);
   }
   return fromDocument(await response.json());
+}
+
+// Удаление доступно только админу. idToken — из auth.getIdToken(); правило
+// Firestore проверит uid в нём и отклонит запрос от кого угодно другого.
+export async function deleteSuggestion(id, idToken) {
+  const response = await fetch(`${BASE_URL}/${id}?key=${API_KEY}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${idToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Firestore ответил ${response.status}`);
+  }
 }
