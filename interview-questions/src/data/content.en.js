@@ -2307,7 +2307,7 @@ Related technologies: **XSLT** — transforming XML into other formats using XPa
   },
   patterns: {
     title: 'Design Patterns',
-    description: 'Design Patterns (GoF)',
+    description: 'Principles (SOLID, DRY, KISS, DDD), GoF patterns, and architectural patterns',
     questions: {
       'pattern-groups': {
         question: 'What groups of design patterns exist?',
@@ -2446,6 +2446,174 @@ In short: Factory Method — "which object to create" (one product), Abstract Fa
 - **Adapter** — \`HandlerAdapter\` in Spring MVC;
 - **Strategy** — \`PlatformTransactionManager\`, converters;
 - **Front Controller** — \`DispatcherServlet\`.`,
+      },
+      solid: {
+        question: 'What are the SOLID principles?',
+        answer: `**SOLID** is five principles of object-oriented design (Robert Martin) that make code flexible and maintainable:
+
+- **S — Single Responsibility**: a class should have one reason to change — one area of responsibility.
+- **O — Open/Closed**: entities are open for extension but closed for modification — new behavior is added without changing existing code (via abstractions, inheritance, composition).
+- **L — Liskov Substitution**: an object of a subclass must be substitutable for an object of the base class without breaking the program's correctness.
+- **I — Interface Segregation**: many small, specialized interfaces are better than one "fat" interface — a client should not depend on methods it doesn't use.
+- **D — Dependency Inversion**: high-level modules depend on abstractions, not concrete implementations; details depend on abstractions.
+
+The goal is to reduce coupling, increase cohesion, and make code easier to change and test.`,
+      },
+      'dry-kiss-yagni': {
+        question: 'What do the DRY, KISS, and YAGNI principles mean?',
+        answer: `These principles complement SOLID and keep code simple:
+
+- **DRY (Don't Repeat Yourself)** — don't duplicate knowledge: every piece of logic should have a single authoritative representation in the system. Duplication leads to drift when things change. Not to be confused with mechanically removing any similarity — what matters is unity of *knowledge*, not matching lines of text.
+- **KISS (Keep It Simple, Stupid)** — choose the simplest solution that works; add complexity only when it is truly justified.
+- **YAGNI (You Aren't Gonna Need It)** — don't build functionality "for the future" until it is actually needed: premature generality bloats the code and rarely guesses the real requirements.
+
+Together they fight over-engineering, while SOLID fights poor structure.`,
+      },
+      ddd: {
+        question: 'What is Domain-Driven Design (DDD) and a bounded context?',
+        answer: `**DDD (Domain-Driven Design)** is an approach that puts the domain and its model at the center of development, rather than the technical implementation. The key idea is a shared **ubiquitous language** for developers and domain experts, reflected directly in the code.
+
+Core building blocks:
+
+- **Entity** — an object with identity (its id matters, not just its values).
+- **Value Object** — an object without identity, defined by its values (money, address), usually immutable.
+- **Aggregate** — a cluster of related objects with a root (aggregate root) through which all changes go; a consistency boundary.
+- **Repository** — an abstraction for accessing aggregates.
+
+**Bounded context** — an explicit boundary within which the model and its terms are unambiguous. In different contexts the same term ("Customer") can mean different things. Context boundaries often become microservice boundaries, and their interactions are described by a context map.`,
+      },
+      'architecture-styles': {
+        question: 'How do layered, hexagonal, and clean architectures differ?',
+        answer: `All three separate responsibilities into layers; they differ in the direction of dependencies.
+
+- **Layered (n-tier)** — the classic layers: presentation → business → data access. Dependencies go top-down, so business logic depends on the data layer. Simple, but the domain ends up coupled to infrastructure (the database, the framework).
+- **Hexagonal (ports & adapters)** — the domain is at the center, and everything external (database, UI, queues) connects through **ports** (interfaces) and **adapters**. The domain knows nothing about the details; adapters implement the ports. Easy to swap infrastructure and to test.
+- **Clean Architecture** — concentric layers with the **dependency rule**: dependencies point only inward, toward the domain (entities → use cases → interface adapters → frameworks). Essentially a generalization of hexagonal.
+
+The shared principle of the latter two is **dependency inversion**: business logic does not depend on infrastructure, but the other way around. Choice: layered for simple applications; hexagonal/clean where domain independence and testability matter.`,
+      },
+      'pattern-vs-antipattern': {
+        question: 'How does a pattern differ from an anti-pattern? What is an architectural pattern?',
+        answer: `A **design pattern** is a proven, typical solution to a commonly occurring design problem in a given context. Not ready-made code, but a description of an approach.
+
+An **anti-pattern** is a common solution that looks good at first but leads to negative consequences. Examples: **God Object** (a class that knows and does everything), **Spaghetti code**, **Golden Hammer** (one favorite tool for every problem), **Copy-Paste programming**.
+
+**Levels of patterns:**
+
+- **design patterns (GoF)** — the level of classes and objects (Singleton, Strategy, Observer);
+- **architectural patterns** — the structure of the whole application (MVC, layered, microservices, event-driven);
+- **enterprise integration patterns** — the level of systems interacting (Saga, CQRS, Event Sourcing).
+
+The difference is scale: from organizing a few classes to the structure of the entire system.`,
+      },
+      'strategy-vs-state': {
+        question: 'What is the Strategy pattern and how does it differ from State?',
+        answer: `**Strategy** is a behavioral pattern: a family of interchangeable algorithms is extracted into separate classes behind a common interface, and the client picks the one it needs at runtime. It lets you change the algorithm independently of the code that uses it (e.g., different sorting, payment, or discount strategies).
+
+**State** is a behavioral pattern: an object changes its behavior when its internal state changes, as if its class changed. Each state is a separate class, and the object delegates behavior to the current state.
+
+Structurally they are almost identical (delegation to an object behind an interface), but they differ in **intent**:
+
+- in **Strategy**, the client deliberately chooses the algorithm, and the strategies don't know about each other;
+- in **State**, transitions between states are often encapsulated within the states themselves, and the object switches automatically as it works.`,
+      },
+      'decorator-proxy-composite': {
+        question: 'What is the difference between Decorator, Proxy, and Composite?',
+        answer: `All three are structural patterns that wrap an object of the same interface, but with different goals:
+
+- **Decorator** — dynamically **adds behavior** to an object by wrapping it and calling the wrapped object "plus something extra." Decorators can be nested. Example in the JDK: I/O stream wrappers (\`BufferedInputStream\` over \`FileInputStream\`).
+- **Proxy** — provides a **surrogate / access control** to an object with the same interface, without changing its behavior: lazy initialization (virtual proxy), access control, remote calls, caching. In Spring, \`@Transactional\` and AOP are implemented via proxies.
+- **Composite** — assembles objects into a **tree structure** and lets you treat the tree and an individual element uniformly (files and folders, UI components).
+
+Key: Decorator "extends," Proxy "controls access," Composite is "part-whole."`,
+      },
+      observer: {
+        question: 'What is the Observer pattern?',
+        answer: `**Observer** is a behavioral pattern: a **subject** keeps a list of dependent **observers** and automatically notifies them when its state changes by calling their method. It implements a one-to-many relationship with loose coupling — the subject only knows the observer interface.
+
+Uses: event subscriptions, reactive streams, UI event mechanisms, model-view bindings.
+
+Examples and relatives:
+
+- historically in Java — \`java.util.Observable\`/\`Observer\` (deprecated);
+- event listeners (\`ActionListener\` in Swing);
+- \`PropertyChangeListener\`;
+- conceptually, publish-subscribe and reactive programming (RxJava, Project Reactor) are built on it.
+
+Downside — with many observers and cascading notifications, order and performance become hard to track.`,
+      },
+      'template-method-vs-strategy': {
+        question: 'What is Template Method and how does it differ from Strategy?',
+        answer: `**Template Method** is a behavioral pattern: a base class defines the **skeleton of an algorithm** in a single method and leaves individual steps abstract/overridable so subclasses fill them in without changing the overall structure. It is based on **inheritance**.
+
+Difference from **Strategy**:
+
+- **Template Method** uses inheritance: the varying steps are overridden methods of a subclass; the algorithm's structure is fixed in the parent. The behavior is chosen at compile time (which subclass was created).
+- **Strategy** uses composition: the whole algorithm is extracted into a separate object that can be swapped at runtime.
+
+Rule of thumb: Template Method is "a fixed algorithm with variable steps via inheritance," Strategy is "an interchangeable algorithm via composition." Template Method examples in Spring: \`JdbcTemplate\`, \`RestTemplate\` — they define the frame while the details are passed in via callbacks.`,
+      },
+      adapter: {
+        question: 'What is the Adapter pattern?',
+        answer: `**Adapter** is a structural pattern: it converts the interface of an existing class into the interface a client expects, allowing classes with incompatible interfaces to work together. The adapter wraps the adaptee and translates the calls.
+
+Two kinds:
+
+- **object adapter** — via composition (the adapter holds a reference to the adaptee); preferred;
+- **class adapter** — via multiple inheritance (limited in Java, since there is no multiple class inheritance).
+
+Uses: integrating third-party/legacy libraries, adapting someone else's API to your own. JDK examples: \`Arrays.asList()\` (array → List), \`InputStreamReader\` (byte stream → character stream), listener adapter classes in Swing.
+
+Difference from Decorator: Adapter **changes the interface** without adding behavior; Decorator keeps the interface but **adds behavior**.`,
+      },
+      saga: {
+        question: 'What is the SAGA pattern and why is it needed?',
+        answer: `**SAGA** is a pattern for managing a **distributed transaction** across microservices without a shared database or two-phase commit. Instead of one ACID transaction, the business operation is split into a sequence of local transactions in different services; for each one a **compensating operation** is defined to undo its effect on failure.
+
+Two ways to coordinate:
+
+- **Choreography** — services exchange events and react to them; there is no central coordinator. Simpler, but the logic is harder to trace.
+- **Orchestration** — a dedicated orchestrator (saga orchestrator) invokes the steps in order and triggers compensations on error. The logic is centralized and explicit.
+
+SAGA provides not atomicity but **eventual consistency**: the system passes through intermediate inconsistent states and converges to a correct one. Example: order → charge payment → reserve stock; if the reservation fails, a compensation runs — refund the payment.`,
+      },
+      'cqrs-event-sourcing': {
+        question: 'What are CQRS and Event Sourcing? How are they related?',
+        answer: `**CQRS (Command Query Responsibility Segregation)** — splitting the model into **commands** (change state) and **queries** (read state). The read and write models can be designed, scaled, and stored independently: for example, a normalized write model and denormalized read views. Pro — optimizing and scaling reads and writes separately; con — added complexity and model drift (usually eventual consistency).
+
+**Event Sourcing** — state is stored not as the current snapshot but as an **ordered sequence of events** (facts of change). The current state is obtained by "replaying" the events. Pros: full history and audit, the ability to reconstruct state at any point in time, natural integration through events. Cons: complexity, event versioning, the need for snapshots for performance.
+
+**Relationship:** they are often used together — the write model emits events (Event Sourcing), and read models (projections) are built from the event stream for CQRS. But each also works on its own.`,
+      },
+      'circuit-breaker': {
+        question: 'What are Circuit Breaker, Retry, and Backoff?',
+        answer: `These are **resilience** patterns for calling unreliable remote services.
+
+**Circuit Breaker** — wraps a call and tracks errors. It has three states:
+
+- **Closed** — calls pass through; errors are counted.
+- **Open** — once the error threshold is exceeded, calls are rejected immediately (fail fast) without loading the failing service; the client gets a fallback.
+- **Half-Open** — after a timeout, a trial call is allowed; success → Closed, failure → Open again.
+
+It protects against cascading failures and gives the service time to recover.
+
+**Retry** — automatically repeats a failed request: helps with transient failures. Dangerous without limits — it can amplify load on a failing service.
+
+**Backoff** — the delay between retries, usually **exponential** (1s, 2s, 4s…) plus **jitter** (random spread) so clients don't retry in sync. Implementations: Resilience4j, Spring Retry. Retry is applied only to **idempotent** operations.`,
+      },
+      idempotency: {
+        question: 'What is idempotency and how do you implement idempotent requests?',
+        answer: `**Idempotency** is a property of an operation where executing it repeatedly with the same parameters yields the same result and produces no side effects beyond the first execution. It matters in distributed systems where, due to retries, timeouts, and "at-least-once" delivery, the same request may arrive multiple times.
+
+In HTTP, GET, PUT, and DELETE are idempotent; **POST is not** (two POSTs create two resources).
+
+How to make a POST idempotent — an **idempotency key**:
+
+1. the client generates a unique key and sends it in a header;
+2. on the first request the server performs the operation and stores the result under that key;
+3. on a repeat with the same key the server does not perform the operation again but returns the stored result.
+
+Additionally helpful: unique constraints in the database, deduplication by a business key, optimistic locking. Idempotency is a prerequisite for safely applying Retry and "at-least-once" semantics.`,
       },
     },
   },
@@ -3092,6 +3260,222 @@ public class LoggingAspect {
 
 \`@Transactional\`, \`@Cacheable\`, \`@Async\`, \`@PreAuthorize\` are all built on AOP proxies — hence the shared self-invocation limitation.`,
       },
+      'applicationcontext-vs-beanfactory': {
+        question: 'How does ApplicationContext differ from BeanFactory?',
+        answer: `Both are IoC containers that manage beans, but \`ApplicationContext\` is an extension of \`BeanFactory\` with enterprise features.
+
+**BeanFactory** is the basic container; it creates beans **lazily** (on demand, at the first \`getBean\`). Minimal memory footprint.
+
+**ApplicationContext** adds on top of it:
+
+- **eager initialization** of singleton beans at startup (configuration errors surface immediately, not on first access);
+- **event** publication (\`ApplicationEvent\`, \`@EventListener\`);
+- internationalization (\`MessageSource\`);
+- convenient work with resources and \`Environment\` (profiles, properties);
+- automatic detection of \`BeanPostProcessor\` and \`BeanFactoryPostProcessor\`.
+
+In practice you almost always use \`ApplicationContext\`. \`BeanFactory\` directly — rarely, in memory-constrained environments or for lazy loading.`,
+      },
+      'autowired-resolution': {
+        question: 'How does @Autowired resolve dependencies? What if there are several candidates?',
+        answer: `\`@Autowired\` injects a dependency **by type**. The algorithm:
+
+1. the container looks for beans of a matching type;
+2. if exactly one is found — it is injected;
+3. if several — it tries to pick by field/parameter name or by \`@Primary\`;
+4. if it can't choose — \`NoUniqueBeanDefinitionException\`; if there are no candidates — \`NoSuchBeanDefinitionException\` (can be relaxed with \`required = false\`).
+
+Resolving ambiguity:
+
+- **\`@Qualifier("beanName")\`** — explicitly name the bean;
+- **\`@Primary\`** — mark a bean as the default preferred one;
+- injecting \`List<T>\` or \`Map<String, T>\` — get all beans of the type at once.
+
+Difference from related annotations: \`@Resource\` (JSR-250) injects **by name**, \`@Inject\` (JSR-330) — by type, like \`@Autowired\`, but without the \`required\` attribute.`,
+      },
+      'injection-types': {
+        question: 'What is the difference between constructor, setter, and field injection? Which is preferred?',
+        answer: `Three ways to inject dependencies:
+
+- **Constructor injection** — dependencies come through the constructor. The **preferred** way: fields can be \`final\` (immutability), the object is always created in a valid state, dependencies are explicit, it's easy to test (pass mocks to the constructor), and circular dependencies are detected immediately at startup.
+- **Setter injection** — through setters. Suitable for **optional** or reconfigurable dependencies.
+- **Field injection** (\`@Autowired\` directly on a field) — compact, but **not recommended**: the field can't be \`final\`, dependencies are hidden, testing without the container is hard (needs reflection/Spring), and it's easy to end up with a bloated class holding a dozen dependencies.
+
+Since Spring 4.3, with a single constructor you can omit \`@Autowired\`. Constructor injection is the Spring team's own recommendation.`,
+      },
+      stereotypes: {
+        question: 'What is the difference between @Component, @Service, @Repository, and @Controller?',
+        answer: `All four are stereotype annotations that mark a class as a bean picked up during component scanning. Technically \`@Service\`, \`@Repository\`, and \`@Controller\` are specializations of \`@Component\`. The differences are semantic and (for two of them) functional:
+
+- **\`@Component\`** — a generic bean, when no more specific stereotype fits.
+- **\`@Service\`** — the business-logic layer. A purely semantic marker.
+- **\`@Repository\`** — the data-access layer. Adds **exception translation**: persistence-specific exceptions (JPA/JDBC) are translated into the unified \`DataAccessException\` hierarchy.
+- **\`@Controller\`** — the Spring MVC web layer; handles HTTP requests. \`@RestController\` = \`@Controller\` + \`@ResponseBody\`.
+
+The separation improves readability, and \`@Repository\` and \`@Controller\` provide extra behavior.`,
+      },
+      'bean-post-processor': {
+        question: 'How does BeanPostProcessor differ from BeanFactoryPostProcessor?',
+        answer: `Both are container extension points, but they work at different stages.
+
+**\`BeanFactoryPostProcessor\`** works with **bean definitions** after they are loaded but **before** the beans themselves are created. It can modify configuration metadata. A classic example is \`PropertySourcesPlaceholderConfigurer\`, which substitutes \`\${...}\` values.
+
+**\`BeanPostProcessor\`** works with **already created** bean instances — its \`postProcessBeforeInitialization\` and \`postProcessAfterInitialization\` methods are called before and after init methods. It is through \`BeanPostProcessor\` that Spring wraps beans in proxies (AOP, \`@Transactional\`) and processes annotations like \`@Autowired\` and \`@PostConstruct\`.
+
+Order: definitions loaded → \`BeanFactoryPostProcessor\` edits the definitions → beans are created → \`BeanPostProcessor\` (before) → init methods (\`@PostConstruct\`, \`afterPropertiesSet\`) → \`BeanPostProcessor\` (after).`,
+      },
+      'circular-dependency': {
+        question: 'How does Spring handle circular dependencies, and what is self-invocation?',
+        answer: `A **circular dependency** is when bean A depends on B and B depends on A.
+
+- with **field/setter injection**, Spring can resolve them via an intermediate "early reference" in a third-level cache;
+- with **constructor injection**, it cannot — a bean can't be created without a ready dependency, and Spring throws \`BeanCurrentlyInCreationException\`.
+
+Cycles are a sign of a design problem; they are fixed by extracting shared logic into a third bean, \`@Lazy\`, or events. Since Spring Boot 2.6+, cycles are prohibited by default.
+
+**Self-invocation** — calling one bean method from another method **of the same class** (\`this.method()\`). The problem is that the proxy wrapper (for \`@Transactional\`, \`@Cacheable\`, \`@Async\`) intercepts only **external** calls made through the proxy reference. An internal \`this\` call bypasses the proxy, so the annotation **doesn't take effect**. Workarounds: move the method into a separate bean, self-injection, or \`AopContext.currentProxy()\`.`,
+      },
+      'configuration-properties': {
+        question: 'How does @ConfigurationProperties differ from @Value? What are Spring Profiles?',
+        answer: `**\`@Value("\${app.timeout}")\`** injects a **single** property into a field. Simple, but: no type-safe grouping, weak support for validation and relaxed binding, inconvenient for large sets of settings.
+
+**\`@ConfigurationProperties(prefix = "app")\`** binds a **whole group** of properties to a typed POJO. Advantages: grouping by prefix, **relaxed binding** (\`app.max-size\` ↔ \`APP_MAXSIZE\`), \`@Validated\` support (JSR-303), nested objects and lists. Recommended for application configuration; \`@Value\` — for single values and SpEL expressions.
+
+**Spring Profiles** — a mechanism for sets of configuration per environment (\`dev\`, \`test\`, \`prod\`). Beans are marked \`@Profile("dev")\`, properties go into \`application-dev.yml\`. The active profile is set via \`spring.profiles.active\` (a property, environment variable, or launch argument), letting a single artifact run in different environments.`,
+      },
+      'exception-handling': {
+        question: 'How do you handle exceptions centrally in Spring (@ControllerAdvice)?',
+        answer: `In Spring MVC, exceptions are handled at several levels:
+
+- **\`@ExceptionHandler\`** on a controller method — catches exceptions of that controller;
+- **\`@ControllerAdvice\` / \`@RestControllerAdvice\`** — a global component with \`@ExceptionHandler\` methods applied to **all** controllers. It lets you map exceptions to HTTP responses (status + body) in one place without duplicating handling.
+
+Example: \`@ExceptionHandler(EntityNotFoundException.class)\` returns a 404 with an error body. You can return a \`ResponseEntity\` with the desired status or use \`@ResponseStatus\`.
+
+Since Spring 6 / Boot 3 there is \`ProblemDetail\` (RFC 7807) for unified error bodies. The base fallback mechanism is \`ResponseEntityExceptionHandler\`, which you can extend to override the handling of standard Spring MVC exceptions.`,
+      },
+      'spring-data-repositories': {
+        question: 'How do CrudRepository, JpaRepository, and PagingAndSortingRepository differ? How do derived queries work?',
+        answer: `The Spring Data interface hierarchy — each extends the previous one:
+
+- **\`CrudRepository\`** — basic CRUD operations (\`save\`, \`findById\`, \`delete\`, \`count\`).
+- **\`PagingAndSortingRepository\`** — adds pagination and sorting (\`findAll(Pageable)\`, \`findAll(Sort)\`).
+- **\`JpaRepository\`** — adds JPA specifics: \`findAll\` returns a \`List\`, batch operations (\`saveAll\`, \`deleteAllInBatch\`), \`flush()\`, \`getReferenceById\`.
+
+In practice, for JPA you usually take \`JpaRepository\`.
+
+**Derived queries (query by method name)** — Spring generates the query by parsing the method name: \`findByLastNameAndAgeGreaterThan(String, int)\` becomes the corresponding JPQL. Keywords \`And\`, \`Or\`, \`Between\`, \`Like\`, \`OrderBy\`, \`Top\`/\`First\`, and others are supported. Convenient for simple queries; for complex ones the names become unreadable — then you switch to \`@Query\`.`,
+      },
+      'query-and-projections': {
+        question: 'When should you use @Query and native SQL? What are projections?',
+        answer: `**\`@Query\`** defines a query explicitly when a derived method is awkward:
+
+- by default — **JPQL** (works with entities and fields, portable across databases);
+- \`nativeQuery = true\` — **native SQL**: needed for database-specific constructs, complex window functions, fine tuning, but you lose portability and entity-level checking.
+
+Parameters are bound positionally (\`?1\`) or by name (\`:name\` + \`@Param\`). Modifying queries are marked \`@Modifying\`.
+
+**Projections** return not the whole entity but the needed subset of fields — less data and no extra joins:
+
+- **interface-based** — an interface with getters for the needed fields (a closed projection); Spring creates the implementation itself;
+- **DTO/class-based** — a class constructor is filled with the selected fields;
+- **dynamic** — the projection type is passed as a method parameter (\`<T> T findBy...(..., Class<T>)\`).
+
+Projections are a simple way to speed up reads and avoid pulling heavy entities.`,
+      },
+      'transaction-propagation': {
+        question: 'What transaction propagation levels exist in Spring?',
+        answer: `**Propagation** defines how a \`@Transactional\` method behaves relative to an already existing transaction. The main options:
+
+- **REQUIRED** (default) — join the current transaction, or create a new one if there is none.
+- **REQUIRES_NEW** — always create a **new** transaction, suspending the current one. The inner one commits/rolls back independently (useful for audit or logs that must persist even if the main transaction rolls back).
+- **SUPPORTS** — run within a transaction if one exists, otherwise without one.
+- **NOT_SUPPORTED** — run outside a transaction, suspending the current one.
+- **MANDATORY** — requires an existing transaction, otherwise an exception.
+- **NEVER** — requires the absence of a transaction, otherwise an exception.
+- **NESTED** — a nested transaction via a savepoint: it rolls back to the savepoint without affecting the outer one.
+
+An important nuance: \`REQUIRES_NEW\` and \`NESTED\` work only through the proxy (not on self-invocation) and depend on the data source's capabilities.`,
+      },
+      pagination: {
+        question: 'How do you implement pagination in Spring Data? How does Page differ from Slice?',
+        answer: `Spring Data provides pagination via \`Pageable\`:
+
+- the method takes a \`Pageable\` (\`PageRequest.of(page, size, Sort.by(...))\`) and returns a \`Page\`, \`Slice\`, or \`List\`.
+- **\`Page<T>\`** — knows the **total number of elements and pages**: for this an extra \`count\` query is executed. Convenient for a UI with page numbers, but the count is expensive on large tables.
+- **\`Slice<T>\`** — knows only **whether there is a next page** (it fetches one extra element), without a total count. Cheaper, suitable for "infinite scroll."
+
+**Offset pagination** (\`LIMIT ... OFFSET\`) degrades at large offsets: the database still scans all skipped rows. For large tables you use **keyset pagination (the seek method)** — instead of an offset you filter by the last seen key value (\`WHERE id > :lastId ORDER BY id LIMIT n\`). This is consistently fast and doesn't "shift" on inserts, but it doesn't allow jumping to an arbitrary page.`,
+      },
+      'spring-security-basics': {
+        question: 'How is the Spring Security filter chain structured? What is the SecurityContext?',
+        answer: `Spring Security plugs into a web application as a **chain of servlet filters**. The entry point is \`DelegatingFilterProxy\`, which delegates to \`FilterChainProxy\`, which runs the request through a \`SecurityFilterChain\` — an ordered set of filters (authentication, authorization, CSRF, exception handling, etc.). Each filter is responsible for its own aspect.
+
+**SecurityContext / SecurityContextHolder:** the result of authentication (an \`Authentication\` with the principal and its authorities) is stored in the \`SecurityContext\`, and \`SecurityContextHolder\` provides access to it — usually via a \`ThreadLocal\`, so the current user is available anywhere during request processing on that thread.
+
+Since Spring Security 5.7, \`WebSecurityConfigurerAdapter\` was dropped in favor of a **component style**: you declare a \`SecurityFilterChain\` bean and configure \`HttpSecurity\` (\`authorizeHttpRequests\`, \`requestMatchers\`, \`hasRole\`/\`hasAuthority\`). Method-level authorization is enabled with \`@EnableMethodSecurity\` + \`@PreAuthorize\`.`,
+      },
+      'jwt-stateless': {
+        question: 'How does JWT authentication and the stateless approach work? Why a refresh token?',
+        answer: `**Stateless authentication** keeps no server-side session: everything needed for verification is sent by the user in every request. This simplifies horizontal scaling (any instance can handle the request), unlike a stateful session in memory/storage.
+
+**JWT (JSON Web Token)** is a signed token of three parts (header, payload with claims, signature). The server issues it at login; the client sends it in the \`Authorization: Bearer ...\` header. The server verifies the signature with its key and trusts the claims **without hitting the database**. Important: the payload is only encoded (base64), not encrypted — secrets are not put into it.
+
+**Access + refresh tokens:** the access token is made **short-lived** (minutes) so that a leak is not critical. A long-lived **refresh token** is stored more securely and is used to obtain a new access token without logging in again. Revocation is done via a blacklist or by storing refresh tokens on the server (which partially reintroduces state).`,
+      },
+      oauth2: {
+        question: 'What is OAuth2 and how does it differ from JWT?',
+        answer: `**OAuth2** is a **delegated authorization** protocol: it lets an application obtain limited access to a user's resources without receiving their password. The participants: the **resource owner** (the user), the **client** (the application), the **authorization server** (issues tokens), and the **resource server** (holds the data). The result of a flow (for example, the Authorization Code Flow) is an **access token**.
+
+The key distinction: **OAuth2 is a protocol/framework, while JWT is a token format.** They are not alternatives: OAuth2 describes *how* to obtain a token, and the access token *may* be in JWT format (or it may be an opaque string verified via introspection). The phrasing "OAuth2 vs JWT" is essentially incorrect — they operate at different levels and are often used together.
+
+For authentication (not just authorization) on top of OAuth2 there is **OpenID Connect (OIDC)**, which adds an **id token**. In Spring these are \`spring-security-oauth2-client\` / \`oauth2-resource-server\`.`,
+      },
+      'csrf-passwordencoder': {
+        question: 'What is CSRF and when is it disabled? How do you store passwords (PasswordEncoder)?',
+        answer: `**CSRF (Cross-Site Request Forgery)** is an attack in which a third-party site makes the victim's browser send a request to an application where they are authenticated, using their cookie. The defense is a **CSRF token**: an unpredictable value the server expects on state-changing requests and that the foreign site cannot know.
+
+CSRF protection is relevant for **session (cookie-based)** authentication. For a **stateless REST API with a token in the \`Authorization\` header** it is usually **disabled**: the browser does not attach the header automatically, so classic CSRF does not apply. Disabling it with cookie sessions is unsafe.
+
+**PasswordEncoder** — passwords are never stored in plaintext or reversibly encrypted, but **hashed** with an adaptive, salted algorithm:
+
+- **BCrypt** — a common default choice (configurable cost);
+- **SCrypt**, **Argon2** — more resistant to GPU/ASIC attacks (memory-hard).
+
+\`DelegatingPasswordEncoder\` stores the algorithm prefix in the hash (\`{bcrypt}...\`), allowing the algorithm to be changed over time. Verification — \`matches(raw, encoded)\`.`,
+      },
+      'spring-cloud-overview': {
+        question: 'What is Spring Cloud and which microservice problems does it solve?',
+        answer: `**Spring Cloud** is a set of projects on top of Spring Boot that cover common tasks of a distributed microservice architecture with ready-made solutions:
+
+- **Service Discovery** (Eureka, Consul) — services find each other by name rather than hardcoded addresses;
+- **Centralized configuration** (Spring Cloud Config) — settings for all services in one place (usually git);
+- **API Gateway** (Spring Cloud Gateway) — a single entry point: routing, authentication, rate limiting;
+- **Client-side load balancing** (Spring Cloud LoadBalancer) — distributing requests across instances;
+- **Resilience** (Resilience4j) — Circuit Breaker, Retry, Bulkhead;
+- **Distributed tracing** (Micrometer Tracing / formerly Sleuth) — an end-to-end request id across services;
+- **Event-driven integration** (Spring Cloud Stream) — an abstraction over brokers (Kafka, RabbitMQ).
+
+The idea is to provide microservice infrastructure patterns as reusable components instead of reinventing them in every service.`,
+      },
+      'service-discovery-gateway': {
+        question: 'How do Service Discovery (Eureka) and an API Gateway work?',
+        answer: `**Service Discovery** solves the problem of locating services in a dynamic environment where addresses and the number of instances change:
+
+- each service **registers** with the registry (Eureka Server) at startup, sending its name and address, and periodically sends a heartbeat;
+- a client asks the registry for instances of the needed service by name and calls them (usually with client-side load balancing);
+- instances that stop sending heartbeats are removed from the registry.
+
+Alternatives to Eureka — Consul, Zookeeper (plus health checks and a KV store).
+
+**API Gateway** (Spring Cloud Gateway) is a single entry point for external clients that hides the internal topology. It is responsible for:
+
+- **routing** requests to the right services (by path, headers);
+- cross-cutting concerns: authentication/authorization, **rate limiting**, CORS, logging, retries;
+- integration with discovery (routes by service name).
+
+Together they enable flexible scaling: instances are added/removed, and clients and the gateway learn about it through the registry.`,
+      },
     },
   },
   hibernate: {
@@ -3265,6 +3649,104 @@ public class Country { ... }
 - makes sense for rarely changing data (reference data).
 
 In practice, business data is more often cached explicitly at the service level (Spring \`@Cacheable\` + Redis/Caffeine), while L2 is used selectively.`,
+      },
+      'hibernate-vs-jdbc': {
+        question: 'How is Hibernate better than plain JDBC? What are its downsides?',
+        answer: `**JDBC** is a low-level API: the developer writes the SQL, manually maps the \`ResultSet\` to objects, manages \`Connection\`/\`Statement\`, and handles \`SQLException\`. Lots of boilerplate.
+
+**Hibernate** is an ORM on top of JDBC that automates this:
+
+- **mapping** objects to tables via annotations — no manual assembling of objects from rows;
+- **SQL generation** for the target database (dialects) — portability;
+- a **Persistence Context** with dirty checking, first-level caching, and automatic synchronization of changes;
+- convenient navigation across associations, lazy loading, HQL/Criteria, second-level cache, optimistic locking.
+
+**Downsides:**
+
+- hidden complexity — the "magic" (lazy loading, N+1, auto-flush) requires understanding, otherwise it creates implicit performance problems;
+- overhead compared to targeted hand-written SQL;
+- for heavy analytical queries and bulk operations, plain SQL is often more efficient.
+
+Bottom line: Hibernate speeds up CRUD development and simplifies working with the domain model, but for bottlenecks native SQL is sometimes needed.`,
+      },
+      'session-vs-sessionfactory': {
+        question: 'How does Session differ from SessionFactory?',
+        answer: `**\`SessionFactory\`** is a heavyweight, thread-safe object created **once** per application (per persistence unit). It holds the configuration, mappings, connection pool, and second-level cache. Creating it is expensive, so it exists as a single instance and serves as a factory of sessions.
+
+**\`Session\`** is a lightweight, **non-thread-safe** object representing a unit of work (usually one request/transaction). It wraps a database connection, holds the first-level **Persistence Context** (the cache of managed entities), and performs operations (\`save\`, \`get\`, \`query\`). It is created from the \`SessionFactory\` for a specific operation and closed when it completes.
+
+In JPA terms they correspond to **\`EntityManagerFactory\`** and **\`EntityManager\`**. Rule: one \`SessionFactory\` per application, many short-lived \`Session\`s — one per thread/transaction.`,
+      },
+      'persist-merge-save': {
+        question: 'What is the difference between persist(), save(), merge(), and update()?',
+        answer: `The methods for moving an object into the managed state differ in semantics:
+
+- **\`persist()\`** (JPA) — makes a **transient** object managed. It does not guarantee an immediate \`INSERT\` (it may be deferred until flush) and returns nothing. It throws if the object is already detached.
+- **\`save()\`** (Hibernate) — similar to \`persist\`, but immediately generates the identifier and returns it; Hibernate-specific.
+- **\`merge()\`** (JPA) — takes a **detached** (or transient) object, **copies its state** into a managed instance from the Persistence Context (loading it if needed), and returns the **managed copy**. Important: the passed object stays detached — you must work with the returned one.
+- **\`update()\`** (Hibernate) — reattaches a detached object to the session, making it managed. It throws if such an object already exists in the context (unlike \`merge\`).
+
+Modern JPA code usually uses \`persist\` for new entities and \`merge\` for detached ones; the Hibernate-specific \`save\`/\`update\`/\`saveOrUpdate\` are considered legacy.`,
+      },
+      'flush-commit': {
+        question: 'What is the difference between flush() and commit()? What is dirty checking?',
+        answer: `**\`flush()\`** synchronizes the Persistence Context with the database — it executes the accumulated \`INSERT\`/\`UPDATE\`/\`DELETE\`, but **within the current transaction** and **without ending it**. The data is visible inside the transaction but can still be rolled back.
+
+**\`commit()\`** ends the transaction: first it calls \`flush()\` (flushing changes), then it commits them to the database permanently. After commit, a rollback is impossible.
+
+**Dirty checking** — on flush, Hibernate automatically compares the current state of managed entities with the snapshot taken at load time, and generates an \`UPDATE\` for the changed ones. That's why an explicit \`save\`/\`update\` isn't needed for an already-managed object: just change a field and it will be saved on flush.
+
+**FlushMode** controls when the automatic flush happens: by default (\`AUTO\`) — before running a query that might depend on unsaved changes, and at commit. If you don't flush/commit, the changes won't reach the database. \`clear()\` empties the context, detaching all entities (managed → detached).`,
+      },
+      'hql-vs-criteria': {
+        question: 'What is HQL and how does it differ from the Criteria API?',
+        answer: `Both are ways to write queries against entities (rather than tables directly).
+
+**HQL (Hibernate Query Language)** / its JPA standard **JPQL** — an object-oriented, SQL-like language that operates on **entity and field names**, not tables and columns: \`FROM User u WHERE u.age > :age\`. Compact and readable, but the query is a **string**, so errors show up only at runtime.
+
+**Criteria API** — building a query programmatically through Java objects (\`CriteriaBuilder\`, \`CriteriaQuery\`, \`Root\`). More verbose, but **type-safe** (especially with the metamodel), checked by the compiler, and convenient for **dynamic** queries assembled from conditions (filters whose set is not known in advance).
+
+Rule of thumb: **HQL/JPQL** for static, known queries (shorter and clearer); **Criteria** for dynamically built queries. For recurring queries there are **named queries** (\`@NamedQuery\`), which are parsed once at startup.`,
+      },
+      'mappedby-joincolumn': {
+        question: 'What is the difference between mappedBy and @JoinColumn? What is the owning side?',
+        answer: `In a bidirectional association there is always an **owning side** — the side whose changes Hibernate translates to the database (it is responsible for the foreign key). The other side is the **inverse** side.
+
+- **\`@JoinColumn\`** goes on the **owning** side and defines the foreign-key column. The owner "physically" holds the association.
+- **\`mappedBy = "field"\`** goes on the **inverse** side and says: "the association is already mapped by a field on the other side; I have no foreign key of my own." This makes the side read-only with respect to the association.
+
+Example: \`@OneToMany(mappedBy = "author") List<Book> books\` in \`Author\`, and in \`Book\` — \`@ManyToOne @JoinColumn(name = "author_id") Author author\`. The owner is \`Book\`.
+
+A common mistake: changing only the inverse side and expecting it to be saved — the change won't reach the database, because the owner is responsible for the foreign key. You must update the owning side (or both, to keep the in-memory state consistent).`,
+      },
+      'manytomany-intermediate': {
+        question: 'When do you need a separate intermediate entity instead of @ManyToMany?',
+        answer: `\`@ManyToMany\` with \`@JoinTable\` is suitable only when the join table contains **exactly two foreign keys** and no data of its own.
+
+As soon as the relationship needs **additional attributes**, a separate entity for the join table becomes necessary. Examples of attributes: quantity and price in "order ↔ product", enrollment date and grade in "student ↔ course", role in "user ↔ project".
+
+In that case \`@ManyToMany\` is replaced by **two \`@OneToMany\`/\`@ManyToOne\` associations** through an intermediate entity (e.g., \`OrderItem\`) that holds references to both sides plus its own fields.
+
+Additional reasons to prefer an intermediate entity even without extra fields:
+
+- better control over cascades and deletion;
+- the option of a separate primary key and auditing;
+- \`@ManyToMany\` can be finicky on updates (deleting/recreating join-table rows). In practice many avoid \`@ManyToMany\` altogether in favor of an explicit entity.`,
+      },
+      'element-collection': {
+        question: 'What is @ElementCollection and when should you use it?',
+        answer: `**\`@ElementCollection\`** maps a collection of **non-entities** — primitives, strings, or embeddable objects (\`@Embeddable\`) — into a separate table, **without creating a separate entity**. The elements belong entirely to the owner and have no identity of their own.
+
+Example: a list of phone numbers or a set of tags on a user — \`@ElementCollection List<String> phones\`; the data goes into a separate table with a foreign key to the owner.
+
+Characteristics:
+
+- the elements' lifecycle depends **entirely** on the owner (no id of their own, cannot be referenced externally);
+- loading is **LAZY** by default;
+- updates are often implemented as **deleting all rows and re-inserting**, which is inefficient for large collections;
+- for embeddable types, \`@Embeddable\` + \`@ElementCollection\` is used.
+
+When to choose it: simple "owned" sets of values with no independent life. If the elements have identity, are reused, or are referenced, you need a full entity and \`@OneToMany\`.`,
       },
     },
   },
@@ -3899,6 +4381,156 @@ Typical use cases: static assets and media, backups, data lakes, build artifacts
 - the primary tool is **Security Groups**: flexible, stateful, can reference each other;
 - NACLs — an additional "coarse" layer (defense in depth) and for deny rules;
 - traffic passes through **both** levels: the NACL at the subnet boundary, then the SG at the instance.`,
+      },
+    },
+  },
+  nosql: {
+    title: 'NoSQL',
+    description: 'Non-relational databases: types, CAP, consistency, sharding, caching',
+    questions: {
+      'what-is-nosql': {
+        question: 'What is NoSQL and what are the main database types?',
+        answer: `**NoSQL** (Not Only SQL) is a family of non-relational databases that give up the rigid table model and strict ACID guarantees in favor of a flexible schema and horizontal scalability.
+
+Main types:
+
+- **Key-value** (Redis, DynamoDB) — "key → value" pairs with the fastest possible lookup by key. When to choose: cache, sessions, rate limiting, fast key lookups.
+- **Document** (MongoDB, Couchbase) — JSON-like documents with a nested structure and a flexible schema. When to choose: REST backends, microservices, frequently changing data structure.
+- **Wide-column** (Cassandra, HBase) — data in columns grouped into families; huge write volumes and distribution. When to choose: time-series, logs, analytics.
+- **Graph** (Neo4j) — nodes and the relationships between them. When to choose: when the relationships themselves matter — social networks, recommendations, dependency graphs.
+
+Common traits: no strict schema, good horizontal scalability, giving up part of the ACID guarantees for performance.`,
+      },
+      'nosql-vs-sql': {
+        question: 'When should you choose NoSQL, and when SQL?',
+        answer: `The choice depends on the data model and integrity requirements, not on fashion.
+
+**SQL is better when:**
+
+- you need strict transactions and integrity (finance, payments);
+- there are many relationships between entities and complex queries with JOINs and aggregations;
+- the schema is stable and well known in advance.
+
+**NoSQL is better when:**
+
+- the schema is flexible or changes often (for example, custom user-defined fields);
+- you need huge volumes and horizontal scaling;
+- queries are simple (by key), data is denormalized, and write load is high.
+
+**A real-world example:** a service accepted arbitrary user-defined fields. In SQL you would constantly run \`ALTER TABLE\` and complicate the model; in MongoDB it is a single document with a flexible schema — faster reads and no JOINs across tables.`,
+      },
+      'scaling-horizontal-vertical': {
+        question: 'What is the difference between horizontal and vertical scaling?',
+        answer: `**Vertical scaling (scale up)** — adding resources to a single machine (CPU, RAM, disk). Simple, requires no application changes, but hits a hardware ceiling and leaves a single point of failure.
+
+**Horizontal scaling (scale out)** — adding new machines and distributing data and load across them. Practically unlimited and fault-tolerant, but it requires sharding and replication and complicates consistency.
+
+NoSQL databases were designed for horizontal scaling from the start — this is one of their key advantages over classic relational databases.`,
+      },
+      'cap-theorem': {
+        question: 'Explain the CAP theorem.',
+        answer: `**The CAP theorem:** a distributed system cannot simultaneously guarantee all three properties:
+
+- **Consistency (C)** — all nodes see the same data; every read returns the latest write.
+- **Availability (A)** — every request gets a response (not an error), even if some nodes are unavailable.
+- **Partition tolerance (P)** — the system keeps working when connectivity between nodes is lost (a network partition).
+
+Since network partitions in a distributed system are inevitable, **P is mandatory**, and the real choice is between C and A at the moment of a partition:
+
+- **CP** (MongoDB, HBase) — sacrifice availability: during a partition some nodes stop responding so they don't return stale data.
+- **AP** (Cassandra, DynamoDB) — sacrifice strict consistency: they always respond, but data may be temporarily inconsistent.`,
+      },
+      'consistency-models': {
+        question: 'How does strong consistency differ from eventual consistency? What other models exist?',
+        answer: `**Strong consistency** — after a successful write, any subsequent read from any node returns that value. Simpler for the developer, but more expensive in latency and availability.
+
+**Eventual consistency** — replicas converge to one value "over time"; right after a write, a read from another replica may return the old value. Provides high availability and low latency.
+
+Between them there are intermediate guarantees:
+
+- **Read-your-writes** — a user always sees their own writes.
+- **Monotonic reads** — a value never "rolls back": once you see a newer value, you won't get an older one.
+- **Causal consistency** — causally related operations are seen in the correct order.
+
+These models let you pick the right trade-off between strictness and performance.`,
+      },
+      'network-partition': {
+        question: 'What happens during a network partition, and how does the system decide what to sacrifice?',
+        answer: `During a **network partition**, nodes lose connectivity with each other and cannot reconcile data. The system is forced to choose one of two options:
+
+- preserve **consistency (CP)** — reject requests to nodes that cannot confirm the data is current; part of the system becomes temporarily unavailable;
+- preserve **availability (AP)** — keep responding with local data, accepting the risk of divergence, and resolve conflicts after connectivity is restored (last-write-wins, vector clocks, CRDTs).
+
+The choice is driven by business requirements: consistency matters more for payments, availability for a social feed. Once connectivity returns, nodes synchronize (anti-entropy, read repair).`,
+      },
+      sharding: {
+        question: 'What is sharding and how do you choose a shard key?',
+        answer: `**Sharding (partitioning)** is horizontally splitting data into parts (shards) placed on different nodes to scale volume and load. The **shard key** determines which shard a record lands on.
+
+A good key:
+
+- provides an **even** distribution of data and load across shards;
+- matches frequent queries, so a query hits a single shard rather than all of them.
+
+**Hot key / hot partition** — a situation where one key or range receives a disproportionate share of requests. A classic example is sharding by date: all fresh writes go to a single shard. It is fixed by choosing a more even key, hashing, or composite keys.`,
+      },
+      'nosql-indexes': {
+        question: 'What kinds of indexes exist in NoSQL and why are they needed?',
+        answer: `Indexes speed up reads at the cost of slower writes and extra memory. Without a suitable index, a query performs a full scan of the entire collection.
+
+- **Primary** — on the primary key (id).
+- **Secondary** — on a non-key field (for example, on \`status\`).
+- **Compound** — on several fields at once; efficient for queries like \`WHERE user_id = ? AND status = ?\`. The order of fields in the index matters.
+- **TTL** — automatically deletes documents after a set time (sessions, cache).
+- **Text** — full-text search over string fields.`,
+      },
+      'nosql-data-modeling': {
+        question: 'How does data modeling in NoSQL differ from normalization in SQL? Embedding or referencing?',
+        answer: `In SQL, data is **normalized** — split into tables without duplication, with relationships assembled through JOINs. In NoSQL, you model **from the queries** (query-driven) and deliberately **denormalize** — duplicating data so it can be read in a single query.
+
+**Embedding** — storing related data inside the document. Pro: a single read and atomicity per document. Con: document growth and duplication. Chosen for a "contains" relationship and data read together (an order and its line items).
+
+**Referencing** — storing an id and loading the related data separately. Chosen for many-to-many relationships and large or independently changing data.
+
+There are no traditional JOINs — they are replaced by denormalization, materialized views, or application-side joins.`,
+      },
+      'nosql-transactions': {
+        question: 'How do transactions and atomicity work in NoSQL? What is an upsert?',
+        answer: `Atomicity is usually guaranteed at the level of a **single document / row / key**: an operation on one document is either fully applied or not at all. This follows from denormalization — related data lives together.
+
+**Multi-document transactions** do exist (for example, in MongoDB since 4.0), but they cost more: higher latency, coordination across shards, and some limitations — so they are avoided on hot paths.
+
+**Upsert** — "update if the record exists, otherwise insert" (update-or-insert). Convenient, but with concurrent requests races are possible: two upserts may create duplicates or overwrite each other. Protection comes from unique indexes, atomic operators (\`$setOnInsert\`), and optimistic locking by version.`,
+      },
+      quorum: {
+        question: 'What is a quorum (N/R/W) and how does it affect consistency?',
+        answer: `In distributed systems with replication:
+
+- **N** — the number of replicas storing the data;
+- **W** — how many replicas must confirm a **write** for it to count as successful;
+- **R** — how many replicas are queried on a **read**.
+
+If **W + R > N**, the sets of written and read replicas overlap, and a read is guaranteed to see the latest write — giving strong consistency. Smaller W and R give a faster response and higher availability at the cost of possibly stale data.
+
+Example: N=3, W=2, R=2 is a balanced quorum. W=1 gives fast writes but weak consistency.
+
+When the primary fails, a **failover** occurs: replicas elect a new leader (leader election), and writes may be unavailable during the election.`,
+      },
+      'caching-strategies': {
+        question: 'Redis as a cache: what caching strategies exist and what problems does a cache have?',
+        answer: `**Caching strategies:**
+
+- **Cache-aside (lazy loading)** — the application checks the cache first; on a miss it reads the database and stores the result in the cache. The most common one. Con: the first request is slow and the cache can drift out of sync with the database.
+- **Write-through** — a write goes to the cache and synchronously to the database. The cache is always current, but writes are slower.
+- **Write-behind (write-back)** — a write goes to the cache and to the database asynchronously later. Fast writes, but a risk of data loss on failure.
+
+**TTL** (time-to-live) — how long an entry lives in the cache before it is evicted; protects against unbounded growth and stale data.
+
+**Cache problems:**
+
+- **Cache stampede** — when a popular key's TTL expires, many requests hit the database at once. Fixed with a regeneration lock and TTL jitter.
+- **Cache penetration** — requests for keys that don't exist always pass through to the database. Fixed by caching the "empty" answer or using a Bloom filter.
+- **Cache avalanche** — a mass simultaneous expiry of many keys overwhelms the database. Fixed with TTL jitter.`,
       },
     },
   },
