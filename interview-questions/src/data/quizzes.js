@@ -21,6 +21,7 @@ import {
 import { patternsQuiz } from './quiz/patterns';
 import { springQuiz, hibernateQuiz } from './quiz/frameworks';
 import { kafkaQuiz, microservicesQuiz, awsQuiz } from './quiz/infra';
+import { nosqlQuiz } from './quiz/nosql';
 
 export const quizzes = {
   oop: {
@@ -454,6 +455,7 @@ export const quizzes = {
   git: { questions: gitQuiz },
   microservices: { questions: microservicesQuiz },
   aws: { questions: awsQuiz },
+  nosql: { questions: nosqlQuiz },
 };
 
 function shuffle(array) {
