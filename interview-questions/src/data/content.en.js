@@ -308,6 +308,85 @@ HotSpot has two JIT compilers: **C1 (client)** — fast compilation with basic o
 
 Diagnostics: heap dump (\`-XX:+HeapDumpOnOutOfMemoryError\`), analysis in Eclipse MAT / VisualVM.`,
       },
+      'metaspace-permgen': {
+        question: 'What is Metaspace and how does it differ from PermGen?',
+        answer: `Both **PermGen** and **Metaspace** store **class metadata** (class structure, methods, the runtime constant pool). The difference is where and how:
+
+**PermGen (Permanent Generation)** — up to and including Java 7:
+
+- part of the **heap** with a fixed size (\`-XX:MaxPermSize\`);
+- a frequent cause of \`OutOfMemoryError: PermGen space\`, especially with heavy class loading (application redeploys in a server, proxy generation);
+- the size is hard to choose in advance.
+
+**Metaspace** — since Java 8 (replaced PermGen):
+
+- resides in **native (off-heap) memory** rather than the heap;
+- **grows automatically** by default, bounded by available OS memory (can be capped with \`-XX:MaxMetaspaceSize\`);
+- the string pool and static fields had already moved to the regular heap even earlier.
+
+Bottom line: the move to Metaspace removed the most common cause of PermGen errors, but a class leak (e.g., from improper ClassLoader unloading) can still produce \`OutOfMemoryError: Metaspace\`.`,
+      },
+      'gc-roots-reachability': {
+        question: 'Which objects does the GC collect? What are GC Roots and reachability?',
+        answer: `The garbage collector removes objects that have become **unreachable** — those that cannot be reached by references from the so-called **GC Roots**. Important: the criterion is **reachability**, not "no references at all" (so cyclic references between two garbage objects are still collected — they're unreachable from the roots).
+
+**GC Roots** — known "live" starting points:
+
+- local variables and method parameters in threads' stacks;
+- **static** fields of classes;
+- active threads;
+- JNI references from native code;
+- objects used for synchronization (monitors).
+
+The GC walks the graph from the roots (mark), marks reachable objects, and treats the rest as garbage to be freed (sweep/compact).
+
+**What is not collected:** everything reachable from the roots, including objects in static collections, live caches, a live thread's ThreadLocal — which is exactly why "forgotten" references in long-lived structures cause memory leaks even with a working GC. Different reference levels (\`strong\`, \`soft\`, \`weak\`, \`phantom\`) change the behavior: e.g., a \`WeakReference\` doesn't keep an object from being collected.`,
+      },
+      'gc-algorithms': {
+        question: 'Which garbage collectors exist in the JVM (Serial, Parallel, CMS, G1, ZGC)?',
+        answer: `Collectors differ in the trade-off between **throughput** and **pauses (latency)**:
+
+- **Serial GC** — single-threaded, stops the application (stop-the-world) for the whole collection. Simple, low memory — for small applications and single-core environments.
+- **Parallel GC** (throughput collector) — multi-threaded collection, optimized for **maximum throughput** at the cost of noticeable pauses. Was the default up to Java 8.
+- **CMS (Concurrent Mark-Sweep)** — tried to minimize pauses by working **concurrently** with the application, but suffered from fragmentation and overhead; **removed** in Java 14.
+- **G1 (Garbage-First)** — **the default since Java 9**. Divides the heap into **regions**, collecting the most "garbage-filled" ones first (garbage-first), balancing pauses and throughput toward a target pause (\`-XX:MaxGCPauseMillis\`). A universal choice for large heaps.
+- **ZGC / Shenandoah** — low-latency, almost fully concurrent collectors with **millisecond pauses** even on very large heaps (tens/hundreds of GB); more throughput overhead.
+
+The choice is set by a flag (\`-XX:+UseG1GC\`, \`-XX:+UseZGC\`, etc.). Rule: throughput workloads — Parallel; low pauses on large heaps — G1/ZGC.`,
+      },
+      'g1-gc': {
+        question: 'How does G1 GC work?',
+        answer: `**G1 (Garbage-First)** divides the heap not into large contiguous Young/Old areas but into many **equal-sized regions** (usually 1–32 MB). At any moment each region plays the role of Eden, Survivor, Old, or **Humongous** (for very large objects). The logical generational split is kept but physically "smeared" across regions.
+
+How it collects:
+
+- **Young collection** — evacuates live objects from Eden/Survivor regions into new ones (a copying collection, stop-the-world but short);
+- a **concurrent marking cycle** — marks live objects in Old regions in parallel with the application, estimating where there's the most garbage;
+- **Mixed collections** — collect Young plus a few of the most "garbage-filled" Old regions ("garbage-first" — first where it's most beneficial);
+- during evacuation, live objects are **copied and compacted** into other regions, which incidentally eliminates fragmentation.
+
+The key idea is to work toward a **target pause** (\`-XX:MaxGCPauseMillis\`, 200 ms by default): G1 takes as many regions into a collection as it can handle within the allotted time. Why G1 is better than CMS: it compacts memory (no fragmentation) and is more predictable in pauses.`,
+      },
+      'memory-leaks': {
+        question: 'What is a memory leak in Java if there is a garbage collector? How do you find it?',
+        answer: `Despite the GC, a **memory leak** in Java is possible: these are objects that are **no longer needed but remain reachable** from GC Roots, so the collector doesn't remove them. Memory grows until an \`OutOfMemoryError\` occurs.
+
+Typical causes:
+
+- objects accumulated in **static collections** or singletons and never removed;
+- **unclosed resources** (streams, connections) — use try-with-resources;
+- a **\`ThreadLocal\`** in a thread pool without \`remove()\` — the value lives as long as the pool thread does;
+- listeners/callbacks you forgot to unsubscribe (the object is held by the subscriber);
+- keys in a \`HashMap\` with incorrect \`equals/hashCode\` (can't be removed), caches without a size/TTL limit.
+
+How to find it:
+
+1. symptoms — growing heap usage, increasingly frequent Full GCs, eventually \`OutOfMemoryError: Java heap space\`;
+2. take a **heap dump** (\`-XX:+HeapDumpOnOutOfMemoryError\`, \`jmap\`) and analyze it in **Eclipse MAT** / VisualVM — look for dominators and reference chains retaining objects (path to GC Roots);
+3. monitor memory in production (JFR, Micrometer/Grafana), profile under load.
+
+Prevention: bounded caches, careful use of ThreadLocal and resources, weak references (\`WeakHashMap\`) where appropriate.`,
+      },
     },
   },
   'java-core': {
@@ -498,6 +577,96 @@ static { config = loadConfig(); }
 **Static import**: \`import static java.lang.Math.PI;\`
 
 Beware: mutable static state is an anti-pattern (problems with concurrency and tests); static methods are hard to mock.`,
+      },
+      'records-sealed': {
+        question: 'What are records and sealed classes?',
+        answer: `A **\`record\`** (Java 16) is a compact way to declare an **immutable data carrier**. The compiler generates the \`private final\` fields, constructor, accessors (\`name()\`, not \`getName()\`), \`equals()\`/\`hashCode()\` (over all components), and \`toString()\`:
+
+\`\`\`java
+public record Point(int x, int y) {}
+\`\`\`
+
+Details: a record is **final** and **cannot extend** a class (it implicitly extends \`java.lang.Record\`), but it can implement interfaces. You can add a compact constructor for validation. Suitable for DTOs, keys, value objects.
+
+A **\`sealed\`** class/interface (Java 17) restricts **which classes may extend/implement it**, via \`permits\`:
+
+\`\`\`java
+public sealed interface Shape permits Circle, Square {}
+\`\`\`
+
+Subtypes must be \`final\`, \`sealed\`, or \`non-sealed\`. Why: control over the hierarchy (a closed set of variants) and an **exhaustive** \`switch\` over types without \`default\` — the compiler knows all the subtypes. Together, record + sealed give Java algebraic data types and work well with pattern matching.`,
+      },
+      'composition-vs-inheritance': {
+        question: 'Should you choose composition or inheritance? Why is inheritance not always good?',
+        answer: `**Inheritance** (\`is-a\`) — a class extends another, reusing its code. **Composition** (\`has-a\`) — a class **contains** another object and delegates work to it.
+
+The general recommendation (including from "Effective Java") is to **prefer composition over inheritance**. Problems with inheritance:
+
+- **strong coupling** to the parent's implementation: changes in the base class can unexpectedly break subclasses (fragile base class);
+- **breaking encapsulation** — the subclass depends on the parent's internal details;
+- **rigidity** — the type is fixed at compile time, behavior can't be changed at runtime;
+- in Java there is only **single** class inheritance — the "inheritance budget" is spent on one class.
+
+Composition is more flexible: behavior is plugged in via interfaces (can be changed at runtime, easy to mock in tests), with no fragile link to a parent. Inheritance is appropriate when there is a truly strict "is-a" relationship and the base class is designed for extension (documented, as in the Template Method pattern). Rule: inherit from **abstractions/interfaces**, reuse code via **composition**.`,
+      },
+      'constructor-order': {
+        question: 'In what order does initialization happen when a subclass object is created?',
+        answer: `On \`new Subclass()\` the order is:
+
+1. **Static** initialization (once when the class is loaded, if not already): static fields and \`static {}\` blocks — the parent's first, then the subclass's.
+2. Memory is allocated, fields get their **default** values (0/\`null\`/\`false\`).
+3. The subclass constructor is invoked, but its first (implicit or explicit) statement is **\`super(...)\`**, so control goes up the hierarchy.
+4. In the **parent**: field initializers and instance-initialization blocks in declaration order, then the parent constructor body.
+5. Back to the subclass: its field initializers and instance blocks, then the subclass constructor body.
+
+Result: **the parent is fully initialized before the subclass**. Hence the well-known trap: if the parent constructor calls a method overridden in the subclass, it runs **while the subclass's fields are not yet initialized** (they equal default values) — which is why calling overridable methods from a constructor is discouraged.`,
+      },
+      'generics-wildcards': {
+        question: 'What are wildcards in generics (? extends T, ? super T)? What is PECS?',
+        answer: `A **wildcard \`?\`** is an unknown type parameter, used when the concrete type doesn't matter or isn't known in advance. Bounded wildcards set a bound:
+
+- **\`? extends T\`** (upper bound) — "\`T\` or any of its subtypes." You can **read** from such a collection as \`T\`, but **cannot add** (except \`null\`) — the compiler doesn't know the exact subtype. This is a **producer** (a source of data).
+- **\`? super T\`** (lower bound) — "\`T\` or any of its supertypes." You can **write** \`T\` and its subtypes into such a collection, but reading yields only \`Object\`. This is a **consumer** (a sink).
+
+**PECS — Producer Extends, Consumer Super:** if a structure **produces** elements, use \`extends\`; if it **consumes** them, use \`super\`. Example: \`Collections.copy(List<? super T> dest, List<? extends T> src)\` — read from the source (\`extends\`), write to the destination (\`super\`).
+
+Wildcards increase API flexibility. Because of **type erasure**, you cannot, for example, create an array of a generic type (\`new T[]\`), and primitives aren't allowed in generics — wrappers are used (\`Integer\` instead of \`int\`).`,
+      },
+      reflection: {
+        question: 'What is the Reflection API and where is it used?',
+        answer: `**Reflection** is a mechanism that lets you **inspect and modify** the structure of classes at runtime: get the list of fields, methods, constructors, annotations, create objects, and call methods by name without knowing the type at compile time.
+
+\`\`\`java
+Class<?> clazz = obj.getClass();
+Method m = clazz.getDeclaredMethod("hello");
+m.setAccessible(true); // access to private
+m.invoke(obj);
+\`\`\`
+
+Access to **private** members is opened via \`setAccessible(true)\` (unless forbidden by the module system/security manager).
+
+Where it is used: frameworks and libraries — Spring (DI, creating beans, processing annotations), Hibernate (entity mapping), Jackson/Gson (serialization), JUnit (finding test methods).
+
+Downsides: **slower** than direct calls, bypasses type checks and encapsulation (risk of runtime errors instead of compile-time ones), and complicates refactoring and code analysis. So in application code reflection is used carefully — it is mostly "hidden" inside frameworks.`,
+      },
+      cloneable: {
+        question: 'How does Cloneable work and why is it better avoided? How else do you copy objects?',
+        answer: `**\`Cloneable\`** is a marker interface that enables \`Object.clone()\` behavior (without it, \`clone()\` throws \`CloneNotSupportedException\`). \`clone()\` creates a bitwise copy of the object.
+
+Why it is avoided (including per "Effective Java"):
+
+- **\`clone()\` makes a shallow copy** — nested objects and collections remain shared between the original and the copy, leading to hidden bugs; for a deep copy \`clone()\` must be overridden manually;
+- a **broken contract**: \`clone()\` is declared in \`Object\` (not \`Cloneable\`), is \`protected\`, throws a checked exception, and doesn't call a constructor — the mechanism is unintuitive and easy to implement wrong;
+- it works poorly with \`final\` fields.
+
+Preferred alternatives:
+
+- a **copy constructor**: \`new ArrayList<>(other)\`, \`public Point(Point p)\`;
+- a **static factory method** for copying;
+- for a record — create a new one from the components;
+- for a deep copy — copy fields manually or via serialization/specialized libraries.
+
+Bottom line: a copy constructor/factory is simpler, safer, and more explicit than \`Cloneable\`.`,
       },
     },
   },
@@ -881,6 +1050,64 @@ stream.parallel()...
 - processing order matters (\`forEachOrdered\` kills the gain).
 
 Rule of thumb: use a sequential stream by default; \`parallel()\` — only after measurements (JMH benchmarks).`,
+      },
+      'stream-intermediate-terminal': {
+        question: 'How do intermediate Stream operations differ from terminal ones? What is laziness?',
+        answer: `Stream operations come in two kinds:
+
+- **Intermediate** — return a **new Stream**, which lets you build chains (\`filter\`, \`map\`, \`sorted\`, \`distinct\`, \`limit\`, \`peek\`). They are **lazy** — not executed when called.
+- **Terminal** — start the processing and return a result or \`void\` (\`collect\`, \`forEach\`, \`reduce\`, \`count\`, \`findFirst\`, \`anyMatch\`). After a terminal operation the stream is **consumed** and cannot be reused.
+
+**Laziness (lazy evaluation):** intermediate operations do nothing until a terminal one is called. Then elements flow through the pipeline **one by one** (not "the whole collection through filter, then the whole thing through map"), which enables optimizations:
+
+- **short-circuiting** — \`findFirst\`, \`anyMatch\`, \`limit\` can stop without processing the entire source (important for infinite streams too, e.g., \`Stream.iterate\`);
+- **loop fusion** — several intermediate operations run in a single pass;
+- skipping unnecessary work.
+
+Important: a Stream does **not modify** the source collection and does not store data — it merely describes a processing pipeline.`,
+      },
+      collectors: {
+        question: 'What are Collectors? How do you do grouping and partitioning?',
+        answer: `**\`Collectors\`** is a set of ready-made "collectors" for the terminal \`collect()\` operation that turn a stream into a collection or aggregate.
+
+Common collectors:
+
+- **into a collection:** \`toList()\`, \`toSet()\`, \`toMap(keyFn, valueFn)\` (beware duplicate keys — a merge function is needed);
+- **strings:** \`joining(", ", "[", "]")\`;
+- **aggregates:** \`counting()\`, \`summingInt()\`, \`averagingDouble()\`, \`minBy()/maxBy()\`.
+
+**Grouping — \`groupingBy\`:** splits elements by a key into \`Map<K, List<V>>\`:
+
+\`\`\`java
+Map<Dept, List<Employee>> byDept =
+    employees.stream().collect(Collectors.groupingBy(Employee::getDept));
+\`\`\`
+
+You can add a **downstream collector** — what to do with each group: \`groupingBy(Employee::getDept, Collectors.counting())\` yields \`Map<Dept, Long>\` (the number of employees per department).
+
+**Partitioning — \`partitioningBy(predicate)\`** — a special case of grouping by a boolean condition, always producing \`Map<Boolean, List<V>>\` with keys \`true\`/\`false\` (e.g., splitting into those above and below a threshold).`,
+      },
+      'stream-reduce': {
+        question: 'How does reduce() work in the Stream API?',
+        answer: `**\`reduce()\`** folds a stream of elements into **a single result** by sequentially applying an associative operation (the accumulator). Three forms:
+
+- **\`reduce(BinaryOperator)\`** → \`Optional<T>\` (the result may be absent for an empty stream):
+
+\`\`\`java
+Optional<Integer> sum = nums.stream().reduce((a, b) -> a + b);
+\`\`\`
+
+- **\`reduce(identity, accumulator)\`** → \`T\`; \`identity\` is the start/neutral value (0 for a sum, 1 for a product), returned for an empty stream:
+
+\`\`\`java
+int sum = nums.stream().reduce(0, Integer::sum);
+\`\`\`
+
+- **\`reduce(identity, accumulator, combiner)\`** — the form with a \`combiner\` for **parallel** streams: the accumulator folds partial results, and the combiner merges them across threads.
+
+Correctness requirements: the operation must be **associative**, \`identity\` truly neutral, and the functions **side-effect-free** (otherwise a parallel reduce gives a wrong result).
+
+When to use which: for simple sums/products/concatenations, specialized methods are handier (\`mapToInt().sum()\`); \`collect()\` is more efficient than \`reduce\` for **mutable** reduction (collecting into a collection/\`StringBuilder\`), since it doesn't create a new object at each step.`,
       },
     },
   },
@@ -1320,6 +1547,139 @@ CompletableFuture.supplyAsync(() -> fetchUser(id), executor)   // asynchronously
 - timeouts (Java 9): \`orTimeout\`, \`completeOnTimeout\`.
 
 **Important:** without an explicit executor, the \`*Async\` methods use \`ForkJoinPool.commonPool()\` — for I/O tasks pass your own pool. \`get()\` blocks — avoid it in asynchronous chains.`,
+      },
+      'concurrency-vs-parallelism': {
+        question: 'What is the difference between concurrency and parallelism? What are a process and a thread?',
+        answer: `A **process** is a running program with its own isolated address space and resources. A **thread** is a unit of execution within a process; threads of one process **share** its memory (the heap) but have their own stack and program counter. Threads are lighter than processes and switch faster, but require synchronization due to shared memory.
+
+**Concurrency** is a program's ability to **manage several tasks** within one period of time by interleaving them. The tasks may run **not simultaneously**, but in turns on one core (context switching creates the illusion of parallelism). It's about **structure** — how tasks are organized and switched.
+
+**Parallelism** is the **physically simultaneous** execution of several tasks on **different cores/processors**. It's about **execution**.
+
+The relationship: concurrency is possible even on a single core; parallelism requires multiple cores. A concurrent program **can** run in parallel if resources allow. Example: handling HTTP requests is concurrent (many tasks "in flight"), and on a multi-core server it's also parallel (several are actually computed at once). The famous phrasing: concurrency is about **dealing** with many things at once; parallelism is about **doing** many things at once.`,
+      },
+      'daemon-threads': {
+        question: 'What is the difference between a user thread and a daemon thread?',
+        answer: `Threads in Java come in two types:
+
+- **User thread** — an ordinary thread. The JVM **will not exit** while at least one user thread is alive. The main thread (\`main\`) is a user thread.
+- **Daemon thread** — a background service thread. The JVM **exits** as soon as only daemon threads remain, **without waiting** for them to finish (they are simply terminated).
+
+Set via \`thread.setDaemon(true)\` **before** \`start()\`; by default a thread inherits the creator's status (threads created from main are user threads).
+
+Why daemons: for auxiliary background tasks that shouldn't keep the application alive — the garbage collector, timers, background monitoring, heartbeats.
+
+An important danger: since the JVM kills daemon threads without waiting, you **must not** do critical resource work in them (writing to a file/DB, releasing resources) — \`finally\` blocks may not run and data can be lost. For such work you need user threads and a proper graceful shutdown.`,
+      },
+      'java-memory-model': {
+        question: 'What is the Java Memory Model (JMM) and happens-before?',
+        answer: `The **Java Memory Model (JMM)** is part of the language specification that defines **how and when** memory changes made by one thread become **visible** to another, and which reorderings of operations are allowed. Without the JMM, multithreaded behavior would be unpredictable: the compiler, JIT, and CPU can **reorder instructions** and cache values in registers/core caches.
+
+Two key problems the JMM addresses:
+
+- **visibility** — a thread may not see another thread's write if it's "stuck" in a core's cache;
+- **ordering** — operations may execute in a different order than in the code.
+
+The central concept is **happens-before**: if action A *happens-before* B, then A's result is **guaranteed visible** to B and cannot be reordered after it. The main rules:
+
+- everything in one thread — in program order;
+- **unlocking** a monitor happens-before a subsequent lock of the same monitor (\`synchronized\`);
+- a write to a **\`volatile\`** field happens-before a subsequent read of that field;
+- \`Thread.start()\` happens-before the started thread's code; the thread's code happens-before \`join()\`.
+
+Practical takeaway: correct visibility isn't achieved "by itself" but through \`synchronized\`, \`volatile\`, \`java.util.concurrent\` (which establish happens-before), not via a bare shared field.`,
+      },
+      'thread-safety-problems': {
+        question: 'What problems arise from incorrect synchronization (race condition, deadlock, livelock, starvation)?',
+        answer: `The main multithreading errors:
+
+- **Race condition** — the result depends on the **order** of thread execution. A special case is a lost update in \`i++\` (not atomic: read-modify-write). Fixed by synchronization or atomic operations.
+- **Visibility** — a thread doesn't see changes made by another (the value is cached). Fixed by \`volatile\`/\`synchronized\` (see the JMM).
+- **Deadlock** — threads wait forever for each other's resources in a cycle (A holds lock 1 and waits for 2, B holds 2 and waits for 1). Prevention — a single lock-acquisition order, timeouts (\`tryLock\`).
+- **Livelock** — threads are **not blocked** but endlessly react to each other and make no progress (like two people yielding the way in the same direction). Fixed by adding randomness/backoff.
+- **Starvation** — a thread **doesn't get** a resource/CPU time because others keep taking it (e.g., a low-priority thread with greedy high-priority ones). Fixed with fair locks and reasonable priorities.
+
+General principle: minimize shared mutable state, and where it's needed, protect it consistently (the same locks, immutability, thread-safe structures from \`java.util.concurrent\`).`,
+      },
+      reentrantlock: {
+        question: 'What is ReentrantLock and how does it differ from synchronized?',
+        answer: `**\`ReentrantLock\`** (from \`java.util.concurrent.locks\`) is an explicit lock with the same mutual-exclusion guarantees as \`synchronized\`, but with more capabilities. "Reentrant" — like \`synchronized\`, it allows the same thread to **re-acquire** it.
+
+\`\`\`java
+lock.lock();
+try { /* critical section */ }
+finally { lock.unlock(); } // must unlock manually!
+\`\`\`
+
+Advantages over \`synchronized\`:
+
+- **\`tryLock()\`** — attempt to acquire without waiting forever (including with a timeout) — helps avoid deadlock;
+- **interruptible** lock waiting (\`lockInterruptibly()\`);
+- **fairness** — an option to grant the lock in queue order (reduces starvation, but slower);
+- multiple **\`Condition\`** objects on one lock (like \`wait/notify\`, but separate wait queues);
+- can unlock in a different method (flexibility).
+
+Downsides: unlocking must be done **manually in \`finally\`** (forget it — deadlock), and the code is more verbose.
+
+When to use which: **\`synchronized\`** — simpler and sufficient in most cases (the JVM optimizes it well); **\`ReentrantLock\`** — when you need tryLock/timeout, interruptibility, fairness, or multiple conditions.`,
+      },
+      'atomic-cas': {
+        question: 'What are atomic classes (AtomicInteger) and CAS?',
+        answer: `**Atomic classes** (\`AtomicInteger\`, \`AtomicLong\`, \`AtomicReference\`, etc. from \`java.util.concurrent.atomic\`) provide thread-safe operations on a single variable **without locks** (lock-free). For example, \`incrementAndGet()\` atomically performs the read-modify-write that a plain \`i++\` doesn't do atomically.
+
+At the core is **CAS (Compare-And-Swap)**: an atomic CPU instruction "compare and exchange." It takes an address, an **expected** value, and a **new** one: if the current value equals the expected, it writes the new one and reports success; otherwise it does nothing and returns failure. The algorithm loops: read the value, compute the new one, try CAS; on failure (someone changed it first) — retry (optimistic retry / spin).
+
+Pros: no locks → no deadlock, less overhead and fewer context switches under **low/moderate** contention. Cons: under **high** contention many loop iterations are wasted (then \`LongAdder\`, which spreads the counter across cells, is better); the classic **ABA problem** (a value changed A→B→A — CAS "won't notice"), solved by versioning (\`AtomicStampedReference\`).
+
+CAS is the foundation of non-blocking structures and most of \`java.util.concurrent\`.`,
+      },
+      'semaphore-latch-barrier': {
+        question: 'How do Semaphore, CountDownLatch, and CyclicBarrier differ?',
+        answer: `Three different synchronization primitives from \`java.util.concurrent\`:
+
+- **\`Semaphore\`** — a counter of **permits** that limits the number of threads simultaneously accessing a resource. \`acquire()\` takes a permit (waits if there are none), \`release()\` returns one. Example: a pool of N connections — no more than N threads at once. A binary semaphore (1 permit) works like a lock.
+- **\`CountDownLatch\`** — a "latch": one or more threads **wait** on \`await()\` until the counter reaches zero via \`countDown()\`. **One-time** — it doesn't reset after zero. Example: the main thread waits until N workers finish initialization; waiting for several tasks to complete.
+- **\`CyclicBarrier\`** — a "barrier": a fixed number of threads wait for each other at \`await()\`, and once all have arrived — they **all continue simultaneously**. **Reusable** (cyclic) — after tripping it's ready for a new cycle; you can set a barrier action. Example: phased computations where threads must move to the next stage in sync.
+
+Key differences: Semaphore — **access limiting** (permits); CountDownLatch — a **one-time** wait for an event (the threads calling \`countDown\` and those waiting are different); CyclicBarrier — a **reusable** mutual meeting of threads (all wait for all).`,
+      },
+      forkjoinpool: {
+        question: 'What is ForkJoinPool and work-stealing?',
+        answer: `**\`ForkJoinPool\`** is a specialized thread pool (Java 7) for tasks that can be **recursively split** into subtasks (divide-and-conquer): each task splits (\`fork\`) as needed, and the results are then combined (\`join\`). It's the basis of parallel streams (\`parallelStream\` uses the shared \`ForkJoinPool.commonPool()\`).
+
+The key feature is **work-stealing**: **each** worker thread has its own **double-ended queue (deque)** of tasks. A thread takes its own subtasks from one end; when its queue is empty, it **"steals"** a task from the **other** end of a busy thread's queue. This balances load automatically and keeps cores busy, minimizing idling and contention on a shared queue.
+
+Tasks are expressed as \`RecursiveTask<V>\` (returns a result) or \`RecursiveAction\` (no result), implementing \`compute()\`: if the task is small — compute directly, otherwise split and \`fork\`/\`join\`.
+
+Important: ForkJoin tasks **must not block** (I/O, long \`sleep\`) — that occupies a pool thread and breaks work-stealing; blocking operations need an ordinary pool. ForkJoin is good for **CPU-bound** recursive computations over large data.`,
+      },
+      'virtual-threads': {
+        question: 'What are virtual threads and how do they differ from ordinary ones?',
+        answer: `**Virtual threads** (Project Loom, stable in **Java 21**) are very lightweight threads managed by the **JVM** rather than the operating system.
+
+An ordinary (**platform**) thread wraps an OS thread: expensive (≈1 MB stack), limited to thousands, with context switching done by the OS. Because of this, blocking code ("a thread per request") scales poorly — threads idle on I/O.
+
+A **virtual thread** is cheap (its stack grows as needed, and there can be **millions** of them). The JVM runs them on a small pool of platform threads (**carrier threads**). The key mechanism: when a virtual thread **blocks** (a network call, \`sleep\`, a blocking queue), the JVM **unmounts** it from the carrier thread and runs another virtual thread on it — the carrier doesn't idle. When the block clears, the virtual thread is mounted again.
+
+What this gives: you can write **simple blocking, synchronous code** (easy to read and debug) while getting async-like scalability — a million concurrent tasks without reactive complexity. Created via \`Thread.ofVirtual().start(...)\` or \`Executors.newVirtualThreadPerTaskExecutor()\`.
+
+Caveats: virtual threads don't speed up **CPU-bound** work (there the core count rules), you should **not** pool them (create one per task), and "pinning" on a \`synchronized\` block with a blocking call can hold the carrier (prefer \`ReentrantLock\`).`,
+      },
+      blockingqueue: {
+        question: 'What is a BlockingQueue and where is it used?',
+        answer: `A **\`BlockingQueue\`** is a thread-safe queue from \`java.util.concurrent\` that **blocks** a thread at the boundaries: when trying to take from an **empty** queue (\`take()\`) the thread waits until an element appears; when trying to put into a **full** (bounded) queue (\`put()\`) it waits until space frees up. This relieves the developer of manual \`wait/notify\`.
+
+The classic use is the **producer-consumer** pattern: producers put tasks into the queue, consumers take them out; the queue safely hands off data and **regulates the pace** (backpressure) — if consumers can't keep up, a bounded queue throttles the producers. Inside a \`ThreadPoolExecutor\`, the task queue is a \`BlockingQueue\`.
+
+Main implementations:
+
+- **\`ArrayBlockingQueue\`** — bounded, array-based (fixed capacity);
+- **\`LinkedBlockingQueue\`** — optionally bounded, linked-list-based, higher throughput;
+- **\`PriorityBlockingQueue\`** — unbounded, with priority ordering;
+- **\`SynchronousQueue\`** — no capacity: a "hand-to-hand" handoff (put waits for take);
+- **\`DelayQueue\`** — elements become available only after a delay (schedulers).
+
+Methods of different "flavors": blocking (\`put\`/\`take\`), timed (\`offer\`/\`poll(timeout)\`), and immediate (\`offer\`/\`poll\` without waiting).`,
       },
     },
   },
@@ -1822,6 +2182,157 @@ WHERE e.salary > d.avg_sal;
 
 CTE benefits: readability, reuse within a single query, recursion. EXISTS is usually more efficient than IN on large sets; NOT IN is dangerous with NULL values.`,
       },
+      'sql-sublanguages': {
+        question: 'What are DDL, DML, DCL, and TCL? Give examples.',
+        answer: `SQL is divided into sublanguages by the purpose of the commands:
+
+- **DDL (Data Definition Language)** — defining the database structure: \`CREATE\`, \`ALTER\`, \`DROP\`, \`TRUNCATE\`. Usually triggers an implicit commit (in most databases DDL auto-commits).
+- **DML (Data Manipulation Language)** — working with data: \`SELECT\`, \`INSERT\`, \`UPDATE\`, \`DELETE\`. (Sometimes \`SELECT\` is separated into its own DQL.)
+- **DCL (Data Control Language)** — managing access rights: \`GRANT\`, \`REVOKE\`.
+- **TCL (Transaction Control Language)** — managing transactions: \`COMMIT\`, \`ROLLBACK\`, \`SAVEPOINT\`, \`SET TRANSACTION\`.
+
+The key practical difference: DML operations run **within a transaction** and can be rolled back (\`ROLLBACK\`), while DDL in most databases cannot be rolled back due to the implicit commit.`,
+      },
+      'delete-vs-truncate': {
+        question: 'What is the difference between DELETE and TRUNCATE?',
+        answer: `Both remove rows, but fundamentally differently:
+
+**\`DELETE\`** (DML):
+
+- removes rows **one by one**, can use a \`WHERE\` condition;
+- logged per row, **triggers** and constraints fire;
+- **transactional** — can be rolled back (\`ROLLBACK\`);
+- does not reset auto-increment counters; slower on large tables.
+
+**\`TRUNCATE\`** (DDL):
+
+- removes **all** rows of the table at once (no \`WHERE\`);
+- fast — frees data pages with minimal logging;
+- usually **resets** auto-increment (identity);
+- \`DELETE\` triggers do **not** fire; in most databases it's DDL with an implicit commit (in PostgreSQL, however, TRUNCATE is transactional).
+
+In short: to remove some rows, with triggers and the ability to roll back — \`DELETE\`; to quickly clear the whole table — \`TRUNCATE\`. To remove the table itself there is \`DROP\`.`,
+      },
+      'self-join': {
+        question: 'What is a SELF JOIN and when is it needed?',
+        answer: `A **SELF JOIN** is joining a table **with itself**. Technically it's an ordinary JOIN where both sides are the same table, so it's given two different **aliases** to distinguish the "instances."
+
+When it's needed: for **hierarchical and recursive relationships within one table**. The classic example is employees and their managers in one \`employees(id, name, manager_id)\` table:
+
+\`\`\`sql
+SELECT e.name AS employee, m.name AS manager
+FROM employees e
+JOIN employees m ON e.manager_id = m.id;
+\`\`\`
+
+Other cases: finding pairs of rows with a common attribute (e.g., employees from the same city), comparing a table's rows with each other (records adjacent by date). For deep hierarchies of arbitrary depth, a single self join isn't enough — use **recursive CTEs** (\`WITH RECURSIVE\`).`,
+      },
+      'join-vs-subquery': {
+        question: 'How does a JOIN differ from a subquery? Which should you choose?',
+        answer: `A **JOIN** combines rows from several tables by a condition, returning columns from all of them. A **subquery** is a query inside a query whose result is used by the outer one (in \`WHERE\`, \`FROM\`, \`SELECT\`).
+
+Often they solve the same task, and the difference is not so much performance (modern optimizers frequently rewrite one into the other) as readability and intent:
+
+- **JOIN** is handier when you need **columns from several tables** in the result, and is usually clearer for many-to-many relationships;
+- a **subquery** is handier for existence checks (\`EXISTS\`/\`IN\`), aggregate filters ("employees earning above their department's average"), and when you don't need columns from the second table.
+
+Nuances:
+
+- a **correlated subquery** (referencing the outer query) runs for each row — it can be slow; often rewritten as a JOIN;
+- \`EXISTS\` is usually more efficient than \`IN\` on large sets and safer with \`NULL\` than \`NOT IN\`.
+
+Rule: need data from several tables — JOIN; need a check/filter by an aggregate — a subquery. Verify the result with \`EXPLAIN\`.`,
+      },
+      'sql-indexes': {
+        question: 'What is an index, why is it needed, and what kinds of indexes exist?',
+        answer: `An **index** is an auxiliary data structure that speeds up finding rows by a column's value(s) so the database doesn't scan the whole table (Seq/Full Scan). The analogy is a book's index. The cost: indexes **slow down writes** (\`INSERT\`/\`UPDATE\`/\`DELETE\` also update the index) and take up space.
+
+Main kinds:
+
+- **B-Tree** — the **default index** in most databases (PostgreSQL, MySQL/InnoDB). Versatile: equality, ranges (\`<\`, \`>\`, \`BETWEEN\`), sorting, prefix \`LIKE 'abc%'\`.
+- **Hash** — equality (\`=\`) only, doesn't support ranges.
+- **Bitmap** — effective for columns with few distinct values (low cardinality), in analytics.
+- **GiST / GIN** (PostgreSQL) — for full-text search, JSON, geodata, arrays.
+- by structure: **clustered** (defines the physical order of rows — in InnoDB this is the primary key; there is one per table) and **non-clustered** (a separate structure with references to rows).
+
+A unique index additionally guarantees uniqueness of values.`,
+      },
+      'composite-covering-index': {
+        question: 'What are composite and covering indexes? When should you use them?',
+        answer: `A **composite index** is an index over **several columns at once**, e.g., \`(user_id, status)\`. The key rule is the **order of columns**: the index works for conditions on a **left-to-right prefix**. \`(user_id, status)\` will speed up \`WHERE user_id = ?\` and \`WHERE user_id = ? AND status = ?\`, but **not** \`WHERE status = ?\` alone. So the most selective / most frequently filtered column goes first.
+
+When to use: when queries regularly filter/sort by several fields at once — one composite index is more efficient than several single-column ones.
+
+A **covering index** is an index that contains **all the columns a query needs** (in the condition and in \`SELECT\`). Then the database answers **straight from the index** without touching the table itself (an index-only scan) — noticeably faster. In PostgreSQL extra non-key columns are added via \`INCLUDE (...)\`, in MySQL/InnoDB by including the needed columns in the index.
+
+In short: composite — "filter by several columns respecting order"; covering — "the index has everything to answer, the table isn't needed."`,
+      },
+      'index-pitfalls': {
+        question: 'When do indexes hurt performance, and why might a Seq Scan be used despite an index?',
+        answer: `**Indexes hurt when:**
+
+- the table changes often — every \`INSERT\`/\`UPDATE\`/\`DELETE\` updates all indexes, slowing writes;
+- there are too many indexes or they're on "wide"/rarely used columns — size and overhead grow without benefit;
+- the column has **low selectivity** (few distinct values, e.g., "gender") — the index barely narrows the result set.
+
+**Why the database chooses a Seq Scan even when an index exists:**
+
+- the query returns a **large fraction of the table** — reading everything sequentially is cheaper than jumping through the index and fetching many rows (random I/O);
+- the table is small — a full pass is faster than using the index;
+- a **function/transformation over the column** in the condition (\`WHERE LOWER(name) = ...\`, a type cast) — an ordinary index doesn't apply (a functional index is needed);
+- a leading \`%\` in \`LIKE '%abc'\`, \`OR\` over non-indexed columns, stale statistics (\`ANALYZE\` helps).
+
+The optimizer estimates cost from statistics and picks a Seq Scan when it deems it cheaper — often the **right** decision, not a mistake.`,
+      },
+      'explain-plan': {
+        question: 'How does EXPLAIN (PLAN) work and how do you tell a query is slow?',
+        answer: `**\`EXPLAIN\`** shows the query's **execution plan** built by the optimizer: which tables are read and in what order, which indexes are used, how tables are joined, and cost/row-count estimates. **\`EXPLAIN ANALYZE\`** additionally **actually runs** the query and shows the real time and row counts at each step — letting you compare the optimizer's estimate with reality.
+
+What to look at:
+
+- a **Seq Scan / Full Table Scan** on a large table where an index was expected — a sign of a missing or unused index;
+- the **join type** (Nested Loop / Hash Join / Merge Join) — a poor choice on large volumes;
+- a large **discrepancy between estimated and actual** rows — stale statistics (need \`ANALYZE\`);
+- expensive steps: sorts that don't fit in memory, redundant joins.
+
+How to tell a query is slow: measure by fact (\`EXPLAIN ANALYZE\`, timings, the slow query log), find the bottleneck — the most expensive plan step — then fix it (an index, rewrite the query, update statistics). Optimize based on profiling data, not guesses.`,
+      },
+      'join-algorithms': {
+        question: 'What are Nested Loop, Hash Join, and Merge Join?',
+        answer: `These are three physical algorithms by which the database implements a logical JOIN; the optimizer picks the right one based on data volume and available indexes.
+
+- **Nested Loop Join** — for each row of the outer table, it iterates over the matching rows of the inner one (efficient if the inner table has an index). Good when **one table is small** or the join is highly selective. On two large tables without an index, it's quadratically slow.
+- **Hash Join** — a **hash table** on the join key is built in memory from the smaller table, then the larger table's rows are probed against it. Efficient for joining **two large** tables on equality (\`=\`), doesn't need indexes, but uses memory (spilling to disk if there isn't enough).
+- **Merge Join (sort-merge)** — both sides are **sorted** by the key, then merged like two sorted sequences. Advantageous when the data is already sorted (there's an index on the key) or for large sets on equality/range.
+
+In short: Nested Loop — a small table + an index; Hash Join — large tables on equality; Merge Join — already-sorted data. Visible in the \`EXPLAIN\` output.`,
+      },
+      'sql-locks': {
+        question: 'How do database locks work? What are optimistic and pessimistic locking and @Version?',
+        answer: `**Locks** prevent concurrent transactions from corrupting data. By granularity they are row-level and table-level, by type — **shared (S, read)** and **exclusive (X, write)**. \`UPDATE\`/\`DELETE\` take an exclusive lock on rows; in PostgreSQL/InnoDB readers usually don't block writers thanks to **MVCC** (row versions). Rows can be locked explicitly with \`SELECT ... FOR UPDATE\`.
+
+Two approaches to concurrent access:
+
+- **Pessimistic locking** — "assume a conflict": the row is locked for the duration of the work (\`SELECT ... FOR UPDATE\`), others wait. Reliable under high contention for the same data, but reduces concurrency and risks deadlocks.
+- **Optimistic locking** — "assume conflicts are rare": don't lock, but on write **check whether anyone changed the data**. Implemented via a **version column**: in JPA/Hibernate it's a field with the **\`@Version\`** annotation. On \`UPDATE\`, the condition includes the version (\`WHERE id = ? AND version = ?\`) and increments it; if the version has already changed in another transaction, the update affects no row and an \`OptimisticLockException\` is thrown — the application retries the operation.
+
+Choice: optimistic — for **rare** conflicts (better for scalability); pessimistic — for **frequent** contention over the same rows.`,
+      },
+      normalization: {
+        question: 'What are normalization and denormalization? What normal forms exist?',
+        answer: `**Normalization** — organizing tables to eliminate **redundancy** and insertion/update/deletion anomalies by splitting data into related tables. The main normal forms (each includes the previous):
+
+- **1NF** — atomic values (no lists/repeating groups in a cell), a primary key exists;
+- **2NF** — 1NF + every non-key attribute depends on the **whole** composite key, not part of it;
+- **3NF** — 2NF + no **transitive** dependencies (a non-key attribute doesn't depend on another non-key one);
+- **BCNF** — a stricter 3NF (every determinant is a candidate key).
+
+In practice you usually go up to **3NF/BCNF**.
+
+**Denormalization** — deliberately **introducing redundancy** (duplicating data, precomputed aggregates, merging tables) for **read speed**: fewer JOINs, faster queries. The cost — more complex writes and a risk of inconsistency (copies must be kept in sync).
+
+The trade-off: normalization optimizes **integrity and writes** (OLTP), denormalization optimizes **reads** (analytics, reports, high-read load). The choice depends on the workload profile.`,
+      },
     },
   },
   jdbc: {
@@ -2048,6 +2559,91 @@ void shouldApplyDiscountForVipUser() {
 \`\`\`
 
 More rules: test **behavior, not implementation**; one logical scenario per test; descriptive names (\`should...When...\`); check edge cases and errors; don't mock everything; avoid logic (if statements, loops) in tests.`,
+      },
+      'testing-pyramid': {
+        question: 'What is the testing pyramid? How do unit tests differ from integration tests?',
+        answer: `The **testing pyramid** is a model for distributing tests across levels: the lower the level, the **more** tests there are and the **faster and cheaper** they are.
+
+- **Unit tests** (the base, the majority) — test **one unit** (class/method) in **isolation**, with dependencies replaced by mocks. Fast (milliseconds), stable, and pinpoint the error's location.
+- **Integration tests** (the middle) — test the **interaction** of components with real dependencies (database, broker, another service). Slower, but catch problems at the seams (mapping, SQL, configuration).
+- **E2E / UI** (the top, the fewest) — cross-cutting scenarios through the whole system. The slowest and most fragile.
+
+**The key unit vs integration difference:** unit tests logic in isolation with mocks (fast); integration tests real interaction of several parts (slower, closer to prod).
+
+The point of the pyramid: keep many fast unit tests at the bottom and few expensive e2e tests at the top. **Anti-patterns:** the "ice-cream cone" — an inverted pyramid with too many slow e2e tests; the "hourglass" — many unit and e2e tests but few integration ones.`,
+      },
+      'junit4-vs-junit5': {
+        question: 'How does JUnit 5 differ from JUnit 4?',
+        answer: `**JUnit 5** is a redesigned version with a modular architecture of three parts: **Platform** (test launching), **Jupiter** (the new API and engine), **Vintage** (compatibility with old JUnit 3/4). The main differences from JUnit 4:
+
+- **annotations renamed and clearer:** \`@Before\`/\`@After\` → \`@BeforeEach\`/\`@AfterEach\`, \`@BeforeClass\`/\`@AfterClass\` → \`@BeforeAll\`/\`@AfterAll\`, \`@Ignore\` → \`@Disabled\`;
+- **exception checking** — via \`assertThrows(...)\` (instead of \`@Test(expected=...)\`), plus \`assertAll\` for grouping checks;
+- **\`@ExtendWith\`** (the extension model) instead of \`@RunWith\` — you can plug in several extensions (e.g., \`@ExtendWith(MockitoExtension.class)\`, \`SpringExtension\`);
+- **\`@DisplayName\`** — readable test names; **\`@Nested\`** — nested groups;
+- powerful **parameterized tests** (\`@ParameterizedTest\` + \`@ValueSource\`, \`@CsvSource\`, \`@MethodSource\`);
+- requires **Java 8+** and makes active use of lambdas.
+
+The Vintage engine lets you run old JUnit 4 tests alongside the new ones during a gradual migration.`,
+      },
+      'spring-boot-testing': {
+        question: 'How do you test a Spring Boot application (REST controller, DB layer)?',
+        answer: `Spring Boot provides **slice tests** that bring up only the needed part of the context — faster than a full \`@SpringBootTest\`.
+
+**REST controller — \`@WebMvcTest\`:** brings up only the web layer (controllers, filters), with service dependencies replaced by \`@MockBean\`. Requests are driven through **\`MockMvc\`** without a real server:
+
+\`\`\`java
+@WebMvcTest(UserController.class)
+class UserControllerTest {
+  @Autowired MockMvc mvc;
+  @MockBean UserService service;
+  @Test void returnsUser() throws Exception {
+    when(service.find(1L)).thenReturn(new User("Ann"));
+    mvc.perform(get("/users/1"))
+       .andExpect(status().isOk())
+       .andExpect(jsonPath("$.name").value("Ann"));
+  }
+}
+\`\`\`
+
+**DB layer — \`@DataJpaTest\`:** brings up only JPA/repositories, by default with an in-memory database and a transaction rollback after each test. Closer to prod — a real database in a container via **Testcontainers** (\`@Testcontainers\` + \`PostgreSQLContainer\`), to test against the same DBMS as in production.
+
+**\`@SpringBootTest\`** brings up the whole context (optionally with \`webEnvironment=RANDOM_PORT\` and \`TestRestTemplate\`/\`WebTestClient\`) — for full integration tests, but slower than slice tests.`,
+      },
+      'flaky-tests': {
+        question: 'What are flaky tests and how do you deal with them?',
+        answer: `A **flaky test** is one that **sometimes passes and sometimes fails without changes to the code**. This is dangerous: it undermines trust in the tests (the team starts ignoring red builds), masks real bugs, and slows CI with reruns.
+
+Common causes:
+
+- **time dependence** — \`sleep\`, timeouts, the real clock (\`LocalDateTime.now()\`); fixed with a fixed \`Clock\`, waiting for a condition (Awaitility) instead of \`sleep\`;
+- **order and shared state** — tests depend on each other or on shared mutable statics/the database; fixed with isolation and state cleanup;
+- **concurrency/races** — non-determinism in multithreaded code;
+- **external dependencies** — network, real APIs; fixed with mocks/stubs, Testcontainers;
+- **non-deterministic** collection order (\`HashMap\`), locale, time zone.
+
+How to deal with them:
+
+1. don't ignore or "retry blindly" — **find the cause** (mark \`@Disabled\` with a ticket, but fix it);
+2. make tests **deterministic and isolated** (no shared state, no real time/network);
+3. replace \`sleep\` with explicit waiting for a condition;
+4. run tests in random order to expose hidden dependencies.
+
+Retry is a last resort that masks the problem, not a solution.`,
+      },
+      'contract-testing': {
+        question: 'What is contract testing and why is it needed?',
+        answer: `**Contract testing** verifies that the **API between a provider and a consumer is compatible**, without bringing up the whole system. It is especially important in microservices, where services are deployed independently: a change to one's API must not silently break another.
+
+A **contract** is a formal description of the consumer's expectations of the provider's API (what requests it sends, what responses it expects). Tests are generated from it **on both sides**:
+
+- on the **consumer** side the contract defines a stub — the consumer is tested against the expected API;
+- on the **provider** side the same contract checks that the real service **actually** responds as promised.
+
+Approaches:
+
+- **Consumer-Driven Contracts (CDC)** — the contract is defined by the consumer (what it really needs), and the provider must satisfy it. Tools: **Pact**, **Spring Cloud Contract**.
+
+Why: to catch API incompatibilities **at build time** rather than in integration/prod; the tests are fast (the whole system isn't needed); and you can evolve the API safely. It's a compromise between cheap unit tests that are "blind" to the counterparty and expensive end-to-end e2e tests.`,
       },
     },
   },
@@ -3049,6 +3645,127 @@ Choosing the message key matters: ordering is guaranteed within a partition, and
 
 In short: Kafka is "an event journal that many read", RabbitMQ is "a smart postman for tasks".`,
       },
+      'topic-partition-offset': {
+        question: 'What are a topic, partition, and offset? Why is Kafka called a commit log?',
+        answer: `**Topic** — a named channel (category) of messages. Producers write to a topic, consumers read from it.
+
+**Partition** — a topic is physically split into partitions; this is the unit of parallelism and scaling. Within a partition, messages are strictly ordered and only appended to the end (append-only). Ordering is guaranteed **only within a single partition**, not across the whole topic.
+
+**Offset** — the sequential number of a message within a partition (monotonically increasing). A consumer stores its offset and thus knows what has been read; it can re-read data by moving the offset back.
+
+**"Commit log":** Kafka is a distributed, replicated, ordered, append-only log. Messages are not deleted after being read (unlike a queue) but live according to a retention policy, and different consumers read the same log independently, each with its own offset. The message key determines the partition (\`hash(key) % partitions\`), which gives per-key ordering.`,
+      },
+      'kafka-brokers-kraft': {
+        question: 'What are a broker, controller, and ZooKeeper/KRaft in Kafka?',
+        answer: `**Broker** — a Kafka server that stores partitions and serves producer and consumer requests. A cluster consists of several brokers; partitions and their replicas are distributed across them.
+
+**Controller** — a special broker that coordinates the cluster: it assigns partition leaders, tracks broker state, and manages replica rebalancing on failures.
+
+**ZooKeeper → KRaft:** historically Kafka stored cluster metadata (the list of brokers, topics, leaders) in an external **ZooKeeper**. Since Kafka 2.8 and as the standard in 3.x+, ZooKeeper is replaced by **KRaft (Kafka Raft)** — metadata is stored in Kafka itself via a built-in Raft consensus. KRaft benefits: fewer moving parts (no separate ZooKeeper cluster), faster controller recovery and failover, better scaling with the number of partitions.`,
+      },
+      'kafka-replication': {
+        question: 'How does Kafka provide fault tolerance (replication, ISR)? What happens if a partition leader fails?',
+        answer: `Each partition has a **replication factor** — the number of copies on different brokers. One replica is the **leader** (all reads and writes go through it), the rest are **followers** that copy data from the leader.
+
+**ISR (In-Sync Replicas)** — the set of replicas that have "caught up" with the leader (not lagging beyond the allowed limit). Only a replica from the ISR can become the new leader.
+
+**When the leader fails**, the controller elects a new leader from the ISR, and clients transparently switch to it — no data is lost if it was replicated to the ISR. The \`min.insync.replicas\` setting together with \`acks=all\` guarantees that a write is acknowledged only after being stored on the required number of replicas: if fewer live ISR members exist than \`min.insync.replicas\`, the write is rejected (sacrificing availability for durability). If \`unclean.leader.election\` is allowed, a lagging replica can become the leader — which risks data loss.`,
+      },
+      'producer-acks': {
+        question: 'What does a producer do and how does the acks setting (0, 1, all) work?',
+        answer: `A **producer** sends messages to a topic, choosing the partition itself (by key via hashing, or round-robin if there's no key), batches messages for performance, and can compress them.
+
+**acks** determines when a write is considered successful — a trade-off between speed and durability:
+
+- **acks=0** — the producer doesn't wait for acknowledgment at all. Maximum speed, but the message can be lost (fire-and-forget).
+- **acks=1** — waits for acknowledgment only from the partition **leader**. A balance of speed and durability, but if the leader fails before replicating to followers, the message is lost.
+- **acks=all (-1)** — waits for acknowledgment from the leader **and all ISR** (respecting \`min.insync.replicas\`). Maximum durability, higher latency.
+
+For "don't lose" guarantees, use \`acks=all\` + \`min.insync.replicas >= 2\` + an enabled idempotent producer.`,
+      },
+      'idempotent-producer': {
+        question: 'What is an idempotent producer and why is it needed?',
+        answer: `On a resend (a retry after a timeout, when the acknowledgment was lost but the message actually was written), an ordinary producer can create a **duplicate** — "at-least-once" semantics.
+
+An **idempotent producer** (\`enable.idempotence=true\`, on by default in recent versions) eliminates duplicates on retries. The mechanism: each producer is assigned a **Producer ID (PID)**, and each message a monotonic **sequence number** per partition. The broker tracks the last written sequence and discards retries with an already-seen number.
+
+This gives **exactly-once at the level of writing to a single partition** within the producer's session, without losing performance. For exactly-once **across multiple partitions/topics and together with a consumer**, Kafka transactions are needed (see the EOS question). Idempotence automatically implies \`acks=all\`.`,
+      },
+      'offset-reset-lag': {
+        question: 'What does auto.offset.reset (earliest/latest/none) do? What is consumer lag?',
+        answer: `**\`auto.offset.reset\`** determines where to start reading when the group has **no stored offset** (a new group) or the stored offset no longer exists (aged out by retention):
+
+- **earliest** — from the very beginning of the partition (read all available history);
+- **latest** (default) — only new messages arriving after connecting;
+- **none** — throw an exception if there is no valid offset (forcing the situation to be handled explicitly).
+
+Important: the setting only applies when there is **no** valid offset — if the group has already committed an offset, reading continues from it.
+
+**Consumer lag** — the difference between the last offset in the partition (log-end offset) and the offset the consumer has read up to. A growing lag means consumers aren't keeping up with producers. It is fixed by increasing the number of consumers in the group (up to the number of partitions), optimizing processing, or increasing the number of partitions. Lag is a key Kafka monitoring metric.`,
+      },
+      'kafka-retention-compaction': {
+        question: 'How does the retention policy work and what is a compacted topic?',
+        answer: `Kafka stores messages **regardless of whether they have been read** — how many is set by **retention**:
+
+- **by time** (\`retention.ms\`, e.g., 7 days) — messages older than the threshold are deleted;
+- **by size** (\`retention.bytes\`) — old segments are deleted when the partition exceeds the size.
+
+This is the **delete** cleanup policy (\`cleanup.policy=delete\`): whole old log segments are removed.
+
+A **compacted topic** (\`cleanup.policy=compact\`) works differently: Kafka keeps **at least the latest value for each key**, removing older records with the same key. The log becomes something like a "snapshot of the current state." It is used for changelogs, storing state (e.g., the latest config/profile per key), and restoring state in Kafka Streams. Deletion by key is expressed with a **tombstone** — a message with that key and a \`null\` value.`,
+      },
+      'kafka-exactly-once': {
+        question: 'How do Kafka transactions and exactly-once semantics (EOS) work?',
+        answer: `An **idempotent producer** removes duplicates when writing to a single partition, but it does not cover atomic writes to **multiple** partitions/topics or the "read → process → write" pattern.
+
+**Kafka transactions** solve this: a producer with a \`transactional.id\` opens a transaction, writes to several partitions/topics, and **atomically commits** (or aborts) it. Consumers with \`isolation.level=read_committed\` see only committed messages.
+
+**Exactly-Once Semantics (EOS)** in the "consume-process-produce" chain is achieved by **including the commit of the input topic's offsets in the same transaction** as the result write. Either everything (processing + offset advance + write) is committed atomically, or nothing — no duplicates and no losses.
+
+The cost: extra latency and transaction coordination, so EOS is enabled where duplicates are unacceptable (finance, billing). Kafka Streams supports EOS out of the box (\`processing.guarantee=exactly_once_v2\`).`,
+      },
+      'kafka-throughput': {
+        question: 'How do you increase Kafka throughput? How does the number of partitions affect performance?',
+        answer: `**Throughput** is increased from several sides:
+
+- **partitions** — the main lever of parallelism: more partitions → more consumers in a group work in parallel, higher total throughput;
+- **producer** — batching (\`batch.size\`, \`linger.ms\`), compression (\`compression.type\`: lz4/zstd), enough \`buffer.memory\`;
+- **consumer** — processing in batches, a sufficient \`max.poll.records\`, parallelism across partitions;
+- **broker/disks** — Kafka relies on sequential disk writes and zero-copy; fast disks and sufficient network help.
+
+**The number of partitions is a double-edged sword.** More partitions = more parallelism, but:
+
+- overhead grows (open files, memory, load on the controller);
+- rebalancing and failover on failures take longer and cost more;
+- ordering is guaranteed only within a partition — more partitions dilute global ordering.
+
+The number of partitions is easy to increase but **cannot be decreased**, and increasing it changes key distribution, so it is planned in advance for the target load.`,
+      },
+      'dead-letter-topic': {
+        question: 'What is a dead-letter topic and why is it needed?',
+        answer: `A **dead-letter topic (DLT)** is a separate topic where messages that **could not be processed** after retries are exhausted are sent (deserialization error, invalid data, a business exception).
+
+Why: a single "poison message" should not block the whole partition. Without a DLT, a consumer either gets stuck endlessly retrying one message or loses it. A DLT allows you to:
+
+- **not block** processing of the other messages — the problematic one is set aside;
+- **preserve** failed messages for analysis, manual review, and reprocessing later;
+- separate transient errors (fixed by retry) from permanent ones (sent to the DLT).
+
+In Spring Kafka, a DLT is implemented via \`DeadLetterPublishingRecoverer\` and \`DefaultErrorHandler\` with a configured retry count and backoff; the DLT name usually gets a \`.DLT\` suffix. Retry topic(s) with a delay are often placed before the DLT.`,
+      },
+      'kafka-streams-connect': {
+        question: 'What are Kafka Streams and Kafka Connect? What is the difference?',
+        answer: `These are two separate libraries/frameworks in the Kafka ecosystem for different tasks.
+
+**Kafka Streams** — a client library for **stream processing**: it reads from topics, transforms (map/filter/join/aggregations, windowed operations), and writes the result back to Kafka. It runs as an ordinary Java application (not a separate cluster), stores state locally (RocksDB) with a backup to compacted topics, and supports EOS. You choose it over "raw" consumers when you need **stateful processing**: aggregations, stream joins, windows — which would otherwise have to be written by hand.
+
+**Kafka Connect** — a framework for **integrating Kafka with external systems** without writing code, via ready-made connectors:
+
+- **source connectors** pull data from external systems into Kafka (e.g., CDC from a database via Debezium);
+- **sink connectors** export from Kafka to external systems (databases, Elasticsearch, S3).
+
+In short: **Streams processes and transforms** data inside Kafka; **Connect moves** data between Kafka and the outside world.`,
+      },
     },
   },
   spring: {
@@ -3995,6 +4712,136 @@ git merge feature    # fast-forward — linear history
 
 The trend: the more often you deploy, the shorter the branches and the simpler the model.`,
       },
+      'fetch-vs-pull': {
+        question: 'How does git fetch differ from git pull?',
+        answer: `Both retrieve changes from a remote repository, but differently:
+
+- **\`git fetch\`** — downloads new commits and updates the **remote-tracking branches** (\`origin/main\`) **without touching** your working branch or working directory. Safe: you can see what changed (\`git log main..origin/main\`) before merging.
+- **\`git pull\`** = \`git fetch\` + an automatic **\`git merge\`** (or \`git rebase\` with \`pull --rebase\`) of the remote branch into the current one. So pull immediately changes your working branch.
+
+In essence: \`fetch\` is "see what's new without changing anything locally," \`pull\` is "get it and merge right away." \`pull --rebase\` keeps history linear by replaying your local commits on top of the pulled ones, without a merge commit. A cautious workflow — \`fetch\` first, review the diff, then \`merge\`/\`rebase\`.`,
+      },
+      'reset-revert-checkout': {
+        question: 'How do you undo changes in Git? What is the difference between reset --soft, --mixed, and --hard?',
+        answer: `Three different undo tools:
+
+- **\`git revert <commit>\`** — creates a **new** commit that undoes the changes of the specified one. History is preserved — safe for **published** (pushed) commits.
+- **\`git reset\`** — moves the branch pointer back, "removing" commits from history. Dangerous for already-pushed commits (rewrites history).
+- **\`git checkout <commit> -- <file>\`** / **\`git restore\`** — restores specific files without touching history.
+
+The \`reset\` modes differ in what happens to the index and the working directory:
+
+- **\`--soft\`** — moves only the branch pointer; the commits' changes remain **staged** (ready for a new commit). Handy for "reassembling" the last commits.
+- **\`--mixed\`** (default) — moves the pointer and resets the **index**, but the changes remain in the working directory (unstaged).
+- **\`--hard\`** — moves the pointer and **erases** changes in both the index and the working directory. Data is lost — the most dangerous mode.
+
+Rule: undoing something published — \`revert\`; local unpushed history — \`reset\`.`,
+      },
+      'fast-forward-merge': {
+        question: 'What is a fast-forward merge?',
+        answer: `A **fast-forward** merge is possible when the target branch (e.g., \`main\`) has had **no new commits** since the feature branch diverged — that is, history is linear. Then Git simply **moves the \`main\` pointer** forward to the feature branch's commit, **without creating a merge commit**. History stays flat, as if the commits were made directly on \`main\`.
+
+If \`main\` has its own new commits (histories diverged), a fast-forward is not possible — Git creates a **merge commit** with two parents (a three-way merge).
+
+Controlling the behavior:
+
+- **\`--ff\`** (default) — fast-forward if possible;
+- **\`--no-ff\`** — always create a merge commit, even when ff is possible. This preserves an explicit trace that there was a separate branch (often used for feature branches so history shows the grouping of work);
+- **\`--ff-only\`** — merge only if a fast-forward is possible, otherwise refuse (protects against unexpected merge commits).`,
+      },
+      'interactive-rebase-squash': {
+        question: 'What is an interactive rebase (git rebase -i) and when should you squash commits?',
+        answer: `**\`git rebase -i <base>\`** opens a list of commits for editing history before publishing. You can:
+
+- **squash / fixup** — combine several commits into one;
+- **reword** — change a commit message;
+- **edit** — stop and fix a commit;
+- **drop** — remove a commit;
+- **reorder** — change the order.
+
+**Squash** is appropriate to "tidy up" a branch's history before merging: combine intermediate commits like "wip", "fix typo", "review fixes" into one meaningful commit. Then \`main\` gets a clean, atomic history — one commit per logical change (which simplifies \`revert\` and \`bisect\`).
+
+**When NOT to squash / rewrite history:** if the commits are already **pushed and used by others** — rebase rewrites hashes and breaks history for colleagues. Rule: interactive rebase is only for **local, not-yet-published** commits (or your own personal branches by agreement). Many teams squash automatically when merging a PR (squash merge), leaving one commit per task in main.`,
+      },
+      'cherry-pick': {
+        question: 'What does git cherry-pick do and when is it used?',
+        answer: `**\`git cherry-pick <commit>\`** transfers a **single commit** (or range) from one branch into the current one, creating a copy of it with a new hash — without merging the whole branch.
+
+When it is used:
+
+- a **hotfix** needs to be delivered to several branches (e.g., from \`main\` into \`release/1.x\`) without bringing the rest of the changes;
+- to grab one specific useful commit from someone else's/experimental branch;
+- to recover a needed commit after a complex history rewrite.
+
+Pitfalls: cherry-pick **duplicates** the change under a new hash, so a later full merge of the same branch may cause conflicts or "repeated" changes. So it isn't overused for regular integration — merge/rebase is for that, and cherry-pick is reserved for a targeted transfer. On a conflict the process stops just like with a merge, and it's resolved manually.`,
+      },
+      'git-bisect': {
+        question: 'How do you find the commit that introduced a bug (git bisect)?',
+        answer: `**\`git bisect\`** finds the commit that introduced a bug via **binary search** through history — in \`log₂(N)\` steps instead of checking every commit.
+
+The process:
+
+1. \`git bisect start\`;
+2. \`git bisect bad\` — mark the current (broken) commit;
+3. \`git bisect good <commit>\` — mark a known-working commit in the past;
+4. Git switches to the **middle** commit between them; you test (run a test) and say \`git bisect good\` or \`git bisect bad\`;
+5. each answer halves the range until the **first bad** commit remains;
+6. \`git bisect reset\` — return to the original state.
+
+The check can be **automated**: \`git bisect run <script>\` — the script returns 0 (good) or a non-zero code (bad), and Git finds the culprit commit itself. Especially useful on a large history where it's unclear which change broke the behavior.`,
+      },
+      'merge-conflicts': {
+        question: 'How do you resolve merge conflicts?',
+        answer: `A **conflict** arises when two branches changed the **same lines** of one file (or one deleted a file while the other changed it) — Git cannot automatically decide which version to keep.
+
+How to resolve:
+
+1. Git marks the conflicting spots in the file with markers \`<<<<<<<\`, \`=======\`, \`>>>>>>>\` (your version, separator, their version);
+2. \`git status\` shows the conflicting files;
+3. manually (or in a merge tool / IDE) edit the file, keeping the desired result and removing the markers;
+4. \`git add <file>\` — mark the conflict resolved;
+5. finish: \`git commit\` (for a merge) or \`git rebase --continue\` (for a rebase). To abort everything — \`git merge --abort\` / \`git rebase --abort\`.
+
+How to reduce the frequency of conflicts: sync with the main branch more often (short-lived branches), make small focused changes, agree on formatting across the team. For recurring similar conflicts, \`git rerere\` helps (it remembers resolutions).`,
+      },
+      'detached-head': {
+        question: 'What is a detached HEAD and why is it dangerous?',
+        answer: `Normally **HEAD** points to a branch (and that to the latest commit). A **detached HEAD** is the state where HEAD points **directly at a specific commit** rather than a branch. It happens with \`git checkout <commit-hash>\`, \`git checkout <tag>\`, or moving onto \`origin/main\` without a local branch.
+
+Why it's dangerous: commits made in a detached HEAD **belong to no branch**. As soon as you switch to another branch, there are no references to those commits — they become "dangling" and will eventually be removed by Git's garbage collector. So the work can be **lost**.
+
+The state itself is fine for "look at / build an old version." But if you started committing and want to keep the work — create a branch: \`git switch -c new-branch\` (or \`git branch new-branch <hash>\`) while the commits are still reachable. Recently lost commits can often be recovered via \`git reflog\`.`,
+      },
+      'git-hooks': {
+        question: 'What are Git hooks and what are they used for?',
+        answer: `**Git hooks** are scripts that Git runs automatically on certain lifecycle events (in the \`.git/hooks\` directory or via tools like Husky/pre-commit). They are split into client-side and server-side.
+
+Common client-side hooks:
+
+- **\`pre-commit\`** — before creating a commit: run a linter, formatting, fast tests, a check for accidental secrets. A non-zero exit code cancels the commit.
+- **\`commit-msg\`** — check the message format (e.g., Conventional Commits).
+- **\`pre-push\`** — before a push: run tests so you don't push something broken.
+
+Server-side (on the repository side):
+
+- **\`pre-receive\` / \`update\`** — check incoming changes (policies, blocking force-push to protected branches);
+- **\`post-receive\`** — triggers after acceptance (notifications, CI/CD, deploy).
+
+Why: to automate quality checks and shared team rules locally, before code reaches the shared repository. Note: local hooks in \`.git/hooks\` are not committed, so for shared rules teams use hook managers (Husky, pre-commit) that are versioned in the repository.`,
+      },
+      'committed-secrets': {
+        question: 'What do you do if you accidentally committed secrets (passwords, keys)?',
+        answer: `The first thing to understand: if the commit is **pushed**, the secret is considered **compromised** — removing it from history does not undo the fact that it could have been seen or cloned.
+
+The order of actions:
+
+1. **Immediately revoke/rotate the secret** (rotate the key, password, token) — this comes first and matters more than cleaning history;
+2. **remove the secret from history**, not just from the last commit (otherwise it stays in earlier ones). Tools: **\`git filter-repo\`** (recommended) or BFG Repo-Cleaner — they rewrite history, removing the file/line from all commits;
+3. if the branch is shared — coordinate with the team: rewriting history requires a **force-push** and re-cloning by everyone;
+4. **prevent a recurrence**: keep secrets in environment variables / secret managers (Vault), add files to \`.gitignore\`, enable secret scanners (git-secrets, gitleaks) in pre-commit and CI.
+
+The key point: rotating the secret is always mandatory; cleaning history is only a supplement that reduces further leakage.`,
+      },
     },
   },
   microservices: {
@@ -4131,6 +4978,121 @@ For local development of multiple services — **Docker Compose** (docker-compos
 - requests/limits — resource management.
 
 Ecosystem: Helm (packages/manifest templates), ArgoCD (GitOps), Prometheus + Grafana (monitoring). Important for Java: the JVM must respect container limits (\`-XX:MaxRAMPercentage\`, modern JDKs do this automatically).`,
+      },
+      'service-boundaries': {
+        question: 'How do you define microservice boundaries? What are the signs of a service that is too small or too large?',
+        answer: `Boundaries are drawn **by business capabilities**, not by technical layers. The main tool is **DDD**: a service corresponds to one **bounded context** — an area with a single model and language. A good service owns its data and changes for a single business reason (high cohesion inside, loose coupling outside).
+
+**Signs of a too-large service:** it changes for many unrelated reasons, several teams edit it, a release touches a lot of unrelated functionality, and independent subdomains are clearly visible inside.
+
+**Signs of a too-small service:** it has almost no logic of its own and constantly "chats" over the network with others (chatty), any change affects several services at once (they always deploy together), and distributed transactions appear where a local one would do. Over-splitting produces a "distributed monolith" — the downsides of microservices without their upsides.
+
+Practice: start with larger services and split them as boundaries become clear, not the other way around.`,
+      },
+      'monolith-migration': {
+        question: 'How do you approach migrating a monolith to microservices?',
+        answer: `The key principle is **not to rewrite everything at once** (a big-bang is risky), but to migrate incrementally with the **Strangler Fig** pattern: microservices are gradually "grown" around the monolith, redirecting individual functions to them until the monolith is no longer needed.
+
+A typical approach:
+
+1. put a **facade/gateway** in front of the monolith to redirect traffic piece by piece;
+2. extract one **bounded context** at a time — starting with the least coupled and most valuable to separate (high load, a separate release cycle);
+3. split the data: the new service gets its own database; synchronization is handled via events or temporary shared access;
+4. shift traffic gradually (canary is possible), watching the metrics;
+5. remove the extracted code from the monolith.
+
+It is important to decide in advance **what not to extract**: a tightly coupled core is sometimes cheaper to leave as a monolith. You migrate when there is real pain (scaling, independent releases), not for fashion.`,
+      },
+      'sync-vs-async': {
+        question: 'When should you choose synchronous communication between services, and when asynchronous?',
+        answer: `**Synchronous** (REST, gRPC) — the caller waits for a response here and now.
+
+- Pros: simplicity, an immediate result, clear debugging.
+- Cons: **temporal coupling** — if the callee is unavailable or slow, the caller suffers; chains of synchronous calls amplify failures (cascade).
+- When: an immediate response is needed (fetching data for display), simple query scenarios. gRPC for fast internal calls, REST for broad compatibility.
+
+**Asynchronous** (messages/events via Kafka, RabbitMQ) — the sender publishes a message and doesn't wait.
+
+- Pros: **loose coupling** in time, resilience to a receiver being down (the message waits in the broker), smoothing of load spikes, natural event-driven integration.
+- Cons: more complex (eventual consistency, ordering, duplicates, debugging a distributed flow).
+- When: event notifications, long-running operations, decoupling services, different processing speeds.
+
+Rule: **commands/queries with an immediate response — synchronously; facts about what happened (events) and decoupling — asynchronously.** Often both approaches are combined in one system.`,
+      },
+      'loose-coupling': {
+        question: 'What is loose coupling between microservices and how do you achieve it?',
+        answer: `**Loose coupling** means services can be changed and deployed independently because they know little about each other's internals. The opposite is a "distributed monolith," where services must be released together.
+
+How it is achieved:
+
+- **data hiding** — each service has its own database; you cannot access another's database directly, only through its API/events;
+- **stable contracts** — communicating via versioned APIs/event schemas; changes are made backward-compatible (without breaking consumers);
+- **asynchronous events** instead of chains of synchronous calls — decoupling in time;
+- **avoiding shared models** — not sharing common domain libraries/entities between services (shared code increases coupling);
+- **tolerance to change** — the "Tolerant Reader" principle: ignore unknown fields, don't fail on inessential changes;
+- failure isolation (timeouts, circuit breaker) so a neighbor's crash doesn't drag you down.
+
+A sign of good decoupling: a service can be deployed to production without coordinating the release with other teams.`,
+      },
+      'database-per-service': {
+        question: 'What is "database per service" and how do you ensure data consistency?',
+        answer: `**Database per service** — each microservice has its own database that only it can access. Other services get data solely through its API or events. This is the key to loose coupling and independent scaling, but it removes the possibility of a single ACID transaction and JOINs across services.
+
+**Consistency** between services becomes **eventual** rather than immediate. Tools:
+
+- **the Saga pattern** — a distributed business operation as a chain of local transactions with compensations (event choreography or orchestration);
+- **Transactional Outbox** — to atomically save data and publish an event: the event is written to an outbox table in the same database within one transaction, and a separate process reads it and sends it to the broker (solving the "wrote to the DB but didn't send the event" problem);
+- **CQRS / read replicas** — a service keeps a denormalized copy of the needed external data, updated via events, so it doesn't call synchronously for every request;
+- **idempotency** of handlers — because delivery is usually at-least-once.
+
+You design so the business tolerates temporary inconsistency; where strict atomicity is needed, that's a sign the data should perhaps live in a single service.`,
+      },
+      'ms-resilience': {
+        question: 'How do you ensure resilience to failures when microservices interact?',
+        answer: `In a distributed system failures are inevitable, so calls to neighbors are always treated as potentially unreliable. The main mechanisms:
+
+- **Timeout** — never wait for a response indefinitely; a hung call must not hold resources (threads, connections).
+- **Retry + backoff** — retry on transient errors with exponential delay and jitter; only for **idempotent** operations, otherwise it amplifies the problem.
+- **Circuit Breaker** — after a series of errors it "opens" calls to the failing service (fail fast + fallback), preventing a cascade and giving the neighbor time to recover.
+- **Bulkhead** — resource isolation (separate thread/connection pools per callee) so one failure doesn't eat all the application's resources.
+- **Fallback / graceful degradation** — a backup response (cache, default value, reduced functionality) instead of a total failure.
+- **Rate limiting / throttling** — protection against overload.
+
+In the Spring ecosystem this is provided by **Resilience4j** (Circuit Breaker, Retry, Bulkhead, RateLimiter, TimeLimiter). The goal is that one service's failure leads to degradation, not to the whole system going down. More on the patterns themselves is in the "Design Patterns" section.`,
+      },
+      'ms-observability': {
+        question: 'How do you set up monitoring, logging, and tracing for microservices?',
+        answer: `In a distributed system, behavior can't be understood from a single service — you need the **three pillars of observability**:
+
+- **Logs** — structured (JSON), collected centrally (e.g., **ELK/EFK**: Elasticsearch + Logstash/Fluentd + Kibana). The key is a request **correlation id** propagated through all services to assemble an end-to-end picture.
+- **Metrics** — numeric indicators over time (RPS, latency p95/p99, errors, resource usage). Usually **Prometheus** (collection) + **Grafana** (dashboards, alerts); in Spring — Micrometer + Actuator.
+- **Tracing (distributed tracing)** — the path of a single request through all services with the timings of each step (**Jaeger**, **Zipkin**, OpenTelemetry). It shows exactly where time is lost in the call chain.
+
+Additionally: **health checks** (\`/actuator/health\`) for the orchestrator, alerts on anomalies, SLO/SLI. Without this, debugging in microservices turns into guesswork — which is why observability is built in from the start, not after an incident.`,
+      },
+      'ms-security': {
+        question: 'How are authentication, authorization, and secret storage implemented in microservices?',
+        answer: `**Authentication and authorization:**
+
+- usually **stateless** via tokens: the user authenticates, gets a token (often a **JWT**) that they send on every request — services verify it without a shared session;
+- for delegated access and external clients — **OAuth2 / OpenID Connect** with an authorization server (which issues tokens);
+- an **API Gateway** often handles token verification at the entry point, and services additionally check permissions (roles/scopes) for their operations;
+- between services — mutual authentication, often **mTLS** (typically via a service mesh), so internal traffic is also trusted (the zero-trust principle: don't trust the network by default).
+
+**Secrets** (database passwords, keys, tokens) are not stored in code or committed to git. Secret managers are used: **HashiCorp Vault**, **AWS Secrets Manager**, Kubernetes Secrets (+ encryption). They provide centralized storage, access control, auditing, and **rotation** of secrets without rebuilding services.`,
+      },
+      'ms-cicd-testing': {
+        question: 'How do you set up CI/CD and testing for microservices?',
+        answer: `**CI/CD:** each service has an **independent pipeline** and is deployed separately — one of the main advantages of microservices. The pipeline: build → tests → package into a container (Docker) → publish the image → deploy to the orchestrator (Kubernetes). Tools: Jenkins, GitLab CI, GitHub Actions; for deploying to k8s — the GitOps approach (**ArgoCD**, Flux). Safe-rollout practices: blue-green and canary releases, automatic rollback based on metrics.
+
+**Testing** is built as a pyramid, with an emphasis on distribution:
+
+- **unit tests** — the service's logic in isolation (fast, the majority);
+- **integration** — the service with its database/broker; it's convenient to spin up real dependencies via **Testcontainers**;
+- **contract tests** — key for microservices: they verify that the API between the consumer and provider is compatible (e.g., Spring Cloud Contract, Pact) without bringing up the whole system;
+- **end-to-end** — cross-service scenarios; valuable but slow and fragile, so you keep few of them.
+
+The idea: keep expensive e2e tests to a minimum, and verify service compatibility with fast contract tests.`,
       },
     },
   },
@@ -4382,6 +5344,123 @@ Typical use cases: static assets and media, backups, data lakes, build artifacts
 - NACLs — an additional "coarse" layer (defense in depth) and for deny rules;
 - traffic passes through **both** levels: the NACL at the subnet boundary, then the SG at the instance.`,
       },
+      'cloud-service-models': {
+        question: 'What is AWS and what is the difference between IaaS, PaaS, and SaaS?',
+        answer: `**AWS (Amazon Web Services)** is a cloud platform providing compute, storage, networking, databases, and other services on a **pay-as-you-go** model, without buying your own hardware.
+
+The three cloud service models differ in **what the provider manages vs. what you do**:
+
+- **IaaS (Infrastructure as a Service)** — the provider gives "raw" infrastructure (virtual machines, network, disks), and you manage the OS, runtime, and application. Maximum control and flexibility. Example: **EC2**, EBS, VPC.
+- **PaaS (Platform as a Service)** — the provider manages the OS and runtime, and you deploy only code and data. Less routine, faster development. Example: **Elastic Beanstalk**, RDS, App Runner.
+- **SaaS (Software as a Service)** — a ready turnkey application that you just use in a browser. Example: Gmail, Office 365, Salesforce (in AWS — e.g., WorkMail).
+
+Analogy: IaaS — rent land and build the house yourself; PaaS — rent the house; SaaS — stay in a hotel. The higher the level, the less management but also the less control. Separately there is **serverless (FaaS)** — e.g., Lambda, where you don't even manage servers.`,
+      },
+      iam: {
+        question: 'What is IAM? What is the difference between users, roles, policies, and MFA?',
+        answer: `**IAM (Identity and Access Management)** is the service for managing access to AWS resources: **who** (authentication) and **what they can do** (authorization). The core principle is **least privilege** (the minimum necessary permissions).
+
+Key entities:
+
+- **User** — a persistent identity for a person or application with long-term credentials (password, access keys). Users can be organized into **groups** with permissions assigned to the group.
+- **Role** — an identity with **temporary** permissions that can be "assumed." A role has **no permanent keys** — temporary tokens are issued (STS). Roles are the preferred approach: they are assumed by EC2 instances, Lambda, services, and federated users. Safer than handing out long-term keys.
+- **Policy** — a JSON document describing **permissions** (Effect Allow/Deny, Action, Resource, Condition). Attached to a user, group, or role.
+- **MFA (Multi-Factor Authentication)** — an extra factor (a one-time code from a phone/device) on top of the password. Mandatory for privileged accounts (root, admins).
+
+Rule: give applications and services **roles**, not hardcoded keys; give people users with MFA; grant permissions via policies following least privilege.`,
+      },
+      kms: {
+        question: 'What is AWS KMS and where is it used?',
+        answer: `**KMS (Key Management Service)** is a managed service for creating and managing **encryption keys** and performing cryptographic operations. It stores **master keys (CMK / KMS keys)** that never leave the service in plaintext, and controls access to them via IAM policies and audit logs (CloudTrail).
+
+It's typically used with **envelope encryption**: the KMS key encrypts not the data itself but a generated **data key**, which in turn encrypts the large data. This encrypts large volumes quickly and securely, while the storage holds the encrypted data key.
+
+Where it is used:
+
+- **encryption at rest** in other services: S3 (SSE-KMS), EBS volumes, RDS, DynamoDB, snapshots — out-of-the-box integration;
+- encrypting secrets in **Secrets Manager** / SSM Parameter Store;
+- application-level encryption via the SDK;
+- key control and **rotation**, access segregation, and full usage auditing.
+
+Pros: keys are under control and auditing, not stored in code; automatic rotation can be enabled. For the highest level of hardware isolation there is **CloudHSM**.`,
+      },
+      'lambda-serverless': {
+        question: 'What are AWS Lambda and serverless? When should you use it instead of a server?',
+        answer: `**Serverless** is a model where you write code and the provider **manages the servers**, scaling, and availability. Servers exist, but you don't think about them and you pay **only for actual execution**, not for idle instances.
+
+**AWS Lambda (FaaS — Function as a Service)** is a service for running functions **in response to events** without managing infrastructure. A function is triggered by an event (HTTP via API Gateway, an S3/DynamoDB/Kafka event, a schedule, an SQS queue), runs, and finishes. You pay for the number of invocations and the run time (per ms).
+
+Characteristics:
+
+- **auto-scaling** from zero to thousands of concurrent executions;
+- **stateless** — state is kept externally (a database, S3);
+- **limits**: a maximum execution time (15 minutes), memory/size limits, **cold start** — a delay on the first run (especially noticeable for the JVM).
+
+When to choose Lambda over an always-on service (EC2/ECS): event-driven and irregular load, short and independent tasks (processing uploads, webhooks, ETL, cron), you want to pay only for usage and avoid managing servers. When **not** to: long-running processes, steadily high constant load (containers are cheaper), strict latency requirements (cold start), heavy state.`,
+      },
+      'aws-storage-types': {
+        question: 'How do S3, EBS, and Glacier differ? When do you use each?',
+        answer: `Three services — three different types of storage:
+
+- **S3 (Simple Storage Service)** — **object** storage: files ("objects") in buckets, accessed via an HTTP API/URL. Practically unlimited, extremely durable (11 nines of durability), not tied to a specific instance. For: files, backups, static websites, data lakes, media. It is not a file system and can't be mounted as a disk.
+- **EBS (Elastic Block Store)** — **block** storage: a virtual disk **attached to a single EC2 instance** (like an HDD/SSD). Data survives instance restarts, supports snapshots. For: OS root volumes, databases on EC2, anything needing a low-latency disk. Tied to one AZ.
+- **Glacier (S3 Glacier)** — **archival** storage: very cheap, but with **retrieval latency** (from minutes to hours depending on the retrieval class). For: long-term archives, compliance, rarely read data.
+
+In short: **S3** — objects and files (shared access, scale); **EBS** — a disk for a single instance (low latency); **Glacier** — a cheap cold archive. S3 has classes (Standard, IA, Intelligent-Tiering, Glacier) with automatic data movement via lifecycle policies.`,
+      },
+      'aws-rds': {
+        question: 'What is RDS and how do you connect Spring Boot to it?',
+        answer: `**RDS (Relational Database Service)** is a managed relational database service (PostgreSQL, MySQL, MariaDB, Oracle, SQL Server, and also Amazon Aurora). AWS handles the routine: installation, patching, backups, replication, recovery, monitoring — you're responsible only for the schema and queries (a PaaS model for databases).
+
+Capabilities:
+
+- **automatic backups** and point-in-time recovery, snapshots;
+- **Multi-AZ** — a synchronous replica in another AZ for fault tolerance and automatic failover;
+- **read replicas** — replicas for scaling reads;
+- encryption via KMS, access through Security Groups in a VPC.
+
+**Connecting Spring Boot** — like to an ordinary database; RDS gives a standard endpoint (host:port):
+
+\`\`\`properties
+spring.datasource.url=jdbc:postgresql://mydb.abc123.eu-west-1.rds.amazonaws.com:5432/app
+spring.datasource.username=appuser
+spring.datasource.password=\${DB_PASSWORD}
+\`\`\`
+
+Practices: don't store the password in code — take it from **Secrets Manager** / environment variables (or use IAM authentication to RDS); keep RDS in a **private subnet**, with access only from the application's SG; tune the connection pool (HikariCP) to the instance's limits.`,
+      },
+      'dynamodb-vs-rds': {
+        question: 'When do you use DynamoDB versus RDS?',
+        answer: `**RDS** is a managed **relational** database (SQL): tables with a schema, relationships, JOINs, ACID transactions, complex queries. **DynamoDB** is a managed **NoSQL** key-value / document database: schemaless, horizontally scalable, with predictable low latency at any scale, priced by requests/capacity.
+
+**Choose RDS when:**
+
+- the data is **relational**, with many relationships, and you need JOINs and complex ad-hoc queries;
+- strict **ACID transactions** matter (finance);
+- the schema is stable, volumes are moderate, and you want familiar SQL.
+
+**Choose DynamoDB when:**
+
+- you need **huge scale** and steadily low latency (single-digit ms) as it grows;
+- access is **by key** with known query patterns (model "from the queries");
+- a flexible/changing schema, high write load, a serverless stack;
+- you don't want to manage sharding and capacity manually (there's an on-demand mode).
+
+DynamoDB's limitations — no full JOINs or complex ad-hoc queries; you must design keys and indexes (GSI/LSI) for access in advance. Rule: a relational model and complex queries → **RDS**; predictable key-based access at hyperscale → **DynamoDB**. They are often combined in one system.`,
+      },
+      'subnets-igw-nat': {
+        question: 'How do public/private subnets, the Internet Gateway, and NAT work? What is CIDR?',
+        answer: `**CIDR (Classless Inter-Domain Routing)** defines a network's IP address range via a mask: for example, a VPC \`10.0.0.0/16\` (65,536 addresses), and a subnet \`10.0.1.0/24\` (256 addresses). The number after the \`/\` is how many bits are fixed for the network: the larger it is, the fewer addresses.
+
+**Subnets** are segments of a VPC within one AZ. Whether a subnet is public is determined by its **route table**:
+
+- **Public subnet** — its route table has a route to an **Internet Gateway (IGW)**. The IGW is a VPC component giving bidirectional internet access. Here you place things that must be reachable from outside: a load balancer, bastion, public web servers (which have a public IP).
+- **Private subnet** — has no route to an IGW and isn't directly reachable from the internet. Here you place applications and **databases** (safer).
+
+A **NAT Gateway** solves this: private resources need **outbound** internet access (download updates, call an external API), but inbound must be blocked. The NAT is placed in a **public** subnet; private resources reach out through a route to the NAT, but connections cannot be initiated to them from outside.
+
+Typical layout: LB and NAT in public subnets; application servers and databases in private ones; traffic filtered by Security Groups and NACLs.`,
+      },
     },
   },
   nosql: {
@@ -4531,6 +5610,732 @@ When the primary fails, a **failover** occurs: replicas elect a new leader (lead
 - **Cache stampede** — when a popular key's TTL expires, many requests hit the database at once. Fixed with a regeneration lock and TTL jitter.
 - **Cache penetration** — requests for keys that don't exist always pass through to the database. Fixed by caching the "empty" answer or using a Bloom filter.
 - **Cache avalanche** — a mass simultaneous expiry of many keys overwhelms the database. Fixed with TTL jitter.`,
+      },
+    },
+  },
+  docker: {
+    title: 'Docker',
+    description: 'Containerization: images, Dockerfile, networks, volumes, docker-compose',
+    questions: {
+      'docker-vs-vm': {
+        question: 'What is Docker and how does a container differ from a virtual machine?',
+        answer: `**Docker** is a **containerization** platform: packaging an application with all its dependencies into an isolated, portable container that runs the same everywhere ("works on my machine" stops being a problem).
+
+The difference between a container and a **virtual machine** is the level of isolation:
+
+- a **VM** virtualizes **hardware**: each VM carries a **full guest OS** on top of a hypervisor. Heavy (gigabytes), starts in minutes, strong isolation.
+- a **container** virtualizes the **OS**: all containers on a host share **one kernel** and are isolated by Linux kernel features (**namespaces** — process/network/file isolation, **cgroups** — resource limits). Lightweight (megabytes), starts in seconds, but with weaker isolation than a VM.
+
+Bottom line: containers are **process-level isolation** with a shared kernel, so they can be packed densely on a host and scaled quickly. VMs are needed when you require a different OS or stricter isolation. They are often combined: containers run inside a VM.
+
+Key Docker concepts: an **image** — an immutable template (file-system layers + metadata), a **container** — a running instance of an image.`,
+      },
+      dockerfile: {
+        question: 'What is a Dockerfile and what instructions does it consist of?',
+        answer: `A **Dockerfile** is a text file with instructions from which \`docker build\` assembles an image. Each instruction describes a build step.
+
+Main instructions:
+
+- **\`FROM\`** — the base image the build starts from (\`FROM eclipse-temurin:21-jre\`);
+- **\`WORKDIR\`** — the working directory inside the image;
+- **\`COPY\` / \`ADD\`** — copying files from the build context into the image (\`ADD\` can also unpack archives and fetch URLs — but \`COPY\` is usually preferred);
+- **\`RUN\`** — run a command at **build** time (install packages, build the project) — creates a new layer;
+- **\`ENV\`** — environment variables;
+- **\`EXPOSE\`** — document a port (doesn't publish it by itself);
+- **\`ENTRYPOINT\` / \`CMD\`** — what to run when the **container starts**.
+
+Example:
+
+\`\`\`dockerfile
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY target/app.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+\`\`\`
+
+Each instruction creates a **layer** — this affects caching (see the separate question), so the order of instructions matters for build speed.`,
+      },
+      'entrypoint-vs-cmd': {
+        question: 'What is the difference between ENTRYPOINT and CMD?',
+        answer: `Both define what runs when the container starts, but they play different roles:
+
+- **\`CMD\`** — sets the **default** command/arguments, which are easy to **override** by passing arguments to \`docker run\`. If you run \`docker run image ls -la\`, CMD is completely replaced by \`ls -la\`.
+- **\`ENTRYPOINT\`** — sets the container's **main executable**, which is **not** overridden by \`docker run\` arguments (arguments are **appended** to it). Makes the container behave like an "executable program."
+
+They are often **combined**: \`ENTRYPOINT\` is the program, \`CMD\` is the default arguments the user can replace:
+
+\`\`\`dockerfile
+ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["--spring.profiles.active=prod"]
+\`\`\`
+
+Then \`docker run image\` starts with the prod profile, and \`docker run image --spring.profiles.active=dev\` replaces just the argument, keeping \`java -jar app.jar\`.
+
+It's important to use the **exec form** (\`["java", "-jar", ...]\`, a JSON array), not the shell form (\`java -jar ...\`): the exec form runs the process as PID 1 directly, so it properly receives signals (\`SIGTERM\` on stop) — otherwise the container won't shut down gracefully.`,
+      },
+      'image-layers-cache': {
+        question: 'How are image layers structured and how does the build cache work in Docker?',
+        answer: `A Docker image consists of **layers** — each \`FROM\`/\`RUN\`/\`COPY\`/\`ADD\` instruction creates a new immutable layer on top of the previous one. Layers are reused across images (a shared base layer is stored once) and cached.
+
+**Build cache:** during \`docker build\`, for each instruction Docker checks whether a ready layer for it already exists, and if the instruction and its inputs haven't changed — it **takes the layer from the cache** instead of re-running it. But once one layer "misses" the cache, **all subsequent** ones are rebuilt (the cache is invalidated down the chain).
+
+Hence the main optimization technique — **order instructions from rarely changing to frequently changing**. The classic for Java/Maven: first copy dependencies and download them, then the sources:
+
+\`\`\`dockerfile
+COPY pom.xml .
+RUN mvn dependency:go-offline      # the dependency layer is cached
+COPY src ./src
+RUN mvn package                    # rebuilt only when the code changes
+\`\`\`
+
+If \`COPY . .\` came first, any code change would invalidate the dependency-download cache, and the build would download them again every time. The right order speeds up builds many times over.`,
+      },
+      'multistage-image-size': {
+        question: 'What is a multi-stage build and how do you reduce a Docker image size?',
+        answer: `A **multi-stage build** — one Dockerfile with several \`FROM\` stages: in the first (heavy, with JDK/Maven) the application is **built**, and into the final (lightweight, with just a JRE) **only the result** is copied — the ready artifact. Build tools don't end up in the final image.
+
+\`\`\`dockerfile
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY . .
+RUN mvn -q package
+
+FROM eclipse-temurin:21-jre       # final image — without Maven/JDK
+WORKDIR /app
+COPY --from=build /app/target/app.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
+\`\`\`
+
+Other ways to shrink the image:
+
+- a **lightweight base image** — \`-jre\` instead of \`-jdk\`, the \`slim\`/\`alpine\` variants (Alpine on musl is compact but sometimes incompatible; for the JVM there are jlink images);
+- **combine \`RUN\`** commands and clean package caches in the same layer (\`apt-get ... && rm -rf /var/lib/apt/lists/*\`);
+- **\`.dockerignore\`** — don't pull unnecessary things into the build context (\`.git\`, \`target\`, node_modules);
+- fewer layers, only the needed dependencies.
+
+A small image = faster pull/deploy, a smaller attack surface, registry savings.`,
+      },
+      'docker-volumes': {
+        question: 'What are volumes in Docker and why are they needed?',
+        answer: `A container's file system is **ephemeral**: when the container is removed, all changes in it are lost. **Volumes** solve **persistence** — storing data outside the container's lifecycle.
+
+Main mount types:
+
+- **Named volume** — managed by Docker (\`docker volume create\`, stored in Docker's area). The preferred way for database data and uploads — it survives container recreation and is easy to back up and move.
+- **Bind mount** — mounts a **specific host folder** into the container. Handy for development (mount the sources to change code without a rebuild), but tied to the host's structure.
+- **tmpfs** — in RAM, not persisted to disk (for secrets/temporary data).
+
+Why they're needed:
+
+- **persist state** — database data, user files, logs shouldn't vanish with the container;
+- **share data** between a container and the host or between containers;
+- **separate data from code** — the container can be updated (a new image) while the data in the volume remains.
+
+Rule: make containers **stateless** and move all state to volumes or external services. In \`docker run\` a volume is attached via \`-v myvol:/var/lib/postgresql/data\`.`,
+      },
+      'docker-networks': {
+        question: 'How does networking work in Docker? How do you link several containers?',
+        answer: `Docker creates isolated networks for containers. The main **network drivers**:
+
+- **bridge** (default) — a virtual network on the host; containers get internal IPs and talk to each other, reaching outside via port publishing;
+- **host** — the container uses the host's network directly (no isolation, no port publishing);
+- **none** — no network;
+- **overlay** — a network spanning several hosts (for Swarm/orchestration clusters).
+
+**Linking containers:** in a **user-defined bridge network** Docker enables a built-in **DNS**: containers see each other **by name** (or network alias). Just put them in the same network:
+
+\`\`\`bash
+docker network create app-net
+docker run -d --name db --network app-net postgres
+docker run -d --name api --network app-net myapi   # reaches the DB at host "db"
+\`\`\`
+
+Then the application connects to the DB at \`db:5432\` rather than by IP. In **docker-compose** this works automatically — all services of one compose file join a shared network and are addressed by service names. (The legacy \`--link\` flag is no longer needed for this.)
+
+**Publishing ports** to the outside — \`-p 8080:8080\` (host:container). Two containers can listen on the same internal port, but you cannot publish the same port to the **host** twice.`,
+      },
+      'docker-registry-versioning': {
+        question: 'What is a Docker registry? How do you version images (latest, semver, git hash)?',
+        answer: `A **Docker registry** is a store for images. The \`docker push\` client uploads images there, \`docker pull\` downloads them. **Docker Hub** is the default public registry; **private registries** (AWS ECR, GitHub Container Registry, GitLab, Harbor, Nexus) keep a company's images private, with access control and vulnerability scanning.
+
+An image is addressed as \`registry/repository:tag\`, e.g., \`ghcr.io/team/app:1.4.2\`.
+
+**Tagging (versioning) strategies:**
+
+- **\`latest\`** — the "latest" tag. Convenient, but **dangerous in prod**: it's mutable (one image today, another tomorrow), with no reproducibility — two "latest" deploys can bring up different versions. Avoided for prod.
+- **Semver (\`1.4.2\`)** — semantic release versions; clear, readable, supports rolling back to a specific version. Good for public/release images.
+- **Git commit hash (\`app:9f3a1c\`)** — a tag by the commit hash: **unambiguously** ties the image to the source code, ideal for CI/CD and traceability (from an image in prod you can tell which commit built it).
+
+In practice you often **combine** them: push an image under several tags at once — semver + git-hash (+ \`latest\` for convenience), and deploy to prod by an **immutable** tag (hash or a specific version) so the deploy is reproducible.`,
+      },
+      'docker-compose': {
+        question: 'What is docker-compose and why is it needed?',
+        answer: `**Docker Compose** is a tool for describing and running **multi-container** applications with a single file \`docker-compose.yml\` (or \`compose.yaml\`). Instead of a dozen manual \`docker run\` commands, the whole system (application + database + cache + queue) is described declaratively and brought up with \`docker compose up\`.
+
+\`\`\`yaml
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: secret
+    volumes: [ "dbdata:/var/lib/postgresql/data" ]
+  api:
+    build: .
+    ports: [ "8080:8080" ]
+    depends_on: [ db ]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
+volumes:
+  dbdata:
+\`\`\`
+
+What it provides:
+
+- one command brings the whole stack up/down (\`up\`/\`down\`);
+- a shared **network** — services see each other by name (\`api\` → \`db\`);
+- images, ports, volumes, variables, and dependencies declared declaratively.
+
+\`depends_on\` sets the **startup order** (but doesn't wait for a service to be ready — health checks are needed for that). Different environments (dev/prod) are set via multiple compose files (\`-f\`), override files, and environment variables / \`.env\`.
+
+Use cases: **local development** and tests (quickly spin up dependencies), simple single-server deploys. For production orchestration across several hosts, use **Kubernetes**.`,
+      },
+      'docker-resource-limits': {
+        question: 'How do you limit a container\'s resources (CPU, RAM) and why does it matter for the JVM?',
+        answer: `By default a container can take up **all** the host's resources. Limits are set via **cgroups**:
+
+- **memory:** \`docker run -m 512m\` (\`--memory\`); on exceeding it, the process is killed by the OOM killer;
+- **CPU:** \`--cpus="1.5"\` (a fraction of cores), \`--cpu-shares\` (relative weight under contention).
+
+In Kubernetes these are **requests/limits** in the pod manifest.
+
+Why: to prevent one container from "eating" the whole host and taking down its neighbors, ensure predictability and scheduling, and protect against leaks.
+
+**Why this is critical for the JVM:** historically the JVM looked at the resources of the **whole host** rather than the container, and, for example, set the heap size and the number of GC/pool threads based on the host's memory/cores — in a container with a 512 MB limit this led to \`OutOfMemoryError\` and the container being killed by the OOM killer. Modern JDKs (11+) are **container-aware** — they respect cgroup limits. Practices:
+
+- set the heap fraction via **\`-XX:MaxRAMPercentage=75\`** (instead of a hard \`-Xmx\`) so the heap scales with the container limit;
+- leave headroom for non-heap memory (Metaspace, thread stacks, direct buffers), since the container limit counts **all** the process's memory, not just the heap;
+- verify the JVM sees the correct number of CPUs (\`-XX:ActiveProcessorCount\` if needed).`,
+      },
+      'container-security': {
+        question: 'How do you secure containers (secrets, vulnerabilities, rootless)?',
+        answer: `The main aspects of container security:
+
+**Secrets (passwords, tokens, keys):**
+
+- do **not** bake them into the image (in \`ENV\`/layers — they're visible in the image history) and don't commit them;
+- pass them via **Docker/Kubernetes secrets**, managers (Vault, AWS Secrets Manager), runtime environment variables;
+- use \`.dockerignore\` so \`.env\`/keys don't reach the build context; for build-time secrets use \`--secret\` (BuildKit), which doesn't leave them in layers.
+
+**Vulnerabilities:**
+
+- **scan images** (Trivy, Grype, Docker Scout, registry scanners) — base images and dependencies contain known CVEs;
+- use **minimal** and fresh base images (slim/alpine/distroless — a smaller attack surface), rebuild/update regularly;
+- pin versions, don't rely on \`latest\`.
+
+**Privileges (least privilege):**
+
+- **don't run the process as root** inside the container — set an unprivileged user (\`USER appuser\`);
+- **rootless containers** — running the daemon/containers without root on the host (rootless Docker, Podman): even on a container escape the attacker doesn't get host root;
+- don't grant \`--privileged\`, drop unneeded Linux capabilities, use a read-only file system where possible, don't mount docker.sock without need.
+
+General principle: a minimal image, an unprivileged user, secrets outside, regular scanning and updates.`,
+      },
+      'docker-daemon': {
+        question: 'What is the Docker Daemon and how is Docker\'s architecture structured?',
+        answer: `Docker is built on a **client-server** model:
+
+- **Docker CLI (client)** — the \`docker\` command you type. It only **sends requests** via a REST API.
+- **Docker Daemon (\`dockerd\`)** — a background service (server) that **does all the work**: builds images, creates and runs containers, manages networks, volumes, images. It listens on a Unix socket (\`/var/run/docker.sock\`) or over TCP.
+- **Registry** — the image store the daemon pulls from/pushes to.
+
+When you run \`docker run\`, the CLI sends a request to the daemon, which creates the container. Under the hood \`dockerd\` relies on lower-level components: **containerd** (container lifecycle management) and **runc** (the actual container launch via the kernel's namespaces/cgroups).
+
+Practical implications:
+
+- the daemon runs with **root** privileges — access to \`docker.sock\` is effectively root on the host, so it must not be handed out/mounted into containers carelessly;
+- the CLI and daemon can be on **different machines** (managing a remote Docker over TCP/TLS);
+- an alternative to the daemon model is **Podman** (daemonless, rootless), compatible with the Docker CLI.`,
+      },
+      'spring-boot-docker': {
+        question: 'How do you properly package a Spring Boot application into Docker?',
+        answer: `A basic working Dockerfile for Spring Boot is **multi-stage** (build separate from runtime) with dependency caching:
+
+\`\`\`dockerfile
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn -q dependency:go-offline      # dependency cache
+COPY src ./src
+RUN mvn -q clean package -DskipTests
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+RUN useradd -r appuser                # unprivileged user
+USER appuser
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+\`\`\`
+
+Good practices:
+
+- **the JVM in a container** — instead of a hard \`-Xmx\`, use \`-XX:MaxRAMPercentage=75\` so the heap depends on the container limit (JDK 11+ is container-aware); leave headroom for non-heap;
+- **configuration via the environment** — Spring reads \`SPRING_DATASOURCE_URL\` etc. from variables, and secrets come from a secrets store, not the image;
+- **not root**, a minimal base image (\`-jre\`/distroless), \`.dockerignore\` (don't pull \`target\`, \`.git\`);
+- a **health check** on \`/actuator/health\` for the orchestrator;
+- the exec form of \`ENTRYPOINT\`, so the application receives \`SIGTERM\` and shuts down gracefully.
+
+An alternative to a hand-written Dockerfile is the Spring Boot plugins: \`./mvnw spring-boot:build-image\` (Cloud Native Buildpacks) builds an optimized layered image without a Dockerfile; or layered jars for better layer caching.`,
+      },
+    },
+  },
+  monitoring: {
+    title: 'Monitoring',
+    description: 'Observability: metrics, Prometheus, Grafana, tracing, alerting',
+    questions: {
+      'what-is-monitoring': {
+        question: 'What is monitoring and how does it differ from logging?',
+        answer: `**Monitoring** is the continuous collection, storage, and analysis of a system's operational indicators, so you **know its state in real time**, notice problems (ideally before users do), and understand causes. It's part of the broader concept of **observability** — the ability to understand a system's internal state from its external signals.
+
+The three pillars of observability:
+
+- **metrics** — numeric indicators over time (latency, RPS, errors, resource usage);
+- **logs** — records of events;
+- **tracing** — a request's path through services.
+
+**Logging vs monitoring** — not "which matters more," but **different, complementary** tools:
+
+- **logs** answer **"what exactly happened"** at a specific place (event details, stack trace) — good for after-the-fact investigation, but expensive to aggregate in real time;
+- **monitoring (metrics)** answers **"how does the system feel overall right now"** (trends, anomalies, thresholds) — compact, suited for alerts and dashboards, but without details.
+
+In practice they are used together: a metric/alert signals a problem, and logs and tracing help find the cause.`,
+      },
+      'jvm-metrics': {
+        question: 'Which metrics are important to monitor in a Java application?',
+        answer: `Metrics are split into **application** (about the service's behavior) and **infrastructure/JVM** (about the runtime).
+
+**JVM-specific:**
+
+- **heap memory** — used/committed/max heap, generation fill; a rise without a drop hints at a leak;
+- **garbage collection** — frequency and duration of GC pauses, share of time in GC; long/frequent pauses hurt latency;
+- **threads** — number of live threads, states, deadlock detection; growing thread count is a warning sign;
+- **classes**, Metaspace, file descriptors, process CPU.
+
+**Application (the golden set):**
+
+- **latency** — response time, necessarily the **p95/p99** percentiles (the average hides outliers);
+- **throughput** — requests per second (RPS);
+- **error rate** — the share of errors (especially 5xx);
+- resource saturation (CPU, memory, DB connection pool, queue sizes).
+
+Useful reference models: **RED** (Rate, Errors, Duration — for services) and **USE** (Utilization, Saturation, Errors — for resources), plus Google SRE's "four golden signals" (latency, traffic, errors, saturation). In Spring Boot all of this is provided by Micrometer + Actuator.`,
+      },
+      'spring-boot-metrics': {
+        question: 'How do you enable metrics for monitoring in Spring Boot?',
+        answer: `In Spring Boot, metrics are provided by **Actuator** + **Micrometer**:
+
+- **Spring Boot Actuator** — adds operational endpoints (\`/actuator/health\`, \`/actuator/metrics\`, \`/actuator/prometheus\`, etc.);
+- **Micrometer** — "SLF4J for metrics": a unified facade that emits metrics to different systems (Prometheus, Datadog, New Relic, CloudWatch) via pluggable registries.
+
+Setup for Prometheus:
+
+1. add the dependencies \`spring-boot-starter-actuator\` and \`micrometer-registry-prometheus\`;
+2. expose the endpoint in the config:
+
+\`\`\`properties
+management.endpoints.web.exposure.include=health,info,prometheus
+\`\`\`
+
+3. Prometheus **scrapes** \`GET /actuator/prometheus\`, which emits metrics in the Prometheus text format.
+
+Out of the box you get JVM metrics (memory, GC, threads), HTTP timers (\`http.server.requests\` with latency and statuses), the connection pool (HikariCP), and more. Custom metrics are added via Micrometer: \`Counter\`, \`Timer\`, \`Gauge\`, \`DistributionSummary\` (e.g., a business-event counter). \`@Timed\` — an annotation for timing methods. These metrics are then visualized in Grafana.`,
+      },
+      prometheus: {
+        question: 'What is Prometheus and how does it work?',
+        answer: `**Prometheus** is an open-source monitoring system and **time-series database (TSDB)**, the de facto standard for metrics.
+
+Key features:
+
+- **Pull model** — Prometheus itself periodically **scrapes** metrics over HTTP from application endpoints (\`/metrics\`, in Spring — \`/actuator/prometheus\`), rather than applications pushing to it. Pros: the center controls the frequency and can easily tell whether a target is alive. For short-lived jobs there is a **Pushgateway**.
+- **Service discovery** — statically or dynamically (Kubernetes, Consul).
+- **Data model** — a time series is identified by a metric name and a set of **labels** (\`http_requests_total{method="GET", status="200"}\`), giving flexible multidimensional querying.
+- **PromQL** — a query language for aggregations and computations: \`rate(http_requests_total[5m])\`, percentiles from histograms (\`histogram_quantile\`), grouping by labels.
+- **Alertmanager** — a separate component for routing and grouping alerts (from PromQL rules).
+
+Prometheus stores metrics locally (usually not for long); for long retention/scale, Thanos, Cortex, and Mimir are used. Visualization is typically via **Grafana**.`,
+      },
+      grafana: {
+        question: 'What is Grafana and why is it needed?',
+        answer: `**Grafana** is a platform for **visualizing and analyzing** metrics (and more). It usually **doesn't store** the data itself but connects to sources — **Prometheus**, Loki (logs), Elasticsearch, InfluxDB, cloud systems — and builds **dashboards** from them.
+
+Why it's needed:
+
+- **dashboards** — graphs, heatmaps, tables, single-stat panels from queries (for Prometheus — in PromQL); they clearly show the system's state and trends;
+- **alerting** — notification rules by thresholds/anomalies, sent to Slack, email, PagerDuty, Telegram;
+- **explore** — interactive queries for investigating incidents;
+- dashboard variables and templates (by service/instance/environment), ready-made community dashboards.
+
+The typical chain: the application (**Micrometer/Actuator**) emits metrics → **Prometheus** scrapes and stores them → **Grafana** visualizes and alerts. Grafana covers the "human" part of observability — turning raw series into a clear picture and notifications.`,
+      },
+      'red-use-metrics': {
+        question: 'What are the RED and USE methods? Which metrics are critical for microservices?',
+        answer: `These are methodologies for choosing the "right" set of metrics so you don't monitor everything indiscriminately.
+
+**RED (for services, request-scoped):**
+
+- **Rate** — requests per second;
+- **Errors** — the number/share of failed requests;
+- **Duration** — the distribution of response time (percentiles).
+
+It quickly answers "is the service healthy" from its clients' perspective. Ideal for microservices and APIs.
+
+**USE (for resources):**
+
+- **Utilization** — how busy a resource is (CPU, memory, disk);
+- **Saturation** — how overloaded it is (queue lengths, waiting);
+- **Errors** — the resource's errors.
+
+It answers "are we hitting a resource limit." It complements RED from the infrastructure side.
+
+A related model is Google SRE's **four golden signals**: latency, traffic, errors, saturation.
+
+For microservices the critical ones are: each service's **latency p95/p99** and **error rate (5xx)**, RPS, pool saturation (DB connections, threads); for event-driven systems — **consumer lag** and queue sizes; and health/availability of dependencies. **Business metrics** (orders/payments per minute) are monitored too — their drop is often the first sign of an incident.`,
+      },
+      'monitoring-distributed-tracing': {
+        question: 'What is distributed tracing and which tools are used?',
+        answer: `**Distributed tracing** follows the path of **a single request** through all services, showing the call chain and the time of each step. In microservices it's indispensable: metrics show "latency went up," but not **where exactly** in a chain of a dozen services time is lost — tracing shows that.
+
+How it works:
+
+- each incoming request is assigned a **trace id**, shared across the whole chain;
+- each unit of work (a service call, a DB query) is a **span** with its own id, start/end time, and a link to the parent span;
+- the **context (trace id, span id) is propagated** between services via headers (W3C \`traceparent\`), including through brokers;
+- collected spans are sent to a backend that **assembles the tree** and draws a timing "waterfall."
+
+Tools:
+
+- **OpenTelemetry (OTel)** — the modern standard: a unified API/SDK and format for traces, metrics, and logs, vendor-neutral;
+- visualization backends — **Jaeger**, **Zipkin**, Grafana Tempo, commercial Datadog/New Relic.
+
+In Spring — **Micrometer Tracing** (which replaced Spring Cloud Sleuth) with export to OTel/Zipkin. The key requirement is end-to-end context propagation through all services and queues.`,
+      },
+      alerting: {
+        question: 'What is alerting and which metrics should trigger alerts?',
+        answer: `**Alerting** is automatic notifications when metrics go beyond acceptable limits, so the team learns of a problem **before users do**. A rule is usually defined in a query language (PromQL) with a threshold and duration ("if the error rate > 5% for 5 minutes").
+
+Good alert candidates are things that directly affect users and availability:
+
+- **rising errors** — the share of \`5xx\`, a spike in exceptions;
+- **high latency** — p95/p99 above the SLO;
+- **unavailability** — the service doesn't respond to health checks, crashed instances;
+- **resource saturation** — CPU/memory near the ceiling, connection pool exhaustion, approaching \`OutOfMemory\`;
+- **growing queues / consumer lag** in Kafka/RabbitMQ;
+- **business anomalies** — a sharp drop in orders/payments.
+
+Principles of good alerting:
+
+- **alert on symptoms, not causes** — on what the user feels (better "the site is slow" than "CPU 90%," which by itself may be normal);
+- **tie to SLOs** and the error budget;
+- **avoid noise (alert fatigue)** — too frequent/false alerts get ignored; tune thresholds, grouping, and the "for" duration;
+- an alert should be **actionable** — it's clear what to do. Routing is via Alertmanager/PagerDuty/Slack, with on-call rotations.`,
+      },
+    },
+  },
+  terraform: {
+    title: 'Terraform',
+    description: 'Infrastructure as Code: state, providers, remote backend, locking',
+    questions: {
+      'what-is-terraform': {
+        question: 'What is Terraform and Infrastructure as Code (IaC)?',
+        answer: `**Infrastructure as Code (IaC)** is an approach where infrastructure (servers, networks, databases, load balancers) is **described as code** and managed through it, rather than created manually by clicking in a UI. Benefits: versioning in git, reproducibility, change review, automation, and eliminating hand-built "snowflake" servers.
+
+**Terraform** (HashiCorp) is a popular IaC tool for provisioning infrastructure in clouds and services. Characteristics:
+
+- **declarative** — you describe the **desired state** (what should exist), and Terraform figures out which actions are needed to get there (unlike imperative "run these steps");
+- **cloud-agnostic** — one tool and language (**HCL**, HashiCorp Configuration Language) for many providers (AWS, GCP, Azure, Kubernetes, etc.) via provider plugins;
+- **plan before apply** — \`terraform plan\` shows exactly what will change before \`apply\`;
+- **state tracking** via a **state file** — Terraform remembers what it has created and brings the real infrastructure in line with the code.
+
+The workflow: write \`.tf\` configuration → \`init\` (download providers) → \`plan\` (review changes) → \`apply\` (apply them).`,
+      },
+      'terraform-vs-others': {
+        question: 'How does Terraform differ from Ansible and CloudFormation?',
+        answer: `All three are about infrastructure automation, but with different focuses:
+
+**Terraform vs Ansible** — this is **provisioning vs configuration management**:
+
+- **Terraform** — **declarative**, for **creating and managing infrastructure** (spin up a VM, network, DB). It keeps state, knows the current state of resources, and can delete/change them.
+- **Ansible** — primarily **configuration management**: **configuring existing** machines (install packages, lay out configs, deploy), imperative/procedural, usually **stateless** (agentless, over SSH). They are often **combined**: Terraform creates the servers, Ansible configures them.
+
+**Terraform vs CloudFormation:**
+
+- **CloudFormation** — an IaC service **for AWS only** (native, managed by AWS itself, which stores the state for you).
+- **Terraform** — **cloud-agnostic**: one tool and language (HCL) for AWS, GCP, Azure, Kubernetes, and hundreds of providers; you manage the state yourself (a remote backend). Advantageous in multi-cloud and when a single ecosystem of modules is needed.
+
+In short: **Terraform** — declarative infrastructure creation in any cloud; **Ansible** — configuring machines; **CloudFormation** — like Terraform but locked to AWS.`,
+      },
+      'terraform-providers-resources': {
+        question: 'What are a provider and a resource in Terraform?',
+        answer: `A **provider** is a plugin through which Terraform talks to a specific platform (its API). For example, the \`aws\`, \`google\`, \`azurerm\`, \`kubernetes\` providers. A provider is configured (region, credentials) and downloaded on \`terraform init\`. Providers are exactly what makes Terraform cloud-agnostic — one language, working with any platform that has a provider.
+
+\`\`\`hcl
+provider "aws" {
+  region = "eu-west-1"
+}
+\`\`\`
+
+A **resource** describes **a single infrastructure object** that Terraform manages: an EC2 instance, an S3 bucket, a VPC, a DNS record. A resource has a type (\`aws_instance\`), a local name, and arguments:
+
+\`\`\`hcl
+resource "aws_instance" "web" {
+  ami           = "ami-123456"
+  instance_type = "t3.micro"
+}
+\`\`\`
+
+Terraform builds a **dependency graph** of resources (from references like \`aws_instance.web.id\`) and creates them in the correct order. There are also **data sources** (\`data\`) — read-only access to existing objects, **variables**/**outputs** — parameterization and value output, and **modules** — reusable sets of resources.`,
+      },
+      'terraform-state': {
+        question: 'What is the state file and what is inside terraform.tfstate?',
+        answer: `The **state file (\`terraform.tfstate\`)** is a JSON file where Terraform keeps its **map of correspondence** between the resources in your code and the **real objects** in the cloud. It's Terraform's memory of what it has created.
+
+What's inside: the list of managed resources, their **real identifiers** (e.g., an EC2 instance id), current attribute values, metadata and dependencies, a version, and sometimes **sensitive data** (passwords, keys that ended up in attributes).
+
+Why it's needed:
+
+- **code ↔ reality mapping** — from a resource's name in code, Terraform knows which specific cloud object corresponds to it;
+- **plan computation** — it compares the *desired* (code) with the *current* (state) and *real* (refresh) state to determine what to create/change/delete;
+- **performance** — it caches attributes to avoid querying the API for every resource;
+- it stores dependencies for the correct order of operations.
+
+An important consequence: state is a **critical and sensitive** artifact. It must not be edited by hand (there are \`terraform state\` commands and \`import\` for changes), and because of the secrets inside it must be stored **securely** (an encrypted remote backend), not in git.`,
+      },
+      'terraform-remote-state': {
+        question: 'Why can\'t you store state locally in production? How does remote state work?',
+        answer: `By default state lives **locally** in \`terraform.tfstate\`. For team/production work this is bad:
+
+- **no shared access** — everyone has their own copy of state, one person's changes aren't visible to others, and the state diverges;
+- **risk of loss** — a file on a laptop can be deleted/lost, and without state Terraform "forgets" about the created infrastructure;
+- **secrets** — state contains sensitive data, and a local file leaks easily (and shouldn't go into git);
+- **no locking** — simultaneous \`apply\` by different people will corrupt the state.
+
+**Remote state (a remote backend)** solves this — state is stored in a shared remote store:
+
+- **a single source of truth** — everyone works with one state;
+- **reliability and encryption** — a store with versioning and encryption (e.g., S3 with versions);
+- **locking** — prevents simultaneous changes (see state locking);
+- **access separation** — permissions to the backend via IAM.
+
+It's configured with a \`backend\` block. A popular option is **AWS S3 (state storage) + DynamoDB (locking)**; also Terraform Cloud, GCS, Azure Blob, Consul. When switching to a remote backend, Terraform offers to **migrate** the existing state into it.`,
+      },
+      'terraform-state-locking': {
+        question: 'What is state locking and why is it needed?',
+        answer: `**State locking** is a mechanism that prevents **two operations from simultaneously** modifying the same state. Before \`apply\` (and other changing commands) Terraform **acquires a lock**, and releases it on completion.
+
+Why: if two people (or two CI jobs) run \`apply\` at the same time, they'll write to one state in parallel — leading to **state corruption** and desynchronization with the real infrastructure (duplicate resources, "lost" objects, conflicting changes). The lock serializes such operations: the second \`apply\` **waits** for release or fails with a lock message.
+
+How it's implemented — depends on the backend:
+
+- **S3 + DynamoDB** — state lives in **S3**, and the lock is a "lock" record in a **DynamoDB** table (its strong consistency guarantees that only one can acquire the lock); this is the classic combination for AWS;
+- Terraform Cloud, Consul, and others have built-in locking.
+
+The local backend provides no locking between machines — another reason not to use it in a team. If a process crashed and left a "stuck" lock, it can be removed with \`terraform force-unlock\` (carefully, after making sure no one is working).`,
+      },
+      'terraform-commands': {
+        question: 'What do the plan, apply, destroy, and refresh commands do?',
+        answer: `The main commands of the Terraform workflow:
+
+- **\`terraform init\`** — initialization: downloads providers and modules, configures the backend. Run first and after changing providers/backend.
+- **\`terraform plan\`** — a **dry run**: compares the desired state (code) with the current (state) and real state, and shows what will be **created / changed / destroyed**, without changing anything. A key step for review before applying.
+- **\`terraform apply\`** — **applies** the changes, bringing the infrastructure in line with the code (by default it first shows the plan and asks for confirmation). Updates the state.
+- **\`terraform destroy\`** — **destroys all** infrastructure managed by this configuration (essentially an apply toward a "nothing" target state). Used carefully, often for temporary/test environments.
+- **\`terraform refresh\`** (now \`apply -refresh-only\`) — synchronizes the **state** with the **real** state in the cloud (updates attributes if something was changed manually outside Terraform), without touching the infrastructure itself. By default refresh is implicitly performed within \`plan\`/\`apply\` too.
+
+The typical flow: \`init\` → \`plan\` (review the diff) → \`apply\` (apply it). \`fmt\` and \`validate\` help format and check the configuration.`,
+      },
+    },
+  },
+  'clean-code': {
+    title: 'Clean Code',
+    description: 'Clean Code and Effective Java: naming, functions, exceptions, immutability, best practices',
+    questions: {
+      'what-is-clean-code': {
+        question: 'What is clean code and why does it matter?',
+        answer: `**Clean code** is code that is **easy to read, understand, and change** for other people (and for you six months later). The key idea: code is read **far more often** than it's written, so you should optimize for reading.
+
+Why it matters:
+
+- most of a software's life is **maintenance** — reading and editing, not the first writing;
+- dirty code slows the team down: every change is risky and requires "excavation";
+- **technical debt** accumulates — "we'll fix it later" turns into a system nobody dares to touch.
+
+Signs of clean code: meaningful names, small functions with a single task, minimal duplication, explicit error handling, no "clever" tangled code, readability over brevity.
+
+The reference sources: **"Clean Code" (Robert Martin)** — about readability and structure at the level of names/functions/classes, and **"Effective Java" (Joshua Bloch)** — about Java-specific idioms and best practices (immutability, generics, exceptions). Both complement the **SOLID/DRY/KISS** principles (see the "Design Patterns" section): SOLID is about structure, clean code is about everyday readability.`,
+      },
+      'clean-naming': {
+        question: 'What makes a good name in code?',
+        answer: `A name should **fully reveal its meaning** — what it is and why — so you can understand it without comments or looking at the implementation. A good name answers: why this exists, what it does, how it's used.
+
+Rules:
+
+- **intention-revealing names:** \`elapsedTimeInDays\` instead of \`d\`; \`getActiveUsers()\` instead of \`getList()\`;
+- **avoid "noise" words** with no meaning: \`data\`, \`info\`, \`tmp\`, \`obj\`, \`value\`, and vague \`manager\`, \`handler\`, \`processor\` — they don't say *what* exactly is done;
+- **pronounceable and searchable** names (not \`genymdhms\`), without "Hungarian notation" or extra prefixes;
+- **classes are nouns** (\`Order\`, \`UserRepository\`), **methods are verbs** (\`save\`, \`calculateTotal\`, \`isValid\`);
+- one concept — **one word** across the whole project (don't mix \`get\`/\`fetch\`/\`retrieve\` for the same thing);
+- name length matches the scope: short for a loop counter, spelled out for a class field.
+
+The point: code should read like clear prose. If understanding a variable requires a comment — you usually just need a **better name**.`,
+      },
+      'clean-functions': {
+        question: 'What requirements should a good function (method) meet?',
+        answer: `The main principles (from "Clean Code"):
+
+- **Small.** A function should be short — aim for a few lines (say 5–20), fitting on the screen in full. A large function almost always does several things.
+- **One task.** A function should do **one thing well**. If you can meaningfully split it into subfunctions with different names — it's doing more than one thing.
+- **One level of abstraction.** Inside a function, don't mix high-level steps (\`processOrder()\`) with low-level details (bit operations, string handling) — it should read as a coherent story at one level.
+- **Few arguments.** The ideal is 0–2, at most ~3. Many parameters complicate calling and testing; several related parameters are better combined into an object. A **boolean flag parameter** is a sign the function does two things (better split into two methods).
+- **No surprising side effects.** The name should honestly reflect everything the method does; hidden state changes are a source of bugs.
+- **Command-Query Separation** — a method either **changes** state (a command, usually \`void\`) or **returns** data (a query), but not both at once.
+
+Result: small, honestly named functions with one level of abstraction read top-down like a table of contents.`,
+      },
+      'clean-comments': {
+        question: 'When are comments needed, and when are they redundant?',
+        answer: `The main principle: **a comment explains "why," not "what."** What the code does should be shown by **the code itself** (through good names and structure), not by a comment retelling it.
+
+**Bad (redundant) comments:**
+
+- duplicate the code: \`i++; // increment i\` — noise;
+- **commented-out code** — it should be deleted (history is in git), not kept;
+- **stale** comments that have diverged from the code — worse than none: they lie;
+- comments as a "crutch" for bad code: instead of commenting an unclear fragment, it's better to **rewrite/rename** it.
+
+**Useful comments:**
+
+- explaining the **intent and reason** for a decision ("why this way, not the obvious one");
+- warning about consequences/non-obvious constraints (thread safety, call order, working around a library bug);
+- **TODO/FIXME** with context;
+- public API documentation (**Javadoc**) — the method's contract for external consumers;
+- explaining a complex formula/regex/algorithm.
+
+Rule: first try to express the thought in **code** (a variable/method name, extracting a function), and only what the code cannot express (the reason, the context) — in a comment.`,
+      },
+      'clean-error-handling': {
+        question: 'How should you handle errors: exceptions or codes/flags?',
+        answer: `Rule: **use exceptions, not return codes, \`null\`, or boolean flags** to signal errors.
+
+Why exceptions are better than flags/\`null\`:
+
+- **a clean main flow** — the logic doesn't drown in \`if (result == null) ...\` checks after every call; error handling is separated from business logic;
+- **an error can't be silently ignored** — an uncaught exception propagates, whereas a forgotten return-code check is easy to miss;
+- **\`null\` as an "error"** leads to a \`NullPointerException\` in an unexpected place; for "the value may be absent," use \`Optional\`, and for an error — an exception.
+
+How to throw and catch correctly:
+
+- **meaningful, domain exceptions** (\`InsufficientFundsException\`), not a generic \`RuntimeException\` — the type makes clear what happened;
+- a message with **context** (what went wrong and with what data);
+- **don't "swallow"** exceptions (\`catch (Exception e) {}\`) — at least log/rethrow;
+- catch an exception **at the level where you can do something about it**, not immediately; don't use exceptions for **normal** control flow (they're expensive and confusing);
+- release resources via **try-with-resources**.
+
+On checked vs unchecked: the modern style more often prefers unchecked (\`RuntimeException\`) for programming errors, leaving checked for recoverable situations.`,
+      },
+      'clean-no-duplication': {
+        question: 'Why is code duplication bad, and must it always be removed?',
+        answer: `**Duplication** is one of the main enemies of maintainability and the essence of the **DRY (Don't Repeat Yourself)** principle: every piece of **knowledge** should have a single authoritative representation.
+
+Why it's harmful:
+
+- when the logic changes, you must fix it in **all copies** — it's easy to miss one and get inconsistency and a bug;
+- it bloats the code and complicates reading;
+- copies **drift apart** over time, and it becomes unclear which is "correct."
+
+It's removed by extracting the common part into a method, class, configuration, or template.
+
+**But not fanatically.** Important caveats:
+
+- DRY is about unity of **knowledge**, not matching lines of text: two pieces of code that *currently* look the same but express **different** business rules and will change independently should **not** be merged — otherwise you get false coupling (premature abstraction is often worse than duplication);
+- sometimes a little duplication **for readability** is justified — don't build a complex abstraction just to remove a couple of similar lines;
+- the "rule of three": tolerate the first repetition, but on the third appearance it's worth extracting the common part.
+
+Bottom line: remove duplication of **knowledge**, but don't confuse it with superficial code similarity, and don't sacrifice clarity for formal DRY.`,
+      },
+      'minimize-mutability': {
+        question: 'Why should you minimize mutability (immutability)? (Effective Java)',
+        answer: `Advice from "Effective Java": **prefer immutable objects** and generally minimize mutability — make fields \`final\` and classes immutable where possible.
+
+Advantages of immutable objects:
+
+- **thread safety "for free"** — an immutable object can be freely shared between threads without synchronization (there's nothing for a race to corrupt);
+- **easy to reason about** — state is set once at creation and never changes; less "who changed this and when";
+- **safe as \`HashMap\` keys** / \`HashSet\` elements — their hash won't "drift" after being added;
+- **reliable invariants** — the object is always in a valid state, no need to guard against external modification;
+- convenient to cache and reuse.
+
+How to do it:
+
+- **\`final\`** fields, no setters; the value only via the constructor;
+- defensive copying of mutable fields (collections, dates) on input and output;
+- in Java — a **\`record\`** for immutable data carriers;
+- fewer setters = fewer states = fewer bugs.
+
+The cost: frequent "changes" create new objects (GC load). The compromise — mutable "builders" (\`StringBuilder\`, the Builder pattern) for construction, with an immutable result. The general rule: make a class immutable unless there's a compelling reason not to; otherwise minimize mutability.`,
+      },
+      'optional-and-streams': {
+        question: 'How do you use Optional and the Stream API well? (Effective Java)',
+        answer: `**Optional** and **Stream** are powerful tools, but they have rules for appropriate use.
+
+**Optional** — a way to explicitly express "the value may be absent" instead of returning \`null\`:
+
+- use it as a method's **return value** when it may not find a result (\`Optional<User> findById(...)\`) — the caller is forced to handle absence;
+- **do not** use \`Optional\` for **fields** and method **parameters** (extra wrappers, overhead) — it wasn't designed for that;
+- don't wrap collections in \`Optional\` — return an empty collection;
+- extract the value safely: \`orElse\`, \`orElseGet\`, \`map\`, \`ifPresent\` — not \`.get()\` without a check (that's the same as \`null\`, just differently);
+- for primitives — \`OptionalInt\`/\`OptionalLong\`.
+
+**Stream API:**
+
+- excellent for **data transformations** (filter/map/reduce/collect) — readable and declarative;
+- **don't overdo it**: overly long/nested streams read worse than a plain loop — choose by readability, not "because it's trendy";
+- functions in the pipeline should be **side-effect-free** (especially important for parallel streams); don't mutate external state in \`forEach\`;
+- prefer \`collect(...)\` for gathering the result over mutable accumulators in lambdas.
+
+Rule: both are for **expressiveness and safety**; apply them where they make the code **clearer**, not more complex.`,
+      },
+      'money-bigdecimal': {
+        question: 'Why can\'t you use float/double for money, and what do you use instead?',
+        answer: `\`float\` and \`double\` are **binary** floating-point numbers: they **cannot exactly represent** many decimal fractions (e.g., 0.1). The classic example: \`0.1 + 0.2\` gives \`0.30000000000000004\`. For money this is unacceptable — rounding errors accumulate, sums "don't add up," and discrepancies of cents arise that are critical in finance.
+
+What to use:
+
+- **\`BigDecimal\`** — an arbitrary-precision number with a **decimal** representation, without loss of precision. Be sure to:
+  - create it from a **string** or via \`BigDecimal.valueOf(...)\`, **not** from a \`double\` (\`new BigDecimal(0.1)\` introduces the same binary error);
+  - explicitly set **rounding** (\`setScale(2, RoundingMode.HALF_UP)\`) and the scale for the currency;
+  - compare via \`compareTo\` (not \`equals\`, which considers scale: \`2.0\` ≠ \`2.00\`).
+- even better — a dedicated domain type **\`Money\`** (amount + currency) that encapsulates rounding rules and forbids adding different currencies. Amounts are often stored as **minor units in an integer** (\`long\` of cents) for speed, but with careful scale control.
+
+In short: money is an **exact decimal** quantity, so use \`BigDecimal\`/\`Money\`; \`double\` is only for approximate scientific/engineering calculations.`,
+      },
+      'domain-return-types': {
+        question: 'Why is it better to return void or a domain object rather than flags? (Effective Java)',
+        answer: `The idea: an operation's result should be **self-documenting and type-safe**. A method should be designed to return either **\`void\`** (when it's a command with no result) or a meaningful **domain result object** (e.g., \`TransferResult\`), rather than "raw" \`boolean\`/\`int\` codes or \`null\`.
+
+Why boolean/numeric flags are poor as a result:
+
+- **opaque** — what does \`false\` mean? "Failed," "already existed," "no permission"? The caller guesses;
+- information is lost — a single \`boolean\` can't convey *why* and *what* details;
+- it's easy to **ignore** the returned code and not handle the error.
+
+A domain result object:
+
+- **explicitly names** the outcome (\`TransferResult\` with fields: status, operation id, message) — the code becomes self-documenting;
+- extensible — you can add details without breaking the signature;
+- combined with exceptions: **normal** outcomes via a result/value, **erroneous/exceptional** ones via domain exceptions (see the error-handling question).
+
+Related to the **Command-Query Separation** principle: commands (change state) are usually \`void\`, queries return data. And when an operation's result matters — return an **expressive type**, not an anonymous flag. This makes the API clearer and safer to use.`,
       },
     },
   },
