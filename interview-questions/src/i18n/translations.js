@@ -3,6 +3,10 @@ const ui = {
   ru: {
     heroTitle: 'Java Interview Hub',
     heroSubtitle: 'Подготовка к интервью на позицию Senior Java Developer',
+    searchPlaceholder: '🔍 Поиск по вопросам…',
+    searchClear: 'Очистить',
+    searchResultsCount: 'найдено',
+    searchNoResults: 'Ничего не найдено. Попробуйте другой запрос.',
     topics: 'тем',
     questionsCount: 'вопросов',
     home: 'Главная',
@@ -57,6 +61,10 @@ const ui = {
   en: {
     heroTitle: 'Java Interview Hub',
     heroSubtitle: 'Preparation for a Senior Java Developer interview',
+    searchPlaceholder: '🔍 Search questions…',
+    searchClear: 'Clear',
+    searchResultsCount: 'found',
+    searchNoResults: 'Nothing found. Try a different query.',
     topics: 'topics',
     questionsCount: 'questions',
     home: 'Home',
