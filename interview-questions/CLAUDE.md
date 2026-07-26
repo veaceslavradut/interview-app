@@ -45,11 +45,12 @@ Consequences:
 
 Russian is the source of truth; English is an override layer that degrades gracefully.
 
-- `questions.js` — the canonical `categories` array: `{ id, title, icon, description, questions: [{ id, question, answer }] }`. Answers are markdown template literals (fenced code blocks included), rendered by `react-markdown` + `remark-gfm`.
-- `content.en.js` — `enContent[categoryId]` with optional `title` / `description` / `questions[questionId]`.
+- `questions.js` — a **barrel** that assembles the canonical `categories` array. Each category lives in its own file under `questions/<categoryId>.js` (e.g. `questions/kafka.js`) exporting `export const <camelCaseId> = { id, title, icon, description, questions: [{ id, question, answer }] }`; the barrel imports them and lists them in the array **in display order** (that order drives the home page). Answers are markdown template literals (fenced code blocks included), rendered by `react-markdown` + `remark-gfm`. `questions.js` also still exports `getCategory` / `getQuestion`.
+- `content.en.js` — a **barrel** for `enContent[categoryId]`. Each category's English overrides live in `content-en/<categoryId>.js` exporting `export const <camelCaseId> = { title?, description?, questions? }`; the barrel maps them (hyphenated ids like `'java-core'` are quoted keys → `javaCore` var).
+- To add/edit content: edit the per-category file. A **new category** also needs one line in each barrel (an import + a slot in the array/object) and — if it has a quiz — a `quizzes.js` map entry. Category id is the filename and the join key; keep the RU file, EN file, and quiz all under the same id.
 - `localized.js` — merges the two. `getCategories` / `getCategory` / `getQuestion(categoryId, questionId, lang)`; the last also returns `prev`/`next` for question navigation. Anything without an English override is returned as Russian with `translated: false`, which drives the "only available in Russian" note and keeps speech synthesis in Russian for that answer. **English translation is intentionally partial — untranslated content is a normal state, not a bug.**
 
-Pages never import `questions.js` or `content.en.js` directly; they go through `localized.js`. Keep it that way.
+Pages never import `questions.js` or `content.en.js` directly; they go through `localized.js`. Keep it that way. The barrels are the only place that knows the full category list — a stray category file that isn't wired into the barrel is simply invisible.
 
 ### Quizzes (`src/data/quiz/*.js` → `quizzes.js`)
 
@@ -75,9 +76,9 @@ Reads answers aloud via the Web Speech API; returns `null` when unsupported. Two
 
 ## Adding content
 
-- **Question**: add to the category's `questions` array in `questions.js`. Optionally add the same `questionId` under `enContent[categoryId].questions` in `content.en.js`; skipping it is fine.
-- **Quiz slot**: add to the topic's bank. 2+ variants per slot is the norm; each variant needs 4 options and a `correct` index.
-- **New topic**: add a category to `questions.js`, then (optionally) a bank in `src/data/quiz/` wired into the `quizzes` map under the identical id. Without a map entry the topic simply has no quiz link.
+- **Question**: add to the `questions` array in `src/data/questions/<categoryId>.js`. Optionally add the same `questionId` under `questions` in `src/data/content-en/<categoryId>.js` (the English override); skipping it is fine — untranslated is a normal state.
+- **Quiz slot**: add to the topic's bank in `src/data/quiz/`. 2+ variants per slot is the norm; each variant needs 4 options and a `correct` index.
+- **New topic**: create `src/data/questions/<id>.js` (exporting the category object), wire it into the `questions.js` barrel (import + a slot in the `categories` array at the desired position). Optionally add `src/data/content-en/<id>.js` wired into the `content.en.js` barrel, and a quiz bank in `src/data/quiz/` wired into the `quizzes` map — all under the identical `<id>`. Without the barrel wiring the category is invisible; without the `quizzes` entry the topic simply has no quiz link.
 
 ## Deployment
 
