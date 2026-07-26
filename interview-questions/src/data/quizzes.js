@@ -22,6 +22,10 @@ import { patternsQuiz } from './quiz/patterns';
 import { springQuiz, hibernateQuiz } from './quiz/frameworks';
 import { kafkaQuiz, microservicesQuiz, awsQuiz } from './quiz/infra';
 import { nosqlQuiz } from './quiz/nosql';
+import { dockerQuiz } from './quiz/docker';
+import { monitoringQuiz } from './quiz/monitoring';
+import { terraformQuiz } from './quiz/terraform';
+import { cleanCodeQuiz } from './quiz/cleanCode';
 
 export const quizzes = {
   oop: {
@@ -456,6 +460,10 @@ export const quizzes = {
   microservices: { questions: microservicesQuiz },
   aws: { questions: awsQuiz },
   nosql: { questions: nosqlQuiz },
+  docker: { questions: dockerQuiz },
+  monitoring: { questions: monitoringQuiz },
+  terraform: { questions: terraformQuiz },
+  'clean-code': { questions: cleanCodeQuiz },
 };
 
 function shuffle(array) {
