@@ -2318,21 +2318,6 @@ Two approaches to concurrent access:
 
 Choice: optimistic — for **rare** conflicts (better for scalability); pessimistic — for **frequent** contention over the same rows.`,
       },
-      normalization: {
-        question: 'What are normalization and denormalization? What normal forms exist?',
-        answer: `**Normalization** — organizing tables to eliminate **redundancy** and insertion/update/deletion anomalies by splitting data into related tables. The main normal forms (each includes the previous):
-
-- **1NF** — atomic values (no lists/repeating groups in a cell), a primary key exists;
-- **2NF** — 1NF + every non-key attribute depends on the **whole** composite key, not part of it;
-- **3NF** — 2NF + no **transitive** dependencies (a non-key attribute doesn't depend on another non-key one);
-- **BCNF** — a stricter 3NF (every determinant is a candidate key).
-
-In practice you usually go up to **3NF/BCNF**.
-
-**Denormalization** — deliberately **introducing redundancy** (duplicating data, precomputed aggregates, merging tables) for **read speed**: fewer JOINs, faster queries. The cost — more complex writes and a risk of inconsistency (copies must be kept in sync).
-
-The trade-off: normalization optimizes **integrity and writes** (OLTP), denormalization optimizes **reads** (analytics, reports, high-read load). The choice depends on the workload profile.`,
-      },
     },
   },
   jdbc: {
@@ -4917,41 +4902,6 @@ Recommendation: events for domain integration, synchronous calls for real-time d
 **BFF (Backend for Frontend)** — a separate API layer for each client type (web, mobile).
 
 **Bulkhead** — resource isolation (separate thread/connection pools) so that the failure of one dependency does not exhaust the resources of the entire service.`,
-      },
-      docker: {
-        question: 'What is Docker? How does a container differ from a virtual machine?',
-        answer: `**Docker** — a containerization platform: packaging an application with all its dependencies into a portable image that runs the same everywhere.
-
-**Container vs virtual machine:**
-
-- **VM** — hardware emulation + a full guest OS on a hypervisor: gigabytes, starts in minutes;
-- **Container** — an isolated process using the **host OS kernel** (namespaces — isolation, cgroups — resource limits): megabytes, starts in seconds.
-
-**Core concepts:**
-
-- **Image** — an immutable template made of layers (layers are cached and reused);
-- **Container** — a running instance of an image;
-- **Dockerfile** — the recipe for building an image;
-- **Registry** — image storage (Docker Hub, ECR, GCR, Harbor).
-
-\`\`\`dockerfile
-# multi-stage build for Java
-FROM maven:3.9-eclipse-temurin-21 AS build
-WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline        # dependency cache as a separate layer
-COPY src ./src
-RUN mvn package -DskipTests
-
-FROM eclipse-temurin:21-jre-alpine   # lightweight runtime image
-COPY --from=build /app/target/app.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
-\`\`\`
-
-**Best practices**: multi-stage builds (small final image), minimal base images (alpine, distroless), don't run as root, .dockerignore, layer ordering for the cache (dependencies before code), healthcheck.
-
-For local development of multiple services — **Docker Compose** (docker-compose.yml).`,
       },
       kubernetes: {
         question: 'What is Kubernetes? Core objects.',
