@@ -1,6 +1,7 @@
 import { Link, useParams, Navigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import { getQuestion } from '../data/localized';
 import Breadcrumbs from '../components/Breadcrumbs';
 import SpeechPlayer from '../components/SpeechPlayer';
@@ -40,7 +41,12 @@ export default function QuestionPage() {
           <p className="untranslated-note">{t(lang, 'untranslated')}</p>
         )}
         <div className="answer-body">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{question.answer}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[[rehypeHighlight, { ignoreMissing: true }]]}
+          >
+            {question.answer}
+          </ReactMarkdown>
         </div>
       </article>
 
