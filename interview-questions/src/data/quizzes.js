@@ -1,15 +1,15 @@
 // Банки вопросов для финальных тестов по темам.
 // Каждый «слот» содержит несколько вариантов вопроса — при каждом прохождении
 // случайно выбирается один вариант, а порядок ответов перемешивается.
-import { jvmQuiz } from './quiz/jvm';
-import { javaCoreQuiz } from './quiz/javaCore';
-import { collectionsQuiz } from './quiz/collections';
-import { java8Quiz } from './quiz/java8';
-import { ioQuiz, serializationQuiz } from './quiz/ioSerialization';
-import { multithreadingQuiz } from './quiz/multithreading';
-import { reactiveQuiz } from './quiz/reactive';
-import { servletsQuiz, htmlQuiz, cssQuiz, webQuiz } from './quiz/webFrontend';
-import { databasesQuiz, sqlQuiz, jdbcQuiz } from './quiz/dataStorage';
+import { jvmQuiz } from './quiz/jvm.js';
+import { javaCoreQuiz } from './quiz/javaCore.js';
+import { collectionsQuiz } from './quiz/collections.js';
+import { java8Quiz } from './quiz/java8.js';
+import { ioQuiz, serializationQuiz } from './quiz/ioSerialization.js';
+import { multithreadingQuiz } from './quiz/multithreading.js';
+import { reactiveQuiz } from './quiz/reactive.js';
+import { servletsQuiz, htmlQuiz, cssQuiz, webQuiz } from './quiz/webFrontend.js';
+import { databasesQuiz, sqlQuiz, jdbcQuiz } from './quiz/dataStorage.js';
 import {
   testingQuiz,
   loggingQuiz,
@@ -17,15 +17,15 @@ import {
   xmlQuiz,
   buildToolsQuiz,
   gitQuiz,
-} from './quiz/toolsQuality';
-import { patternsQuiz } from './quiz/patterns';
-import { springQuiz, hibernateQuiz } from './quiz/frameworks';
-import { kafkaQuiz, microservicesQuiz, awsQuiz } from './quiz/infra';
-import { nosqlQuiz } from './quiz/nosql';
-import { dockerQuiz } from './quiz/docker';
-import { monitoringQuiz } from './quiz/monitoring';
-import { terraformQuiz } from './quiz/terraform';
-import { cleanCodeQuiz } from './quiz/cleanCode';
+} from './quiz/toolsQuality.js';
+import { patternsQuiz } from './quiz/patterns.js';
+import { springQuiz, hibernateQuiz } from './quiz/frameworks.js';
+import { kafkaQuiz, microservicesQuiz, awsQuiz } from './quiz/infra.js';
+import { nosqlQuiz } from './quiz/nosql.js';
+import { dockerQuiz } from './quiz/docker.js';
+import { monitoringQuiz } from './quiz/monitoring.js';
+import { terraformQuiz } from './quiz/terraform.js';
+import { cleanCodeQuiz } from './quiz/cleanCode.js';
 
 export const quizzes = {
   oop: {
