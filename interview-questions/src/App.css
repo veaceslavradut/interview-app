@@ -490,6 +490,58 @@
   font-size: inherit;
 }
 
+/* Syntax highlighting (rehype-highlight / highlight.js tokens).
+   The code block background is dark (see .answer-body pre), so this is a
+   GitHub-dark-style palette — readable in both light and dark app themes. */
+.answer-body .hljs-comment,
+.answer-body .hljs-quote {
+  color: #8b949e;
+  font-style: italic;
+}
+.answer-body .hljs-keyword,
+.answer-body .hljs-selector-tag,
+.answer-body .hljs-literal,
+.answer-body .hljs-type,
+.answer-body .hljs-deletion {
+  color: #ff7b72;
+}
+.answer-body .hljs-string,
+.answer-body .hljs-attr,
+.answer-body .hljs-attribute,
+.answer-body .hljs-addition {
+  color: #a5d6ff;
+}
+.answer-body .hljs-number,
+.answer-body .hljs-built_in,
+.answer-body .hljs-symbol,
+.answer-body .hljs-bullet {
+  color: #79c0ff;
+}
+.answer-body .hljs-title,
+.answer-body .hljs-title.function_,
+.answer-body .hljs-section {
+  color: #d2a8ff;
+}
+.answer-body .hljs-title.class_,
+.answer-body .hljs-variable,
+.answer-body .hljs-property,
+.answer-body .hljs-params {
+  color: #ffa657;
+}
+.answer-body .hljs-meta {
+  color: #d2a8ff;
+}
+.answer-body .hljs-name,
+.answer-body .hljs-tag {
+  color: #7ee787;
+}
+.answer-body .hljs-emphasis {
+  font-style: italic;
+}
+.answer-body .hljs-strong {
+  font-weight: 600;
+}
+
 .answer-body table {
   border-collapse: collapse;
   margin: 1rem 0;
