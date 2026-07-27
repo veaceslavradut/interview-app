@@ -15,6 +15,11 @@
   --color-primary-soft: #eef1fe;
   --color-accent: #7c5cf0;
   --color-code-bg: #f0f2f8;
+  --color-header-grad-end: #f3effe;
+  --color-mark-bg: #fff2ac;
+  --color-note-bg: #fff8e6;
+  --color-note-border: #f2dfa8;
+  --color-note-text: #8a6d1a;
   --shadow-sm: 0 1px 3px rgba(43, 52, 69, 0.08);
   --shadow-md: 0 6px 20px rgba(43, 52, 69, 0.1);
   --radius: 14px;
@@ -26,6 +31,31 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark theme — activated by data-theme="dark" on <html> (set by the inline
+   script in index.html + ThemeContext). Overrides the same variables so the
+   whole app switches without touching component styles. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-bg: #0f1420;
+  --color-surface: #1a2130;
+  --color-border: #2b3349;
+  --color-text: #e6e9f2;
+  --color-text-muted: #9aa4bb;
+  --color-primary: #8098ff;
+  --color-primary-dark: #c3ccff;
+  --color-primary-soft: #232d47;
+  --color-accent: #b199ff;
+  --color-code-bg: #11151f;
+  --color-header-grad-end: #202a44;
+  --color-mark-bg: rgba(255, 213, 74, 0.28);
+  --color-note-bg: #2e2a1a;
+  --color-note-border: #4d4326;
+  --color-note-text: #d8c48a;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
 *,

@@ -142,7 +142,7 @@
 }
 
 .search-highlight {
-  background: #fff2ac;
+  background: var(--color-mark-bg);
   color: inherit;
   border-radius: 3px;
   padding: 0 0.1em;
@@ -260,7 +260,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1.5rem 1.75rem;
-  background: linear-gradient(120deg, var(--color-primary-soft), #f3effe);
+  background: linear-gradient(120deg, var(--color-primary-soft), var(--color-header-grad-end));
   border-radius: var(--radius);
   margin-bottom: 1.5rem;
 }
@@ -389,7 +389,7 @@
 
 .speech-voice-select {
   border: 1px solid var(--color-primary-soft);
-  background: #fff;
+  background: var(--color-surface);
   color: var(--color-primary);
   font: inherit;
   font-size: 0.85rem;
@@ -400,14 +400,42 @@
   max-width: 14rem;
 }
 
-.lang-switcher {
+/* Top-right controls: theme toggle + language switcher share one fixed bar. */
+.top-controls {
   position: fixed;
   top: 1rem;
   right: 1rem;
   z-index: 100;
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--color-primary-soft);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(30, 41, 90, 0.08);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.lang-switcher {
+  display: flex;
   gap: 0.25rem;
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid var(--color-primary-soft);
   border-radius: 999px;
   padding: 0.2rem;
@@ -439,11 +467,11 @@
 .untranslated-note {
   margin: 0 0 1.25rem;
   padding: 0.6rem 1rem;
-  background: #fff8e6;
-  border: 1px solid #f2dfa8;
+  background: var(--color-note-bg);
+  border: 1px solid var(--color-note-border);
   border-radius: 10px;
   font-size: 0.9rem;
-  color: #8a6d1a;
+  color: var(--color-note-text);
 }
 
 .answer-body {

@@ -5,6 +5,21 @@
     <link rel="icon" href="./public/java.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Java Interview Hub — подготовка к собеседованию Senior Java Developer</title>
+    <script>
+      // Set the theme before first paint to avoid a flash of the wrong theme.
+      // Kept in sync afterwards by ThemeContext.
+      (function () {
+        try {
+          var t = localStorage.getItem('interview-hub-theme');
+          if (t !== 'light' && t !== 'dark') {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.dataset.theme = t;
+        } catch (e) {
+          /* localStorage/matchMedia unavailable — fall back to CSS default (light) */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
