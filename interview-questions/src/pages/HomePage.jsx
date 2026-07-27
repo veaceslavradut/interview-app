@@ -1,22 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCategories } from '../data/localized';
+import { buildSearchIndex, searchQuestions } from '../data/search';
+import Highlighted from '../components/Highlighted';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
-
-// Подсвечивает первое вхождение запроса в тексте вопроса.
-function highlight(text, query) {
-  if (!query) return text;
-  const idx = text.toLowerCase().indexOf(query);
-  if (idx === -1) return text;
-  return (
-    <>
-      {text.slice(0, idx)}
-      <mark className="search-highlight">{text.slice(idx, idx + query.length)}</mark>
-      {text.slice(idx + query.length)}
-    </>
-  );
-}
 
 const MAX_RESULTS = 50;
 
@@ -26,40 +14,10 @@ export default function HomePage() {
   const totalQuestions = categories.reduce((sum, c) => sum + c.questions.length, 0);
 
   const [query, setQuery] = useState('');
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
 
-  // плоский индекс всех вопросов для быстрого поиска (данные статичные, в памяти)
-  const allQuestions = useMemo(
-    () =>
-      categories.flatMap((c) =>
-        c.questions.map((question) => ({
-          catId: c.id,
-          catTitle: c.title,
-          catIcon: c.icon,
-          id: question.id,
-          question: question.question,
-          // предвычисленные строки в нижнем регистре для быстрого поиска
-          questionLc: question.question.toLowerCase(),
-          catTitleLc: c.title.toLowerCase(),
-          answerLc: (question.answer || '').toLowerCase(),
-        }))
-      ),
-    [categories]
-  );
-
-  // Ищем по тексту вопроса, названию темы и тексту ответа, чтобы находились и
-  // термины из ответов (например, «BigDecimal»). Совпадения в заголовке вопроса
-  // или названии темы показываем выше совпадений только в тексте ответа.
-  const results = useMemo(() => {
-    if (!q) return [];
-    const primary = [];
-    const secondary = [];
-    for (const item of allQuestions) {
-      if (item.questionLc.includes(q) || item.catTitleLc.includes(q)) primary.push(item);
-      else if (item.answerLc.includes(q)) secondary.push(item);
-    }
-    return [...primary, ...secondary];
-  }, [q, allQuestions]);
+  const index = useMemo(() => buildSearchIndex(categories), [categories]);
+  const results = useMemo(() => searchQuestions(index, query), [index, query]);
 
   return (
     <div className="page">
@@ -117,7 +75,7 @@ export default function HomePage() {
                     {item.catIcon} {item.catTitle}
                   </span>
                   <span className="search-result-question">
-                    {highlight(item.question, q)}
+                    <Highlighted text={item.question} query={query} />
                   </span>
                   <span className="question-arrow">→</span>
                 </Link>

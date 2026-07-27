@@ -8,6 +8,7 @@ import SuggestionsPage from './pages/SuggestionsPage';
 import ScrollToTop from './components/ScrollToTop';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import ThemeSwitcher from './components/ThemeSwitcher';
+import SearchOverlay from './components/SearchOverlay';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { ThemeProvider } from './theme/ThemeContext';
 import './App.css';
@@ -19,6 +20,7 @@ function App() {
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <ScrollToTop />
           <div className="top-controls">
+            <SearchOverlay />
             <ThemeSwitcher />
             <LanguageSwitcher />
           </div>
