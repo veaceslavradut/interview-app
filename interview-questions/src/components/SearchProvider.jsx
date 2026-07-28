@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCategories } from '../data/localized';
 import { buildSearchIndex, searchQuestions } from '../data/search';
@@ -8,9 +16,15 @@ import { t } from '../i18n/translations';
 
 const MAX_RESULTS = 10;
 
-// Global command-palette search: a trigger button (rendered wherever the
-// component is mounted) plus a full-screen overlay opened with Cmd/Ctrl+K.
-export default function SearchOverlay() {
+// One search UI for the whole app: the command palette. Any entry point (the
+// header trigger, the home-page launcher, or Cmd/Ctrl+K) opens the same overlay.
+const SearchContext = createContext({ openSearch: () => {}, closeSearch: () => {} });
+
+export function useSearch() {
+  return useContext(SearchContext);
+}
+
+export function SearchProvider({ children }) {
   const { lang } = useLanguage();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -24,6 +38,9 @@ export default function SearchOverlay() {
     () => searchQuestions(index, query).slice(0, MAX_RESULTS),
     [index, query]
   );
+
+  const openSearch = useCallback(() => setOpen(true), []);
+  const closeSearch = useCallback(() => setOpen(false), []);
 
   // Cmd/Ctrl+K toggles the palette from anywhere.
   useEffect(() => {
@@ -52,23 +69,20 @@ export default function SearchOverlay() {
     };
   }, [open]);
 
-  // Reset selection when the query changes; keep the active item in view.
   useEffect(() => setActive(0), [query]);
   useEffect(() => {
     listRef.current?.querySelector('.is-active')?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
-  const close = () => setOpen(false);
-
   const select = (item) => {
     if (!item) return;
     navigate(`/category/${item.catId}/question/${item.id}`);
-    close();
+    closeSearch();
   };
 
   const onInputKeyDown = (event) => {
     if (event.key === 'Escape') {
-      close();
+      closeSearch();
     } else if (event.key === 'ArrowDown') {
       event.preventDefault();
       setActive((a) => Math.min(a + 1, results.length - 1));
@@ -81,17 +95,11 @@ export default function SearchOverlay() {
     }
   };
 
+  const value = useMemo(() => ({ openSearch, closeSearch }), [openSearch, closeSearch]);
+
   return (
-    <>
-      <button
-        type="button"
-        className="search-trigger"
-        aria-label={t(lang, 'searchOpen')}
-        title={t(lang, 'searchOpen')}
-        onClick={() => setOpen(true)}
-      >
-        🔍
-      </button>
+    <SearchContext.Provider value={value}>
+      {children}
 
       {open && (
         <div
@@ -99,7 +107,7 @@ export default function SearchOverlay() {
           role="dialog"
           aria-modal="true"
           aria-label={t(lang, 'searchPlaceholder')}
-          onMouseDown={close}
+          onMouseDown={closeSearch}
         >
           <div className="search-palette" onMouseDown={(event) => event.stopPropagation()}>
             <input
@@ -146,6 +154,6 @@ export default function SearchOverlay() {
           </div>
         </div>
       )}
-    </>
+    </SearchContext.Provider>
   );
 }
