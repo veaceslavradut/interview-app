@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getCategories } from '../data/localized';
-import { useSearch } from '../components/SearchProvider';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
 
 export default function HomePage() {
   const { lang } = useLanguage();
-  const { openSearch } = useSearch();
   const categories = useMemo(() => getCategories(lang), [lang]);
   const totalQuestions = categories.reduce((sum, c) => sum + c.questions.length, 0);
 
@@ -16,14 +14,6 @@ export default function HomePage() {
       <header className="hero">
         <h1 className="hero-title">{t(lang, 'heroTitle')}</h1>
         <p className="hero-subtitle">{t(lang, 'heroSubtitle')}</p>
-
-        {/* Prominent search affordance that opens the shared command palette. */}
-        <button type="button" className="search-launcher" onClick={openSearch}>
-          <span className="search-launcher-icon">🔍</span>
-          <span className="search-launcher-text">{t(lang, 'searchPlaceholder')}</span>
-          <kbd className="search-launcher-kbd">Ctrl / ⌘ K</kbd>
-        </button>
-
         <p className="hero-stats">
           {categories.length} {t(lang, 'topics')} · {totalQuestions} {t(lang, 'questionsCount')}
         </p>
