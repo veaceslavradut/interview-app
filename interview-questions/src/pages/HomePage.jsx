@@ -1,13 +1,19 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getCategories } from '../data/localized';
+import { useProgress } from '../data/progress';
+import ProgressBar from '../components/ProgressBar';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
 
 export default function HomePage() {
   const { lang } = useLanguage();
+  const { status, bookmarks, knownCount } = useProgress();
   const categories = useMemo(() => getCategories(lang), [lang]);
   const totalQuestions = categories.reduce((sum, c) => sum + c.questions.length, 0);
+
+  const bookmarkCount = Object.keys(bookmarks).length;
+  const reviewCount = Object.values(status).filter((s) => s === 'review').length;
 
   return (
     <div className="page">
@@ -19,17 +25,32 @@ export default function HomePage() {
         </p>
       </header>
 
+      <nav className="study-nav">
+        <Link to="/bookmarks" className="study-nav-link">
+          ★ {t(lang, 'studyBookmarks')} <span className="study-nav-count">{bookmarkCount}</span>
+        </Link>
+        <Link to="/review" className="study-nav-link">
+          ↻ {t(lang, 'studyReview')} <span className="study-nav-count">{reviewCount}</span>
+        </Link>
+      </nav>
+
       <main className="category-grid">
-        {categories.map((category) => (
-          <Link key={category.id} to={`/category/${category.id}`} className="category-card">
-            <span className="category-icon">{category.icon}</span>
-            <div className="category-info">
-              <h2 className="category-title">{category.title}</h2>
-              <p className="category-description">{category.description}</p>
-            </div>
-            <span className="category-count">{category.questions.length}</span>
-          </Link>
-        ))}
+        {categories.map((category) => {
+          const done = knownCount(category.id, category.questions);
+          return (
+            <Link key={category.id} to={`/category/${category.id}`} className="category-card">
+              <span className="category-icon">{category.icon}</span>
+              <div className="category-info">
+                <h2 className="category-title">{category.title}</h2>
+                <p className="category-description">{category.description}</p>
+                {done > 0 && (
+                  <ProgressBar done={done} total={category.questions.length} showLabel={false} />
+                )}
+              </div>
+              <span className="category-count">{category.questions.length}</span>
+            </Link>
+          );
+        })}
       </main>
 
       <section className="suggest-banner">

@@ -5,6 +5,7 @@ import rehypeHighlight from 'rehype-highlight';
 import { getQuestion } from '../data/localized';
 import Breadcrumbs from '../components/Breadcrumbs';
 import SpeechPlayer from '../components/SpeechPlayer';
+import ProgressControls from '../components/ProgressControls';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
 
@@ -37,6 +38,7 @@ export default function QuestionPage() {
           {question.question}
         </h1>
         <SpeechPlayer title={question.question} text={question.answer} contentLang={contentLang} />
+        <ProgressControls categoryId={category.id} questionId={question.id} />
         {lang !== 'ru' && !question.translated && (
           <p className="untranslated-note">{t(lang, 'untranslated')}</p>
         )}

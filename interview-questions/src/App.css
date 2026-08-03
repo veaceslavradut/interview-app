@@ -992,6 +992,157 @@
   overflow-wrap: anywhere;
 }
 
+/* ---------- Прогресс изучения (Item 5) ---------- */
+
+.category-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Study controls on the question page */
+.progress-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.progress-btn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.progress-btn:hover {
+  border-color: var(--color-primary);
+}
+
+.progress-btn.is-known {
+  background: #1f8f4d;
+  border-color: #1f8f4d;
+  color: #fff;
+}
+
+.progress-btn.is-review {
+  background: #d98a1f;
+  border-color: #d98a1f;
+  color: #fff;
+}
+
+.progress-btn.is-bookmarked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* Progress bar (category header + cards) */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #1f8f4d;
+  transition: width 0.25s ease;
+}
+
+.progress-label {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+/* Per-question status markers in the category list */
+.question-mark {
+  flex-shrink: 0;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.mark-known {
+  color: #1f8f4d;
+}
+
+.mark-review {
+  color: #d98a1f;
+}
+
+.mark-bookmark {
+  color: var(--color-primary);
+}
+
+/* Study-lists nav on the home page */
+.study-nav {
+  display: flex;
+  gap: 0.6rem;
+  margin: 1.25rem 0 0.25rem;
+}
+
+.study-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.study-nav-link:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.study-nav-count {
+  min-width: 1.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.clear-progress {
+  display: block;
+  margin: 2rem auto 0;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.clear-progress:hover {
+  color: #b4292d;
+}
+
 /* ---------- Адаптивность ---------- */
 
 @media (max-width: 640px) {
