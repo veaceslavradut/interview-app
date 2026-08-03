@@ -924,6 +924,65 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Spaced-repetition flashcards */
+.review-start-link {
+  margin: 0 0 1rem;
+}
+
+.flashcard {
+  text-align: left;
+}
+
+.flashcard .quiz-heading {
+  margin-top: 0.6rem;
+}
+
+.flashcard-answer {
+  margin: 0.75rem 0 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.flashcard-ratings {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.flashcard-rate {
+  flex: 1;
+  min-width: 5.5rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.flashcard-rate:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.rate-again:hover {
+  border-color: #e5484d;
+}
+
+.rate-hard:hover {
+  border-color: #e8930c;
+}
+
+.rate-good:hover {
+  border-color: var(--color-primary);
+}
+
+.rate-easy:hover {
+  border-color: #22a06b;
+}
+
 /* ---------- Предложенные вопросы ---------- */
 
 .suggest-banner {
