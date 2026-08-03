@@ -6,6 +6,7 @@ import QuizPage from './pages/QuizPage';
 import SuggestPage from './pages/SuggestPage';
 import SuggestionsPage from './pages/SuggestionsPage';
 import StudyListPage from './pages/StudyListPage';
+import RandomPage from './pages/RandomPage';
 import ScrollToTop from './components/ScrollToTop';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import ThemeSwitcher from './components/ThemeSwitcher';
@@ -38,6 +39,7 @@ function App() {
                 <Route path="/suggestions" element={<SuggestionsPage />} />
                 <Route path="/bookmarks" element={<StudyListPage mode="bookmarks" />} />
                 <Route path="/review" element={<StudyListPage mode="review" />} />
+                <Route path="/random" element={<RandomPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </SearchProvider>

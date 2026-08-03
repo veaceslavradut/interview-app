@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getCategories } from '../data/localized';
+import { getQuestionOfTheDay } from '../data/daily';
 import { useProgress } from '../data/progress';
 import ProgressBar from '../components/ProgressBar';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -10,6 +11,7 @@ export default function HomePage() {
   const { lang } = useLanguage();
   const { status, bookmarks, knownCount } = useProgress();
   const categories = useMemo(() => getCategories(lang), [lang]);
+  const qotd = useMemo(() => getQuestionOfTheDay(lang), [lang]);
   const totalQuestions = categories.reduce((sum, c) => sum + c.questions.length, 0);
 
   const bookmarkCount = Object.keys(bookmarks).length;
@@ -32,7 +34,23 @@ export default function HomePage() {
         <Link to="/review" className="study-nav-link">
           ↻ {t(lang, 'studyReview')} <span className="study-nav-count">{reviewCount}</span>
         </Link>
+        <Link to="/random" className="study-nav-link">
+          🎲 {t(lang, 'randomQuestion')}
+        </Link>
       </nav>
+
+      {qotd && (
+        <Link
+          to={`/category/${qotd.category.id}/question/${qotd.question.id}`}
+          className="qotd-card"
+        >
+          <span className="qotd-label">✨ {t(lang, 'qotdTitle')}</span>
+          <span className="qotd-question">
+            {qotd.category.icon} {qotd.question.question}
+          </span>
+          <span className="qotd-category">{qotd.category.title}</span>
+        </Link>
+      )}
 
       <main className="category-grid">
         {categories.map((category) => {
