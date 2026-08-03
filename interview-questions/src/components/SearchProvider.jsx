@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCategories } from '../data/localized';
+import { loadAllFull } from '../data/localized';
 import { buildSearchIndex, searchQuestions } from '../data/search';
 import Highlighted from './Highlighted';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -33,7 +33,21 @@ export function SearchProvider({ children }) {
   const inputRef = useRef(null);
   const listRef = useRef(null);
 
-  const index = useMemo(() => buildSearchIndex(getCategories(lang)), [lang]);
+  // The index needs answer bodies, which are lazy-loaded (item 9). We build it
+  // off the entry path: warmed on idle and guaranteed on first open, then cached
+  // per language. Until it lands, the palette simply returns no matches for a beat.
+  const [index, setIndex] = useState([]);
+  const builtLang = useRef(null);
+  const ensureIndex = useCallback(() => {
+    if (builtLang.current === lang) return;
+    builtLang.current = lang;
+    loadAllFull(lang)
+      .then((cats) => setIndex(buildSearchIndex(cats)))
+      .catch(() => {
+        builtLang.current = null; // let a later attempt retry
+      });
+  }, [lang]);
+
   const results = useMemo(
     () => searchQuestions(index, query).slice(0, MAX_RESULTS),
     [index, query]
@@ -41,6 +55,16 @@ export function SearchProvider({ children }) {
 
   const openSearch = useCallback(() => setOpen(true), []);
   const closeSearch = useCallback(() => setOpen(false), []);
+
+  // Warm the index in the background so the first open is instant.
+  useEffect(() => {
+    const ric = typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback : null;
+    const handle = ric ? ric(ensureIndex) : setTimeout(ensureIndex, 1500);
+    return () => {
+      if (ric && typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(handle);
+      else clearTimeout(handle);
+    };
+  }, [ensureIndex]);
 
   // Cmd/Ctrl+K toggles the palette from anywhere.
   useEffect(() => {
@@ -57,6 +81,7 @@ export function SearchProvider({ children }) {
   // On open: focus the input and lock background scroll. On close: reset query.
   useEffect(() => {
     if (open) {
+      ensureIndex();
       setActive(0);
       requestAnimationFrame(() => inputRef.current?.focus());
       document.body.style.overflow = 'hidden';
@@ -67,7 +92,7 @@ export function SearchProvider({ children }) {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [open]);
+  }, [open, ensureIndex]);
 
   useEffect(() => setActive(0), [query]);
   useEffect(() => {

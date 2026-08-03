@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
-import { getCategories } from '../data/localized';
+import { loadCategoryFull } from '../data/localized';
 import { useProgress, keyOf } from '../data/progress';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -15,24 +15,63 @@ export default function ReviewSessionPage() {
   const { lang } = useLanguage();
   const { status, srs, rateQuestion } = useProgress();
 
-  // The queue is snapshotted once on mount so ratings don't reshuffle mid-session.
-  const [queue, setQueue] = useState(() => {
-    const now = Date.now();
-    const cards = [];
-    for (const c of getCategories(lang)) {
-      for (const q of c.questions) {
-        const key = keyOf(c.id, q.id);
-        if (status[key] !== 'review') continue;
-        const card = srs[key];
-        if (!card || card.due <= now) {
-          cards.push({ catId: c.id, catTitle: c.title, catIcon: c.icon, question: q });
-        }
-      }
-    }
-    return cards;
-  });
+  // Flashcard answers are lazy-loaded (item 9), so the queue builds asynchronously.
+  // null = still loading; [] = nothing due. Only the categories that actually hold
+  // a due card are fetched, and the queue is snapshotted once so ratings don't
+  // reshuffle mid-session — hence status/srs are read from the mount closure only.
+  const [queue, setQueue] = useState(null);
   const [revealed, setRevealed] = useState(false);
   const [doneCount, setDoneCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const now = Date.now();
+    const dueCatIds = [
+      ...new Set(
+        Object.keys(status)
+          .filter((key) => status[key] === 'review')
+          .map((key) => key.slice(0, key.indexOf('/')))
+      ),
+    ];
+    Promise.all(dueCatIds.map((id) => loadCategoryFull(id, lang))).then((cats) => {
+      if (cancelled) return;
+      const cards = [];
+      for (const c of cats) {
+        if (!c) continue;
+        for (const q of c.questions) {
+          const key = keyOf(c.id, q.id);
+          if (status[key] !== 'review') continue;
+          const card = srs[key];
+          if (!card || card.due <= now) {
+            cards.push({ catId: c.id, catTitle: c.title, catIcon: c.icon, question: q });
+          }
+        }
+      }
+      setQueue(cards);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
+
+  if (queue === null) {
+    return (
+      <div className="page">
+        <Breadcrumbs
+          items={[
+            { label: t(lang, 'home'), to: '/' },
+            { label: t(lang, 'studyReview'), to: '/review' },
+            { label: t(lang, 'reviewSessionTitle') },
+          ]}
+        />
+        <div className="quiz-card">
+          <h1 className="quiz-heading">{t(lang, 'reviewSessionTitle')}</h1>
+          <p className="answer-loading">{t(lang, 'reviewLoading')}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (queue.length === 0) {
     return (

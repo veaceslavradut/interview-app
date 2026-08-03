@@ -1,8 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
-import { getQuestion } from '../data/localized';
+import { getQuestion, loadAnswer } from '../data/localized';
 import Breadcrumbs from '../components/Breadcrumbs';
 import SpeechPlayer from '../components/SpeechPlayer';
 import ProgressControls from '../components/ProgressControls';
@@ -12,7 +13,21 @@ import { t } from '../i18n/translations';
 export default function QuestionPage() {
   const { categoryId, questionId } = useParams();
   const { lang } = useLanguage();
+  // Meta (title, prev/next) is synchronous from the manifest; the answer markdown
+  // is the heavy part, lazy-loaded per category (item 9 — code splitting).
   const data = getQuestion(categoryId, questionId, lang);
+
+  const [answer, setAnswer] = useState(null); // { answer, translated } | null while loading
+  useEffect(() => {
+    let cancelled = false;
+    setAnswer(null);
+    loadAnswer(categoryId, questionId, lang).then((loaded) => {
+      if (!cancelled) setAnswer(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [categoryId, questionId, lang]);
 
   if (!data) {
     return <Navigate to="/" replace />;
@@ -20,7 +35,8 @@ export default function QuestionPage() {
 
   const { category, question, prev, next } = data;
   // если ответ ещё не переведён — озвучиваем его по-русски
-  const contentLang = question.translated ? lang : 'ru';
+  const translated = answer ? answer.translated : question.translated;
+  const contentLang = translated ? lang : 'ru';
 
   return (
     <div className="page">
@@ -37,19 +53,28 @@ export default function QuestionPage() {
           <span className="answer-category-icon">{category.icon}</span>
           {question.question}
         </h1>
-        <SpeechPlayer title={question.question} text={question.answer} contentLang={contentLang} />
-        <ProgressControls categoryId={category.id} questionId={question.id} />
-        {lang !== 'ru' && !question.translated && (
-          <p className="untranslated-note">{t(lang, 'untranslated')}</p>
+        {answer ? (
+          <>
+            <SpeechPlayer title={question.question} text={answer.answer} contentLang={contentLang} />
+            <ProgressControls categoryId={category.id} questionId={question.id} />
+            {lang !== 'ru' && !answer.translated && (
+              <p className="untranslated-note">{t(lang, 'untranslated')}</p>
+            )}
+            <div className="answer-body">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[[rehypeHighlight, { ignoreMissing: true }]]}
+              >
+                {answer.answer}
+              </ReactMarkdown>
+            </div>
+          </>
+        ) : (
+          <>
+            <ProgressControls categoryId={category.id} questionId={question.id} />
+            <p className="answer-loading">{t(lang, 'answerLoading')}</p>
+          </>
         )}
-        <div className="answer-body">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[[rehypeHighlight, { ignoreMissing: true }]]}
-          >
-            {question.answer}
-          </ReactMarkdown>
-        </div>
       </article>
 
       <nav className="question-nav">
