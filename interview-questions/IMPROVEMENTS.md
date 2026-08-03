@@ -144,16 +144,32 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 ## Phase 3 — Performance & reach
 
-### [ ] 9. Lazy‑load category data (code splitting)  ·  Effort: M  ·  Status: todo
-- **Why:** Build warns the JS chunk is >1 MB because all 316 answers ship up front.
-  The per‑category split we just did makes per‑route lazy loading natural.
-- **Approach:** Dynamic‑import a category's data only when its route is visited
-  (`import('./questions/kafka.js')`), keeping the home page light (it needs only
-  id/title/icon/description/count — consider a tiny generated manifest for the grid).
-  Also `React.lazy` the page components. Measure before/after bundle sizes.
-- **Files:** `localized.js` (async accessors) or a data‑loader layer, `App.jsx` routes,
-  possibly a build step emitting a categories manifest.
-- **Acceptance:** First‑load JS drops materially; navigation still instant; no data regressions.
+### [x] 9. Lazy‑load category data (code splitting)  ·  Effort: M  ·  Status: done
+- **Why:** The whole app shipped as one ~1.82 MB JS chunk (gzip 561 kB) on every
+  page, because all 316 answers were statically imported up front.
+- **Done:** Split the content into a **light** layer and a **heavy** layer along the
+  only seam that matters — just three consumers ever read an `answer` (QuestionPage,
+  ReviewSessionPage, the search index); everything else needs no more than category
+  meta + question text.
+  - `scripts/gen-content-manifest.mjs` (wired into `predev`/`prebuild`) reads the RU/EN
+    barrels in Node and emits the committed, answer‑free `src/data/content-manifest.js`
+    (category meta + question text, RU + EN). The barrels are no longer imported by the
+    app — only by the generator and the tests.
+  - `localized.js` serves its synchronous API (`getCategories`/`getCategory`/`getQuestion`)
+    from the manifest, and gains async loaders (`loadAnswer`, `loadCategoryFull`,
+    `loadAllFull`) that pull answer markdown per category via `import.meta.glob` — so
+    every category becomes its own lazy chunk.
+  - `QuestionPage`/`ReviewSessionPage` load answers on demand; `SearchProvider` builds
+    its (answer‑body) index lazily, warmed on idle and guaranteed on first open;
+    `daily.js` reads the manifest so the home page never pulls the corpus. Route
+    components are `React.lazy`‑loaded in `App.jsx` (only the landing page is eager),
+    which also splits out react‑markdown/rehype‑highlight.
+- **Verified:** Initial‑load JS **1.82 MB → 334 kB** (gzip **561 kB → 104 kB**, ~81% less);
+  answers, the markdown/highlight libs, and the quiz banks now load per route. `index.html`
+  preloads none of them. Smoke‑tested in `npm run preview`: home + QotD render from the
+  manifest, a deep‑linked question lazy‑loads its answer, search matches on answer‑body
+  text (`cgroups`), and the review flashcard reveals its answer. lint/test/build green
+  (7/7 tests; 0 errors).
 
 ### [ ] 10. PWA / offline  ·  Effort: M  ·  Status: todo
 - **Why:** Content is static and `SpeechPlayer` already handles offline voices — perfect
@@ -222,9 +238,10 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 1. **Item 13 — suggestions moderation/anti‑spam** (now live on public Firestore → real risk).
 2. **Item 12 — resolve the dependency hack** (removes the app's most fragile foundation).
-3. **Item 9 — lazy‑load category data** (the JS bundle is >1.8 MB and growing).
+3. **Item 10 — PWA / offline** (content is static and now per‑route cacheable → natural fit).
 
-_Phases 1–2 (items 1–8) are done. Suggestions were migrated from the initial
-`localStorage` plan to a shared Firestore backend, which promotes item 13 to active._
+_Items 1–9 are done. Suggestions were migrated from the initial `localStorage` plan to a
+shared Firestore backend, which promotes item 13 to active. Item 9 split content into a
+light answer‑free manifest + lazy per‑category answer chunks (first‑load JS ~561 → ~104 kB gzip)._
 
 _Last updated: 2026‑08‑03._

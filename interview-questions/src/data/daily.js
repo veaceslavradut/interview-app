@@ -1,8 +1,9 @@
-import { categories } from './questions';
+import { categoriesMeta } from './content-manifest';
 import { getQuestion } from './localized';
 
-// Плоский список всех пар категория/вопрос — для случайного выбора и «вопроса дня»
-const allQuestionRefs = categories.flatMap((c) =>
+// Плоский список всех пар категория/вопрос — для случайного выбора и «вопроса дня».
+// Берём из лёгкого манифеста (без ответов), чтобы главная не тянула весь контент.
+const allQuestionRefs = categoriesMeta.flatMap((c) =>
   c.questions.map((q) => ({ categoryId: c.id, questionId: q.id })),
 );
 

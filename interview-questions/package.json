@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "gen:manifest": "node scripts/gen-content-manifest.mjs",
+    "predev": "node scripts/gen-content-manifest.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/gen-content-manifest.mjs",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
