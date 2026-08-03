@@ -1,6 +1,7 @@
 import { Link, useParams, Navigate } from 'react-router-dom';
 import { getCategory } from '../data/localized';
 import { hasQuiz } from '../data/quizzes';
+import { getQuizHistory } from '../data/quizHistory';
 import { useProgress } from '../data/progress';
 import Breadcrumbs from '../components/Breadcrumbs';
 import ProgressBar from '../components/ProgressBar';
@@ -18,6 +19,7 @@ export default function CategoryPage() {
   }
 
   const done = knownCount(category.id, category.questions);
+  const quizHistory = getQuizHistory(category.id);
 
   return (
     <div className="page">
@@ -59,6 +61,33 @@ export default function CategoryPage() {
         <Link to={`/category/${category.id}/quiz`} className="quiz-start-link">
           🎯 {t(lang, 'quizStart')}
         </Link>
+      )}
+
+      {quizHistory.length > 0 && (
+        <section className="quiz-history">
+          <h2 className="quiz-history-title">{t(lang, 'quizHistoryTitle')}</h2>
+          <ul className="quiz-history-list">
+            {quizHistory.map((a) => {
+              const percent = Math.round((a.correct / a.total) * 100);
+              const cls =
+                percent >= 80 ? 'quiz-result-good' : percent >= 50 ? 'quiz-result-ok' : 'quiz-result-bad';
+              return (
+                <li key={a.ts} className="quiz-history-item">
+                  <span className="quiz-history-date">
+                    {new Date(a.ts).toLocaleString(lang === 'ru' ? 'ru-RU' : 'en-US', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
+                  </span>
+                  <span className="quiz-history-score">
+                    {a.correct} / {a.total}
+                  </span>
+                  <span className={`quiz-history-percent ${cls}`}>{percent}%</span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
     </div>
   );

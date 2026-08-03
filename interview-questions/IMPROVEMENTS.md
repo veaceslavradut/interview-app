@@ -113,14 +113,18 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 - **Verified:** QotD stable within a day and shown on home; `/random` lands on a valid
   question; lint/test/build green; checked in `npm run preview`.
 
-### [ ] 7. Quiz history & "review wrong answers"  ·  Effort: M  ·  Status: todo
+### [x] 7. Quiz history & "review wrong answers"  ·  Effort: M  ·  Status: done
 - **Why:** Quizzes are currently stateless — results vanish on reload.
-- **Approach:** Persist each attempt (category, score, timestamp, wrong slot ids) to
-  `localStorage`; show a history panel per category; add a **"review wrong answers"** flow
-  that revisits the questions behind the missed slots. Respect the existing slot/variant
-  shuffle model (read `isCorrect`, never a stored index).
-- **Files:** `src/data/quizHistory.js`, `QuizPage`/results view, category page panel.
-- **Acceptance:** History persists; review flow links to the right questions.
+- **Done:** `src/data/quizHistory.js` — plain localStorage module
+  (`interview-hub-quiz-history`), keeps the last 10 attempts per category as
+  `{ ts, correct, total, wrong: [slotId] }`. `QuizPage` records the attempt on finish
+  and the results screen shows a **"Разобрать ошибки"** list linking each missed slot
+  to the question with the same id (slot ids match question ids by convention;
+  unmatched slots are silently skipped — read `isCorrect`, never a stored index).
+  `CategoryPage` shows an **attempt history** panel (localized date, score, colored %).
+  Strings via `t(lang, 'quizReviewWrongTitle' | 'quizPerfect' | 'quizHistoryTitle')`.
+- **Verified:** Attempt persisted and shown on the category page; wrong-answer links
+  navigate to the right questions; lint/test/build green; checked in `npm run preview`.
 
 ### [ ] 8. Spaced‑repetition review mode  ·  Effort: M  ·  Status: todo
 - **Why:** The proven way to actually retain interview material; builds on item 5.
@@ -212,9 +216,9 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 1. **Item 13 — suggestions moderation/anti‑spam** (now live on public Firestore → real risk).
 2. **Item 12 — resolve the dependency hack** (removes the app's most fragile foundation).
-3. **Item 7 — quiz history & review wrong answers** (next study‑feature increment).
+3. **Item 8 — spaced‑repetition review mode** (completes the study‑features phase).
 
-_Phase 1 (items 1–4), item 5 and item 6 are done. Suggestions were migrated from the initial
+_Phase 1 (items 1–4) and items 5–7 are done. Suggestions were migrated from the initial
 `localStorage` plan to a shared Firestore backend, which promotes item 13 to active._
 
 _Last updated: 2026‑08‑03._
