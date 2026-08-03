@@ -126,13 +126,19 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 - **Verified:** Attempt persisted and shown on the category page; wrong-answer links
   navigate to the right questions; lint/test/build green; checked in `npm run preview`.
 
-### [ ] 8. Spaced‑repetition review mode  ·  Effort: M  ·  Status: todo
+### [x] 8. Spaced‑repetition review mode  ·  Effort: M  ·  Status: done
 - **Why:** The proven way to actually retain interview material; builds on item 5.
-- **Approach:** Lightweight SM‑2‑style scheduling in `localStorage` (per question:
-  ease, interval, due date). A **"Review"** page serves due questions as flashcards
-  (question → reveal answer → rate again/hard/good/easy). Keep it simple; no backend.
-- **Files:** extend `progress.jsx` with scheduling, new `ReviewPage` + route, flashcard UI.
-- **Acceptance:** Due queue works; ratings reschedule; survives reloads.
+- **Done:** SM‑2‑lite scheduling added to `progress.jsx` (new `srs` bucket in the same
+  `interview-hub-progress` store: `{ ease, interval, due }` per question; `rateQuestion`
+  with again/hard/good/easy, `isDue` helper; `clearAll` clears it too). Questions marked
+  **«↻ Повторить»** enter the queue — due when never rated or the schedule has come due.
+  New `ReviewSessionPage` (`/review/session`): flashcards (question → «Show answer» with
+  full markdown+highlighting → rate); «again» requeues the card within the session.
+  The `/review` list gets a **«▶ Повторить сейчас (N)»** entry point with the due count.
+  Strings via `t()` (RU + EN); no backend.
+- **Verified:** Due queue builds from review marks; «again» requeues; ratings write
+  ease/interval/due to localStorage and survive reload; done screen when queue is empty;
+  lint/test/build green; checked in `npm run preview`.
 
 ---
 
@@ -216,9 +222,9 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 1. **Item 13 — suggestions moderation/anti‑spam** (now live on public Firestore → real risk).
 2. **Item 12 — resolve the dependency hack** (removes the app's most fragile foundation).
-3. **Item 8 — spaced‑repetition review mode** (completes the study‑features phase).
+3. **Item 9 — lazy‑load category data** (the JS bundle is >1.8 MB and growing).
 
-_Phase 1 (items 1–4) and items 5–7 are done. Suggestions were migrated from the initial
+_Phases 1–2 (items 1–8) are done. Suggestions were migrated from the initial
 `localStorage` plan to a shared Firestore backend, which promotes item 13 to active._
 
 _Last updated: 2026‑08‑03._

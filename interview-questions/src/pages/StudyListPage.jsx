@@ -9,7 +9,7 @@ import { t } from '../i18n/translations';
 // One page for both study lists: mode="bookmarks" or mode="review".
 export default function StudyListPage({ mode }) {
   const { lang } = useLanguage();
-  const { status, bookmarks, clearAll } = useProgress();
+  const { status, bookmarks, clearAll, isDue } = useProgress();
   const categories = useMemo(() => getCategories(lang), [lang]);
 
   const items = useMemo(() => {
@@ -31,6 +31,8 @@ export default function StudyListPage({ mode }) {
   const title = mode === 'bookmarks' ? t(lang, 'studyBookmarks') : t(lang, 'studyReview');
   const icon = mode === 'bookmarks' ? '★' : '↻';
   const emptyMsg = mode === 'bookmarks' ? t(lang, 'bookmarksEmpty') : t(lang, 'reviewEmpty');
+  const dueCount =
+    mode === 'review' ? items.filter((item) => isDue(item.catId, item.id)).length : 0;
 
   const onClear = () => {
     if (window.confirm(t(lang, 'clearProgressConfirm'))) clearAll();
@@ -49,6 +51,12 @@ export default function StudyListPage({ mode }) {
           </p>
         </div>
       </header>
+
+      {mode === 'review' && dueCount > 0 && (
+        <Link to="/review/session" className="quiz-start-link review-start-link">
+          ▶ {t(lang, 'reviewStartSession')} ({dueCount})
+        </Link>
+      )}
 
       {items.length === 0 ? (
         <div className="suggest-card suggest-empty">
