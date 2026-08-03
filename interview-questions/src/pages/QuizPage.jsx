@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { getCategory } from '../data/localized';
 import { buildQuiz } from '../data/quizzes';
+import { addQuizAttempt } from '../data/quizHistory';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
@@ -37,6 +38,11 @@ export default function QuizPage() {
     } else {
       setAnswers(nextAnswers);
       setFinished(true);
+      addQuizAttempt(categoryId, {
+        correct: nextAnswers.filter((a) => a.isCorrect).length,
+        total,
+        wrong: nextAnswers.filter((a) => !a.isCorrect).map((a) => a.id),
+      });
     }
   };
 
@@ -53,6 +59,11 @@ export default function QuizPage() {
     const percent = Math.round((correctCount / total) * 100);
     const resultClass =
       percent >= 80 ? 'quiz-result-good' : percent >= 50 ? 'quiz-result-ok' : 'quiz-result-bad';
+    // Слоты квиза именуются как вопросы темы — связываем ошибки с вопросами по id
+    const wrongQuestions = answers
+      .filter((a) => !a.isCorrect)
+      .map((a) => category.questions.find((q) => q.id === a.id))
+      .filter(Boolean);
 
     return (
       <div className="page">
@@ -69,6 +80,26 @@ export default function QuizPage() {
           <p className="quiz-result-detail">
             {t(lang, 'quizCorrectAnswers')}: {correctCount} / {total}
           </p>
+          {wrongQuestions.length > 0 && (
+            <section className="quiz-review">
+              <h2 className="quiz-review-title">{t(lang, 'quizReviewWrongTitle')}</h2>
+              <ul className="quiz-review-list">
+                {wrongQuestions.map((q) => (
+                  <li key={q.id}>
+                    <Link
+                      to={`/category/${category.id}/question/${q.id}`}
+                      className="quiz-review-link"
+                    >
+                      {q.question}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {correctCount === total && (
+            <p className="quiz-review-perfect">{t(lang, 'quizPerfect')}</p>
+          )}
           <div className="quiz-actions">
             <button type="button" className="quiz-button" onClick={handleRestart}>
               {t(lang, 'quizRetry')}
