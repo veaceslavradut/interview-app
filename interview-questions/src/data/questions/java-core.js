@@ -7,6 +7,9 @@ export const javaCore = {
     questions: [
       {
         id: 'object-methods',
+        difficulty: 'easy',
+        tags: ['object', 'basics'],
+        related: ['equals-hashcode'],
         question: 'Какие методы есть у класса Object?',
         answer: `Класс \`java.lang.Object\` — корень иерархии классов. Его методы:
 
@@ -21,6 +24,9 @@ export const javaCore = {
       },
       {
         id: 'equals-hashcode',
+        difficulty: 'medium',
+        tags: ['object', 'basics'],
+        related: ['object-methods', 'string-pool'],
         question: 'Что такое контракт equals() и hashCode()?',
         answer: `**Контракт equals():**
 
@@ -40,6 +46,9 @@ export const javaCore = {
       },
       {
         id: 'string-immutable',
+        difficulty: 'medium',
+        tags: ['strings'],
+        related: ['string-pool'],
         question: 'Почему String неизменяемый (immutable)?',
         answer: `Класс \`String\` в Java неизменяемый: после создания содержимое строки нельзя изменить. Причины такого дизайна:
 
@@ -52,6 +61,9 @@ export const javaCore = {
       },
       {
         id: 'exceptions',
+        difficulty: 'easy',
+        tags: ['exceptions'],
+        related: ['final-finally-finalize'],
         question: 'Расскажите про иерархию исключений в Java.',
         answer: `Корень иерархии — \`java.lang.Throwable\`, у него два наследника:
 
@@ -66,6 +78,9 @@ Best practices: не глотать исключения, использоват
       },
       {
         id: 'final-finally-finalize',
+        difficulty: 'easy',
+        tags: ['basics', 'exceptions'],
+        related: ['exceptions'],
         question: 'В чем разница между final, finally и finalize?',
         answer: `Три совершенно разных понятия:
 
@@ -81,6 +96,9 @@ Best practices: не глотать исключения, использоват
       },
       {
         id: 'autoboxing',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: [],
         question: 'Что такое автоупаковка (autoboxing) и распаковка (unboxing)?',
         answer: `**Autoboxing** — автоматическое преобразование примитива в объект-обёртку (\`int\` → \`Integer\`). **Unboxing** — обратное преобразование.
 
@@ -97,6 +115,9 @@ int primitive = boxed;   // unboxing: boxed.intValue()
       },
       {
         id: 'interface-vs-abstract',
+        difficulty: 'medium',
+        tags: ['oop'],
+        related: ['composition-vs-inheritance'],
         question: 'В чем разница между абстрактным классом и интерфейсом?',
         answer: `**Абстрактный класс:**
 
@@ -123,6 +144,9 @@ int primitive = boxed;   // unboxing: boxed.intValue()
       },
       {
         id: 'generics',
+        difficulty: 'medium',
+        tags: ['generics'],
+        related: ['generics-wildcards'],
         question: 'Что такое дженерики (Generics) и стирание типов (Type Erasure)?',
         answer: `**Дженерики** — механизм параметризации типов (Java 5): классы и методы работают с разными типами, сохраняя типобезопасность на этапе компиляции.
 
@@ -151,6 +175,9 @@ list.add(42); // ошибка компиляции — не ClassCastException �
       },
       {
         id: 'string-pool',
+        difficulty: 'medium',
+        tags: ['strings', 'memory'],
+        related: ['string-immutable', 'equals-hashcode'],
         question: 'Что такое String Pool? В чем разница между == и equals() для строк?',
         answer: `**String Pool** — область в куче, где JVM кэширует строковые литералы. Одинаковые литералы указывают на один объект — экономия памяти (возможна благодаря неизменяемости String).
 
@@ -174,6 +201,9 @@ c.intern() == a; // true — intern() возвращает экземпляр и
       },
       {
         id: 'static-keyword',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['constructor-order'],
         question: 'Что делает ключевое слово static?',
         answer: `**static** означает принадлежность классу, а не экземпляру.
 
@@ -202,6 +232,9 @@ static { config = loadConfig(); }
       },
       {
         id: 'records-sealed',
+        difficulty: 'medium',
+        tags: ['modern-java'],
+        related: [],
         question: 'Что такое record и sealed-классы?',
         answer: `**\`record\`** (Java 16) — компактный способ объявить **неизменяемый носитель данных**. Компилятор сам генерирует \`private final\`-поля, конструктор, геттеры (\`name()\`, а не \`getName()\`), \`equals()\`/\`hashCode()\` (по всем компонентам) и \`toString()\`:
 
@@ -221,6 +254,9 @@ public sealed interface Shape permits Circle, Square {}
       },
       {
         id: 'composition-vs-inheritance',
+        difficulty: 'medium',
+        tags: ['oop'],
+        related: ['interface-vs-abstract'],
         question: 'Что выбрать — композицию или наследование? Почему наследование не всегда хорошо?',
         answer: `**Наследование** (\`is-a\`) — класс расширяет другой, переиспользуя его код. **Композиция** (\`has-a\`) — класс **содержит** другой объект и делегирует ему работу.
 
@@ -235,6 +271,9 @@ public sealed interface Shape permits Circle, Square {}
       },
       {
         id: 'constructor-order',
+        difficulty: 'hard',
+        tags: ['oop'],
+        related: ['static-keyword'],
         question: 'В каком порядке выполняется инициализация при создании объекта подкласса?',
         answer: `При \`new Subclass()\` порядок такой:
 
@@ -248,6 +287,9 @@ public sealed interface Shape permits Circle, Square {}
       },
       {
         id: 'generics-wildcards',
+        difficulty: 'hard',
+        tags: ['generics'],
+        related: ['generics'],
         question: 'Что такое wildcards в дженериках (? extends T, ? super T)? Что такое PECS?',
         answer: `**Wildcard \`?\`** — неизвестный тип-параметр, когда конкретный тип не важен или заранее не известен. Ограниченные wildcards задают границу:
 
@@ -260,6 +302,9 @@ Wildcards повышают гибкость API. Из-за **стирания т
       },
       {
         id: 'reflection',
+        difficulty: 'medium',
+        tags: ['reflection'],
+        related: [],
         question: 'Что такое Reflection API и где он применяется?',
         answer: `**Reflection (рефлексия)** — механизм, позволяющий **исследовать и изменять** структуру классов во время выполнения: получать список полей, методов, конструкторов, аннотаций, создавать объекты и вызывать методы по имени, не зная типа на этапе компиляции.
 
@@ -278,6 +323,9 @@ m.invoke(obj);
       },
       {
         id: 'cloneable',
+        difficulty: 'medium',
+        tags: ['object'],
+        related: ['object-methods'],
         question: 'Как работает Cloneable и почему его лучше избегать? Как ещё копировать объекты?',
         answer: `**\`Cloneable\`** — маркерный интерфейс, включающий поведение \`Object.clone()\` (без него \`clone()\` бросит \`CloneNotSupportedException\`). \`clone()\` создаёт побитовую копию объекта.
 
