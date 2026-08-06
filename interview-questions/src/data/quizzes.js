@@ -26,6 +26,7 @@ import { dockerQuiz } from './quiz/docker.js';
 import { monitoringQuiz } from './quiz/monitoring.js';
 import { terraformQuiz } from './quiz/terraform.js';
 import { cleanCodeQuiz } from './quiz/cleanCode.js';
+import { algorithmsQuiz } from './quiz/algorithms.js';
 import { claudeCertifiedDeveloperQuiz } from './quiz/claude.js';
 import { ccdvImportedQuiz } from './quiz/ccdvImported.js';
 
@@ -466,6 +467,7 @@ export const quizzes = {
   monitoring: { questions: monitoringQuiz },
   terraform: { questions: terraformQuiz },
   'clean-code': { questions: cleanCodeQuiz },
+  algorithms: { questions: algorithmsQuiz },
   'claude-certified-developer': {
     questions: [...claudeCertifiedDeveloperQuiz, ...ccdvImportedQuiz],
   },
