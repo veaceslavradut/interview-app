@@ -250,14 +250,33 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
   **Owner moderation stays console‑based** (flip `approved`); an in‑app admin (option c,
   Firebase Auth) was left out as heavier and not needed.
 
-### [ ] 14. Content depth: tags, difficulty, cross‑links  ·  Effort: L  ·  Status: todo
+### [x] 14. Content depth: tags, difficulty, cross‑links  ·  Effort: L  ·  Status: done (mechanism; backfill incremental)
 - **Why:** Enables filtering ("show only hard", "show Spring + concurrency"), related‑
   question navigation, and better study targeting.
-- **Approach:** Add optional `tags: []` and `difficulty` to the question shape (data
-  files), surface as filter chips + badges; add optional `related: [ids]` for cross‑links
-  at the bottom of an answer. Backfill incrementally — untranslated/untagged stays valid.
-- **Files:** question data files, category/question pages, filter UI, tests (item 1) updated.
-- **Acceptance:** Filtering works; tags/difficulty optional (no big‑bang backfill required).
+- **Done:** Three **optional** per‑question fields — `difficulty` (`easy|medium|hard`),
+  `tags: []`, `related: []` — added along the same light‑layer seam as `subtopic`, so
+  filtering stays synchronous and answers stay lazy:
+  - **`src/data/taxonomy.js`** holds the canonical `DIFFICULTIES` set (shared by the UI
+    and the data‑integrity test); **`gen-content-manifest.mjs`** now carries the three
+    fields into the manifest when present.
+  - **CategoryPage** grows a **filter bar** — difficulty chips + tag chips (AND across
+    selected tags), a reset, and a "no matches" state — that filters *before* the existing
+    subtopic grouping and resets on category change; each list row shows a colored
+    **difficulty badge**.
+  - **QuestionPage** shows a difficulty badge + `#tag` badges under the title and a
+    **"Related questions"** block; `resolveRelated` in `localized.js` maps refs (bare id =
+    same category, `categoryId/questionId` = cross‑category) to links and silently drops
+    stale ones.
+  - **Data‑integrity test** extended: difficulty ∈ allowed set, tags are unique
+    lowercase tokens, `related` refs resolve to a real question and aren't self‑refs.
+  - **Backfill:** the flagship **`oop`** category (12 Qs) is fully tagged/rated/linked as a
+    working demo; every other category stays valid untagged and simply shows no filter bar.
+    Remaining categories can be backfilled incrementally.
+- **Files:** `taxonomy.js`, `questions/oop.js`, `gen-content-manifest.mjs`, `localized.js`,
+  `CategoryPage.jsx`, `QuestionPage.jsx`, `translations.js`, `App.css`, `data-integrity.test.js`.
+- **Verified:** 8/8 tests, lint 0 errors, build green. Smoke‑tested in `preview`: difficulty +
+  tag filtering (incl. AND → empty → reset), badges on list + question page, related links
+  navigate (intra‑category).
 
 ### [ ] 15. Remaining Notion content  ·  Effort: M  ·  Status: todo
 - **Why:** System Design (5 write‑ups) and Algorithms weren't imported — they're prose/
@@ -274,13 +293,15 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 1. **Item 12 — resolve the dependency hack** (removes the app's most fragile foundation).
 2. **Item 11 — prerender to static HTML (SSG)** (pairs well with the PWA; real per‑question pages).
-3. **Item 14 — content depth: tags, difficulty, cross‑links** (filtering + better study targeting).
+3. **Item 15 — remaining Notion content** (System Design / Algorithms write‑ups).
 
-_Items 1–10 and 13 are done. Item 9 split content into a light answer‑free manifest + lazy
+_Items 1–10, 13, and 14 are done. Item 9 split content into a light answer‑free manifest + lazy
 per‑category answer chunks (first‑load JS ~561 → ~104 kB gzip); item 10 added a
-`vite-plugin-pwa` service worker that precaches the whole build for offline use and makes the
-app installable; item 13 added `firestore.rules` premoderation (`approved:false` on create,
+`vite-plugin-pwa` service worker that precaches the whole build for offline use and makes the app
+installable; item 13 added `firestore.rules` premoderation (`approved:false` on create,
 enforced server‑side) plus honeypot/cooldown/heuristic deterrents — **the rules must be deployed
-once** for premoderation to take effect._
+once** for premoderation to take effect; item 14 added optional `difficulty`/`tags`/`related` per
+question with filter chips, badges, and a related‑questions block (mechanism complete; `oop`
+backfilled, rest incremental)._
 
 _Last updated: 2026‑08‑06._

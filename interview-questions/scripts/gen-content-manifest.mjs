@@ -23,11 +23,15 @@ const meta = categories.map((c) => ({
   description: c.description,
   // optional markdown blurb shown as a section intro on the category page
   ...(c.intro != null ? { intro: c.intro } : {}),
-  // subtopic groups the category page's question list under section headings
+  // subtopic groups the category page's question list under section headings;
+  // difficulty/tags/related (item 14) drive filtering + cross-links — all optional
   questions: c.questions.map((q) => ({
     id: q.id,
     question: q.question,
     ...(q.subtopic ? { subtopic: q.subtopic } : {}),
+    ...(q.difficulty ? { difficulty: q.difficulty } : {}),
+    ...(Array.isArray(q.tags) && q.tags.length ? { tags: q.tags } : {}),
+    ...(Array.isArray(q.related) && q.related.length ? { related: q.related } : {}),
   })),
 }));
 

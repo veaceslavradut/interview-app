@@ -61,6 +61,32 @@ export function getQuestion(categoryId, questionId, lang) {
   };
 }
 
+// Resolve a question's `related` refs (item 14) to linkable targets. A ref is
+// either a bare question id (same category) or "categoryId/questionId" (cross-
+// category). Unresolvable refs are dropped, so stale links never render. Reads
+// the light manifest, so it stays synchronous.
+export function resolveRelated(refs, currentCategoryId, lang) {
+  if (!Array.isArray(refs) || refs.length === 0) return [];
+  const byId = new Map(getCategories(lang).map((c) => [c.id, c]));
+  const out = [];
+  for (const ref of refs) {
+    const [catId, qId] = ref.includes('/') ? ref.split('/') : [currentCategoryId, ref];
+    if (catId === currentCategoryId && qId === undefined) continue;
+    const cat = byId.get(catId);
+    const q = cat?.questions.find((x) => x.id === qId);
+    if (!q) continue;
+    out.push({
+      categoryId: catId,
+      questionId: qId,
+      question: q.question,
+      categoryTitle: cat.title,
+      icon: cat.icon,
+      crossCategory: catId !== currentCategoryId,
+    });
+  }
+  return out;
+}
+
 // --- HEAVY layer (lazy answers) -------------------------------------------
 
 // Each file exports a single `export const <camelCaseId> = {...}`, so the one
