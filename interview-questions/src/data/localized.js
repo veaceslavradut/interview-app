@@ -29,6 +29,7 @@ function localizeCategory(category, lang) {
     ...category,
     title: override.title ?? category.title,
     description: override.description ?? category.description,
+    intro: override.intro ?? category.intro,
     questions: category.questions.map((q) => {
       const qOverride = override.questions?.[q.id];
       return qOverride
