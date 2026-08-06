@@ -21,7 +21,14 @@ const meta = categories.map((c) => ({
   title: c.title,
   icon: c.icon,
   description: c.description,
-  questions: c.questions.map((q) => ({ id: q.id, question: q.question })),
+  // optional markdown blurb shown as a section intro on the category page
+  ...(c.intro != null ? { intro: c.intro } : {}),
+  // subtopic groups the category page's question list under section headings
+  questions: c.questions.map((q) => ({
+    id: q.id,
+    question: q.question,
+    ...(q.subtopic ? { subtopic: q.subtopic } : {}),
+  })),
 }));
 
 const enMeta = {};
@@ -29,6 +36,7 @@ for (const [catId, override] of Object.entries(enContent)) {
   const entry = {};
   if (override.title != null) entry.title = override.title;
   if (override.description != null) entry.description = override.description;
+  if (override.intro != null) entry.intro = override.intro;
   if (override.questions) {
     const questions = {};
     for (const [qId, q] of Object.entries(override.questions)) {

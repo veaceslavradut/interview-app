@@ -34,6 +34,7 @@ import { docker } from './questions/docker.js';
 import { monitoring } from './questions/monitoring.js';
 import { terraform } from './questions/terraform.js';
 import { cleanCode } from './questions/clean-code.js';
+import { claudeCertifiedDeveloper } from './questions/claude-certified-developer.js';
 
 export const categories = [
   oop,
@@ -69,6 +70,7 @@ export const categories = [
   monitoring,
   terraform,
   cleanCode,
+  claudeCertifiedDeveloper,
 ];
 
 
