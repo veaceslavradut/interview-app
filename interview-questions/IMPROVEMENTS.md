@@ -209,17 +209,25 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 ## Phase 4 — Tech‑debt, infra & content
 
-### [ ] 12. Resolve the dependency hack  ·  Effort: M  ·  Status: todo
-- **Why:** CLAUDE.md flags it: routing/markdown deps resolve only via a **committed
+### [x] 12. Resolve the dependency hack  ·  Effort: M  ·  Status: done
+- **Why:** CLAUDE.md flagged it: routing/markdown deps resolved only via a **committed
   `node_modules/` at the git root** + a split `package.json`. Fragile and surprising.
-  (item 2's `rehype-highlight` was already declared the right way, in
-  `interview-questions/package.json` — follow that pattern here.)
-- **Approach:** Move `react-router-dom` / `react-markdown` / `remark-gfm` (+ new deps)
-  into `interview-questions/package.json`, regenerate the lockfile, untrack the root
-  `node_modules/`. Verify `npm ci && npm run build` from a **clean checkout** and that
-  the Pages deploy still works. Do it as one deliberate PR.
-- **Files:** both `package.json`s, lockfile, root `.gitignore`, CI.
-- **Acceptance:** Clean `npm ci` builds with no reliance on committed root modules.
+- **Done:** Moved `react-router-dom` (`^7.18.1`), `react-markdown` (`^10.1.0`), `remark-gfm`
+  (`^4.0.1`) into `interview-questions/package.json` (the same versions that were resolving,
+  so no behaviour change — router landed on 7.18.2, a patch bump) and regenerated its
+  lockfile. Then **untracked and deleted** the git‑root `node_modules/` (~1615 committed
+  files), root `package.json`, and root `package-lock.json`, and added a root `.gitignore`
+  (`node_modules/`). The git root is no longer an npm project — the app is one self‑contained
+  project under `interview-questions/`. No CI/deploy edits needed: both workflows already ran
+  `npm ci` in `interview-questions/` (that reliance on the committed root tree was the whole
+  bug), so `npm ci` now simply installs the deps it always should have. Rewrote the CLAUDE.md
+  "Repo layout" section to match.
+- **Files:** `interview-questions/package.json` + lockfile, root `.gitignore` (new), deleted
+  root `package.json`/`package-lock.json`/`node_modules/`, `CLAUDE.md`.
+- **Verified:** with the root `node_modules/` physically removed, a clean `npm ci && npm run
+  build` succeeds (reproducing exactly what CI does), `npm test` 16/16, lint 0 errors, and a
+  `preview` smoke test navigated home → category → question with routing + markdown rendering
+  from the consolidated install.
 
 ### [x] 13. Suggestions: moderation & anti‑spam  ·  Effort: M  ·  Status: done
 - **Why:** Suggestions ship on a **public Firestore write** with manual console‑only
@@ -291,17 +299,16 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 ## Suggested next three
 
-1. **Item 12 — resolve the dependency hack** (removes the app's most fragile foundation).
-2. **Item 11 — prerender to static HTML (SSG)** (pairs well with the PWA; real per‑question pages).
-3. **Item 15 — remaining Notion content** (System Design / Algorithms write‑ups).
+1. **Item 11 — prerender to static HTML (SSG)** (pairs well with the PWA; real per‑question pages).
+2. **Item 15 — remaining Notion content** (System Design / Algorithms write‑ups).
+3. **Item 14 backfill** — extend `difficulty`/`tags`/`related` beyond `oop` to the other categories.
 
-_Items 1–10, 13, and 14 are done. Item 9 split content into a light answer‑free manifest + lazy
-per‑category answer chunks (first‑load JS ~561 → ~104 kB gzip); item 10 added a
-`vite-plugin-pwa` service worker that precaches the whole build for offline use and makes the app
-installable; item 13 added `firestore.rules` premoderation (`approved:false` on create,
-enforced server‑side) plus honeypot/cooldown/heuristic deterrents — **the rules must be deployed
-once** for premoderation to take effect; item 14 added optional `difficulty`/`tags`/`related` per
-question with filter chips, badges, and a related‑questions block (mechanism complete; `oop`
-backfilled, rest incremental)._
+_Items 1–14 are done. Item 9 split content into a light answer‑free manifest + lazy per‑category
+answer chunks (first‑load JS ~561 → ~104 kB gzip); item 10 added a `vite-plugin-pwa` service worker
+(offline + installable); item 13 added `firestore.rules` premoderation plus honeypot/cooldown/
+heuristic deterrents — **the rules must be deployed once** for premoderation to take effect;
+item 12 consolidated the app into a single `interview-questions/` npm project and removed the
+committed‑root‑`node_modules` hack; item 14 added optional `difficulty`/`tags`/`related` per
+question (mechanism complete; only `oop` backfilled so far)._
 
 _Last updated: 2026‑08‑06._

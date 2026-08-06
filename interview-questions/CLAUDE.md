@@ -21,19 +21,14 @@ npm run preview  # serve the built dist/
 
 `npm run lint` exits with 0 errors and ~8 warnings, all expected: one intentional in `QuizPage.jsx` (`attempt` listed as a `useMemo` dep to force a fresh quiz on retry — `react-hooks/exhaustive-deps` can't see that; don't "fix" it), and the rest are `react-refresh/only-export-components` on context/provider files that export a hook alongside the component. New warnings are the signal to check — the count itself isn't.
 
-## Repo layout — read this before touching dependencies
+## Repo layout — dependencies
 
-The git root is the **parent** directory (`interview-app/`), not `interview-questions/`. Dependencies are split across two `package.json` files, and this is load-bearing:
+The git root is the **parent** directory (`interview-app/`), but the app is a single self-contained npm project under `interview-questions/`: **one `package.json`, one lockfile**. All runtime deps — `react`, `react-dom`, `react-router-dom`, `react-markdown`, `remark-gfm`, `rehype-highlight` — are declared there, and `npm ci` inside `interview-questions/` installs everything CI and the Pages deploy need.
 
-- `interview-questions/package.json` — react, react-dom, vite, eslint. Has a lockfile; `npm ci` uses it.
-- `interview-app/package.json` (git root) — `react-router-dom`, `react-markdown`, `remark-gfm`. **Its `node_modules/` is committed to git** (~102 packages, ~1660 files).
+- Add a dependency with `npm install` **inside `interview-questions/`** so it lands in that `package.json` + lockfile. There is nothing to install at the git root.
+- The git root is **not** an npm project — no `package.json`, no `node_modules` (both are `.gitignore`d via the root `.gitignore`). Don't recreate them.
 
-`src/` imports all three of those root-level packages, but they are absent from `interview-questions/package.json`. They resolve only because Node walks up the directory tree into the committed `interview-app/node_modules/`. CI does `npm ci` inside `interview-questions/`, which never installs them — so the checked-in `node_modules/` at the root is the *only* reason the build and deploy work.
-
-Consequences:
-- Do not gitignore or delete the root `node_modules/`. It looks like an accident; it is currently the dependency source for routing and markdown rendering. Removing it breaks `npm run build` and the Pages deploy.
-- Adding a router/markdown-adjacent dependency the same way means committing its `node_modules/` tree too. Prefer instead to declare the dep properly in `interview-questions/package.json` and let the lockfile carry it.
-- If you consolidate this (a reasonable cleanup: move the three deps into `interview-questions/package.json`, regenerate the lockfile, untrack root `node_modules/`), do it as a deliberate, self-contained change and verify `npm ci && npm run build` from a clean checkout — not as a drive-by.
+> History (item 12): routing/markdown deps used to live in a second `package.json` at the git root whose `node_modules/` was **committed** (~1615 files), because Node resolution walked up into it. That hack was removed — the three deps were moved into `interview-questions/package.json`, the lockfile regenerated, and the root `node_modules/` + `package.json` + lockfile untracked and deleted. Verified with a clean `npm ci && npm run build` (the root tree removed). If you ever see routing fail to resolve, the fix is to declare the dep here — never to re-commit a `node_modules/`.
 
 ## Architecture
 

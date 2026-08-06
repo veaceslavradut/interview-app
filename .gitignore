@@ -1,0 +1,5 @@
+# The app is a self-contained npm project under interview-questions/ (its own
+# package.json + lockfile). Nothing at the git root is an npm project anymore —
+# node_modules here used to be committed to satisfy routing/markdown imports
+# (item 12 removed that hack). Never commit node_modules again.
+node_modules/
