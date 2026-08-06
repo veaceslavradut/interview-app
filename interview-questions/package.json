@@ -9,6 +9,7 @@
     "dev": "vite",
     "prebuild": "node scripts/gen-content-manifest.mjs",
     "build": "vite build",
+    "postbuild": "node scripts/prerender.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node --test src/data/data-integrity.test.js src/data/suggestions.test.js"

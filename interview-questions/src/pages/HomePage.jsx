@@ -6,9 +6,12 @@ import { useProgress } from '../data/progress';
 import ProgressBar from '../components/ProgressBar';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { homeTitle } from '../data/pageMeta';
 
 export default function HomePage() {
   const { lang } = useLanguage();
+  useDocumentTitle(homeTitle(lang));
   const { status, bookmarks, knownCount } = useProgress();
   const categories = useMemo(() => getCategories(lang), [lang]);
   const qotd = useMemo(() => getQuestionOfTheDay(lang), [lang]);

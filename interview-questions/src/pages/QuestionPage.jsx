@@ -9,6 +9,8 @@ import SpeechPlayer from '../components/SpeechPlayer';
 import ProgressControls from '../components/ProgressControls';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { questionTitle } from '../data/pageMeta';
 
 const DIFFICULTY_LABEL = { easy: 'difficultyEasy', medium: 'difficultyMedium', hard: 'difficultyHard' };
 
@@ -30,6 +32,8 @@ export default function QuestionPage() {
       cancelled = true;
     };
   }, [categoryId, questionId, lang]);
+
+  useDocumentTitle(data ? questionTitle(data.question, data.category) : null);
 
   if (!data) {
     return <Navigate to="/" replace />;
