@@ -53,6 +53,7 @@ export default function SuggestionsPage() {
       </header>
 
       <p className="untranslated-note">{t(lang, 'suggestionsSharedNote')}</p>
+      <p className="untranslated-note">{t(lang, 'suggestionsModerationNote')}</p>
 
       {status === 'loading' ? (
         <div className="suggest-card suggest-empty">

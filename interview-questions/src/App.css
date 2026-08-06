@@ -1179,6 +1179,16 @@
   overflow-wrap: anywhere;
 }
 
+/* Honeypot: taken out of the visual/AT flow but still present in the DOM and
+   focusable by naive bots. Not display:none — some bots skip hidden fields. */
+.suggest-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .suggest-topic-badge {
   display: inline-block;
   padding: 0.25rem 0.7rem;
