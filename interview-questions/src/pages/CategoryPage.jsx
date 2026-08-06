@@ -11,6 +11,8 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import ProgressBar from '../components/ProgressBar';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { categoryTitle } from '../data/pageMeta';
 
 // Порядок подтем на странице категории (домены экзамена по убыванию веса).
 const SUBTOPIC_ORDER = [
@@ -41,6 +43,8 @@ export default function CategoryPage() {
     setDifficulty(null);
     setActiveTags(new Set());
   }, [categoryId]);
+
+  useDocumentTitle(category ? categoryTitle(category) : null);
 
   if (!category) {
     return <Navigate to="/" replace />;

@@ -196,14 +196,33 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
   manifest `start_url`/`scope` and all icon/`registerSW.js` links correctly prefixed with
   `/interview-app/`. lint/test/build green (7/7 tests, 0 errors).
 
-### [ ] 11. Prerender to static HTML (SSG)  ·  Effort: L  ·  Status: todo
+### [x] 11. Prerender to static HTML (SSG)  ·  Effort: L  ·  Status: done (meta‑only)
 - **Why:** It's a client‑rendered SPA, so individual questions aren't well indexed or
   link‑previewable. Prerendering gives every question a real static page.
-- **Approach:** Add a prerender/SSG step (e.g. `vite-plugin-ssg` or a puppeteer prerender
-  over all `/category/:c/question/:q` routes) emitting static HTML + per‑page `<title>`/
-  Open Graph meta. Must stay compatible with the Pages `base` + 404 SPA fallback.
-- **Files:** build config, meta helper, deploy workflow.
-- **Acceptance:** Question URLs return prerendered HTML with correct meta; SPA still works.
+- **Tried first — full SSG via `vite-react-ssg` — and hit a hard wall:** its SSR renderer
+  imports `react-router-dom/server`, a subpath **react‑router v7 removed** (server APIs moved
+  to the `react-router` package). `vite-react-ssg@0.9.2` (latest) targets react‑router v6, and
+  a Vite alias can't fix it (the import runs inside the library's own Node code during
+  prerender). Making it work would mean downgrading our deliberate v7 (flagged in CLAUDE.md) —
+  so we chose the meta‑only route instead of reversing that.
+- **Done (meta‑only):** `scripts/prerender.mjs` runs as `postbuild` (so plain `npm run build`
+  in CI/deploy triggers it — no workflow change). For the home page, every category, and every
+  question it writes a static `dist/<route>/index.html` = the built shell with a route‑specific
+  `<title>` + description + Open Graph / Twitter / canonical tags. Titles/descriptions live in
+  `src/data/pageMeta.js`, **shared** with a client `useDocumentTitle` hook so SPA navigation
+  keeps `document.title` correct too. Respects the Pages `base` (absolute `og:url`/asset paths)
+  and the 404 fallback. The React body still hydrates client‑side, so **item 9's lazy answers
+  are untouched** (answer markdown isn't in the static HTML — this is meta/indexing + link
+  previews, not full content SSR).
+- **Files:** `scripts/prerender.mjs`, `src/data/pageMeta.js`, `src/hooks/useDocumentTitle.js`,
+  `HomePage`/`CategoryPage`/`QuestionPage`, `package.json` (`postbuild`), `CLAUDE.md`.
+- **Verified:** `GITHUB_PAGES=true` build wrote **569** HTML pages (home + 5 static + 34
+  categories + 529 questions), each with the right `<title>`/OG/canonical (checked the raw
+  files). Preview (run with matching base): a deep question URL serves its prerendered file
+  and the app hydrates (answer renders); client‑side nav updates `document.title`. 16/16 tests,
+  lint 0 errors.
+- **Future:** full‑content SSG would need a router‑agnostic approach (puppeteer snapshot) or a
+  react‑router v7 SSG path — deferred.
 
 ---
 
@@ -299,16 +318,17 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 ## Suggested next three
 
-1. **Item 11 — prerender to static HTML (SSG)** (pairs well with the PWA; real per‑question pages).
-2. **Item 15 — remaining Notion content** (System Design / Algorithms write‑ups).
-3. **Item 14 backfill** — extend `difficulty`/`tags`/`related` beyond `oop` to the other categories.
+1. **Item 15 — remaining Notion content** (System Design / Algorithms write‑ups) — the last unstarted item.
+2. **Item 14 backfill** — extend `difficulty`/`tags`/`related` beyond `oop` to the other categories.
+3. **Full‑content SSG** — revisit item 11 with a router‑agnostic prerender (puppeteer) if answer text in the static HTML becomes worth it.
 
-_Items 1–14 are done. Item 9 split content into a light answer‑free manifest + lazy per‑category
-answer chunks (first‑load JS ~561 → ~104 kB gzip); item 10 added a `vite-plugin-pwa` service worker
-(offline + installable); item 13 added `firestore.rules` premoderation plus honeypot/cooldown/
-heuristic deterrents — **the rules must be deployed once** for premoderation to take effect;
-item 12 consolidated the app into a single `interview-questions/` npm project and removed the
-committed‑root‑`node_modules` hack; item 14 added optional `difficulty`/`tags`/`related` per
-question (mechanism complete; only `oop` backfilled so far)._
+_**All roadmap items 1–14 are done.** Highlights: item 9 split content into a light answer‑free
+manifest + lazy per‑category answer chunks (first‑load JS ~561 → ~104 kB gzip); item 10 added a
+`vite-plugin-pwa` service worker (offline + installable); item 12 consolidated the app into a single
+`interview-questions/` npm project and removed the committed‑root‑`node_modules` hack; item 13 added
+`firestore.rules` premoderation plus honeypot/cooldown deterrents — **the rules must be deployed
+once**; item 14 added optional `difficulty`/`tags`/`related` per question (only `oop` backfilled so
+far); item 11 added a meta‑only prerender (per‑route `<title>`/OG/canonical for indexing + link
+previews; answer bodies stay client‑hydrated per item 9)._
 
 _Last updated: 2026‑08‑06._
