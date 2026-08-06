@@ -5,6 +5,7 @@ import ScrollToTop from './components/ScrollToTop';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import ThemeSwitcher from './components/ThemeSwitcher';
 import SearchTrigger from './components/SearchTrigger';
+import InstallButton from './components/InstallButton';
 import { SearchProvider } from './components/SearchProvider';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { ThemeProvider } from './theme/ThemeContext';
@@ -31,6 +32,7 @@ function App() {
             <SearchProvider>
               <ScrollToTop />
               <div className="top-controls">
+                <InstallButton />
                 <SearchTrigger />
                 <ThemeSwitcher />
                 <LanguageSwitcher />
