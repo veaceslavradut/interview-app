@@ -1,0 +1,48 @@
+rules_version = '2';
+
+// Firestore security rules for the `java-interview-app` project (suggestions).
+//
+// Deploy them — they are NOT applied automatically by anything in this repo:
+//   firebase deploy --only firestore:rules
+// or paste into Firebase console → Firestore Database → Rules → Publish.
+//
+// Why this file is the real defense: the web app talks to Firestore over the
+// public REST API with an API key that ships in the bundle (see
+// src/data/suggestions.js). A spammer can POST straight to the REST endpoint and
+// skip the React form entirely, so no client-side check can actually stop abuse —
+// only these server-side rules can. They:
+//   * let anyone READ suggestions (the list is public);
+//   * let anyone CREATE one ONLY if it is well-formed AND carries approved == false,
+//     so nothing a stranger writes can appear in the app until a moderator flips
+//     the flag (the app shows only approved / legacy items);
+//   * forbid UPDATE and DELETE from clients — moderation runs in the Firebase
+//     console or via the Admin SDK, both of which bypass these rules.
+//
+// One-time transition note: existing documents created before this change have no
+// `approved` field. The app treats a missing flag as visible (legacy), so the live
+// list does not go blank. Optionally backfill them to approved:true in the console.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidNewSuggestion(d) {
+      return d.keys().hasOnly(['categoryId', 'customTopic', 'question', 'createdAt', 'approved'])
+        && d.keys().hasAll(['categoryId', 'customTopic', 'question', 'createdAt', 'approved'])
+        && d.approved == false
+        && d.question is string
+        && d.question.size() >= 10
+        && d.question.size() <= 500
+        && d.customTopic is string
+        && d.customTopic.size() <= 60
+        && d.createdAt is string
+        && d.createdAt.size() <= 40
+        && (d.categoryId == null || (d.categoryId is string && d.categoryId.size() <= 40));
+    }
+
+    match /suggestions/{id} {
+      allow read: if true;
+      allow create: if isValidNewSuggestion(request.resource.data);
+      allow update, delete: if false;
+    }
+  }
+}

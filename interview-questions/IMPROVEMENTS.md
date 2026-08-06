@@ -221,15 +221,34 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 - **Files:** both `package.json`s, lockfile, root `.gitignore`, CI.
 - **Acceptance:** Clean `npm ci` builds with no reliance on committed root modules.
 
-### [ ] 13. Suggestions: moderation & anti‑spam  ·  Effort: M  ·  Status: todo (now active)
+### [x] 13. Suggestions: moderation & anti‑spam  ·  Effort: M  ·  Status: done
 - **Why:** Suggestions ship on a **public Firestore write** with manual console‑only
   moderation (see `src/data/suggestions.js`). This is live in the app now, so the spam
-  risk is real, not hypothetical — this item is no longer "future".
-- **Approach:** Options, pick per appetite: (a) premoderation (`approved:false` +
-  read rule shows only approved), (b) rate limiting / hCaptcha, (c) an owner‑auth admin
-  delete (Firebase Auth) to moderate from within the app.
-- **Files:** `src/data/suggestions.js`, Firestore rules, suggest/suggestions pages.
-- **Acceptance:** Spam can't trivially fill the public list; owner can moderate.
+  risk is real, not hypothetical.
+- **Done:** Went with **(a) premoderation** as the real defense, since the API key ships
+  in the bundle and a spammer can POST straight to the REST endpoint — so only
+  **server‑side rules** can actually gate content, with client checks as defense‑in‑depth.
+  - **`firestore.rules`** (new, in repo — the core): `read` public; `create` allowed
+    **only** if the doc is well‑formed (field allow‑list, `question` 10–500 chars,
+    `customTopic` ≤60, `categoryId` string|null) **and** carries `approved == false`;
+    `update`/`delete` denied to clients. So nothing a stranger writes can appear until a
+    moderator flips the flag in the console. *(Manual step: deploy once via
+    `firebase deploy --only firestore:rules` or the console — nothing in the repo applies
+    it automatically.)*
+  - **App wiring:** writes set `approved:false`; the list filters to visible items and
+    treats **legacy docs (no flag) as visible**, so the live list doesn't blank out during
+    the transition. New submitters get a **"pending review" done‑screen** + moderation
+    notes (RU/EN) instead of being sent to a list where their post is hidden.
+  - **Client deterrents (secondary):** a **honeypot** field (bots that fill it are silently
+    dropped with no write), a **min‑time‑on‑form** guard, a **30 s submit cooldown**
+    (localStorage), and a **link‑count heuristic** — all pure helpers, unit‑tested.
+- **Files:** `firestore.rules`, `src/data/suggestions.js` (+ `suggestions.test.js`),
+  `SuggestPage.jsx`, `SuggestionsPage.jsx`, `translations.js`, `App.css`.
+- **Verified:** 15/15 tests (8 new anti‑spam helper tests), lint 0 errors, build green.
+  Smoke‑tested in `preview`: honeypot path reaches the done‑screen with **0 Firestore
+  writes**; confirm step shows the moderation note; list page reads/filters without error.
+  **Owner moderation stays console‑based** (flip `approved`); an in‑app admin (option c,
+  Firebase Auth) was left out as heavier and not needed.
 
 ### [ ] 14. Content depth: tags, difficulty, cross‑links  ·  Effort: L  ·  Status: todo
 - **Why:** Enables filtering ("show only hard", "show Spring + concurrency"), related‑
@@ -253,14 +272,15 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 ## Suggested next three
 
-1. **Item 13 — suggestions moderation/anti‑spam** (now live on public Firestore → real risk).
-2. **Item 12 — resolve the dependency hack** (removes the app's most fragile foundation).
-3. **Item 11 — prerender to static HTML (SSG)** (pairs well with the PWA; real per‑question pages).
+1. **Item 12 — resolve the dependency hack** (removes the app's most fragile foundation).
+2. **Item 11 — prerender to static HTML (SSG)** (pairs well with the PWA; real per‑question pages).
+3. **Item 14 — content depth: tags, difficulty, cross‑links** (filtering + better study targeting).
 
-_Items 1–10 are done. Suggestions were migrated from the initial `localStorage` plan to a
-shared Firestore backend, which promotes item 13 to active. Item 9 split content into a
-light answer‑free manifest + lazy per‑category answer chunks (first‑load JS ~561 → ~104 kB gzip);
-item 10 added a `vite-plugin-pwa` service worker that precaches the whole build for offline use
-and makes the app installable._
+_Items 1–10 and 13 are done. Item 9 split content into a light answer‑free manifest + lazy
+per‑category answer chunks (first‑load JS ~561 → ~104 kB gzip); item 10 added a
+`vite-plugin-pwa` service worker that precaches the whole build for offline use and makes the
+app installable; item 13 added `firestore.rules` premoderation (`approved:false` on create,
+enforced server‑side) plus honeypot/cooldown/heuristic deterrents — **the rules must be deployed
+once** for premoderation to take effect._
 
 _Last updated: 2026‑08‑06._
