@@ -33,6 +33,7 @@ import { docker } from './content-en/docker.js';
 import { monitoring } from './content-en/monitoring.js';
 import { terraform } from './content-en/terraform.js';
 import { cleanCode } from './content-en/clean-code.js';
+import { systemDesign } from './content-en/system-design.js';
 import { claudeCertifiedDeveloper } from './content-en/claude-certified-developer.js';
 
 export const enContent = {
@@ -69,5 +70,6 @@ export const enContent = {
   monitoring,
   terraform,
   'clean-code': cleanCode,
+  'system-design': systemDesign,
   'claude-certified-developer': claudeCertifiedDeveloper,
 };
