@@ -35,6 +35,7 @@ import { monitoring } from './questions/monitoring.js';
 import { terraform } from './questions/terraform.js';
 import { cleanCode } from './questions/clean-code.js';
 import { systemDesign } from './questions/system-design.js';
+import { algorithms } from './questions/algorithms.js';
 import { claudeCertifiedDeveloper } from './questions/claude-certified-developer.js';
 
 export const categories = [
@@ -72,6 +73,7 @@ export const categories = [
   terraform,
   cleanCode,
   systemDesign,
+  algorithms,
   claudeCertifiedDeveloper,
 ];
 
