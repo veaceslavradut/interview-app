@@ -81,6 +81,7 @@ Reads answers aloud via the Web Speech API; returns `null` when unsupported. Two
 ## Adding content
 
 - **Question**: add to the `questions` array in `src/data/questions/<categoryId>.js`. Optionally add the same `questionId` under `questions` in `src/data/content-en/<categoryId>.js` (the English override); skipping it is fine — untranslated is a normal state.
+- **Optional taxonomy (item 14)**: a question may carry `difficulty` (`'easy'|'medium'|'hard'`), `tags: []` (lowercase tokens), and `related: []` (each a bare question id = same category, or `'categoryId/questionId'` = cross‑category). All optional and language‑neutral (authored on the RU source, carried through the light manifest like `subtopic`); untagged questions stay valid and just show no badge / no filter bar. Allowed difficulty values live in `src/data/taxonomy.js`; the data‑integrity test guards the shape. Only `oop` is backfilled so far.
 - **Quiz slot**: add to the topic's bank in `src/data/quiz/`. 2+ variants per slot is the norm; each variant needs 4 options and a `correct` index.
 - **New topic**: create `src/data/questions/<id>.js` (exporting the category object), wire it into the `questions.js` barrel (import + a slot in the `categories` array at the desired position). Optionally add `src/data/content-en/<id>.js` wired into the `content.en.js` barrel, and a quiz bank in `src/data/quiz/` wired into the `quizzes` map — all under the identical `<id>`. Without the barrel wiring the category is invisible; without the `quizzes` entry the topic simply has no quiz link.
 

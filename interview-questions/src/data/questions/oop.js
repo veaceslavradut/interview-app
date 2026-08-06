@@ -7,6 +7,9 @@ export const oop = {
     questions: [
       {
         id: 'what-is-oop',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['oop-principles', 'class-object-interface'],
         question: 'Что такое ООП?',
         answer: `Объектно-ориентированное программирование (ООП) — методология программирования, основанная на представлении программы в виде совокупности объектов, каждый из которых является экземпляром определенного класса, а классы образуют иерархию наследования.
 
@@ -20,6 +23,9 @@ export const oop = {
       },
       {
         id: 'oop-principles',
+        difficulty: 'easy',
+        tags: ['basics', 'principles'],
+        related: ['encapsulation', 'inheritance', 'polymorphism'],
         question: 'Назовите основные принципы ООП.',
         answer: `Основные принципы ООП:
 
@@ -32,6 +38,9 @@ export const oop = {
       },
       {
         id: 'encapsulation',
+        difficulty: 'easy',
+        tags: ['principles', 'encapsulation'],
+        related: ['oop-principles', 'abstraction'],
         question: 'Что такое «инкапсуляция»?',
         answer: `**Инкапсуляция** — это принцип ООП, при котором данные (состояние) и методы (поведение), работающие с этими данными, объединяются в единый компонент — класс, а внутренняя реализация скрывается от внешнего мира.
 
@@ -48,6 +57,9 @@ export const oop = {
       },
       {
         id: 'inheritance',
+        difficulty: 'medium',
+        tags: ['principles', 'inheritance'],
+        related: ['polymorphism', 'is-a-has-a', 'composition-aggregation'],
         question: 'Что такое «наследование»?',
         answer: `**Наследование** — механизм, позволяющий описать новый класс на основе уже существующего (родительского). При этом свойства и функциональность родительского класса заимствуются новым классом.
 
@@ -73,6 +85,9 @@ class Dog extends Animal {
       },
       {
         id: 'polymorphism',
+        difficulty: 'medium',
+        tags: ['principles', 'polymorphism'],
+        related: ['inheritance', 'static-dynamic-binding'],
         question: 'Что такое «полиморфизм»?',
         answer: `**Полиморфизм** — возможность объектов с одинаковым интерфейсом иметь различную реализацию; способность обрабатывать объекты разных типов единообразно.
 
@@ -90,6 +105,9 @@ animal.makeSound(); // вызовется реализация Dog
       },
       {
         id: 'abstraction',
+        difficulty: 'easy',
+        tags: ['principles', 'abstraction'],
+        related: ['encapsulation', 'class-object-interface'],
         question: 'Что такое «абстракция»?',
         answer: `**Абстракция** — выделение значимых характеристик объекта, важных в контексте задачи, и игнорирование незначимых деталей.
 
@@ -104,6 +122,9 @@ animal.makeSound(); // вызовется реализация Dog
       },
       {
         id: 'message-passing',
+        difficulty: 'medium',
+        tags: ['basics', 'design'],
+        related: ['polymorphism'],
         question: 'Что представляет собой «обмен сообщениями»?',
         answer: `**Обмен сообщениями** — способ взаимодействия объектов в ООП, при котором один объект «посылает сообщение» другому, а тот реагирует на него выполнением соответствующего метода.
 
@@ -119,6 +140,9 @@ animal.makeSound(); // вызовется реализация Dog
       },
       {
         id: 'class-object-interface',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['abstraction', 'oop-principles'],
         question: 'Расскажите про основные понятия ООП: «класс», «объект», «интерфейс».',
         answer: `**Класс** — шаблон (описание), на основе которого создаются объекты. Класс определяет состояние (поля) и поведение (методы). Класс — это тип данных, описывающий общие характеристики множества однотипных объектов.
 
@@ -145,6 +169,9 @@ Movable car = new Car(); // объект car — экземпляр класса
       },
       {
         id: 'oop-pros-cons',
+        difficulty: 'medium',
+        tags: ['design'],
+        related: ['oop-principles'],
         question: 'В чем заключаются преимущества и недостатки объектно-ориентированного подхода в программировании?',
         answer: `**Преимущества:**
 
@@ -165,6 +192,9 @@ Movable car = new Car(); // объект car — экземпляр класса
       },
       {
         id: 'is-a-has-a',
+        difficulty: 'medium',
+        tags: ['design', 'inheritance'],
+        related: ['composition-aggregation', 'inheritance'],
         question: 'Что подразумевают в плане принципов ООП выражения «является» и «имеет»?',
         answer: `Выражения **«является»** (is-a) и **«имеет»** (has-a) описывают два вида отношений между классами:
 
@@ -186,6 +216,9 @@ class Car {
       },
       {
         id: 'composition-aggregation',
+        difficulty: 'medium',
+        tags: ['design', 'composition'],
+        related: ['is-a-has-a'],
         question: 'В чем разница между композицией и агрегацией?',
         answer: `Композиция и агрегация — виды ассоциации, отношения «имеет» (has-a). Разница — в жёсткости связи и владении жизненным циклом.
 
@@ -210,6 +243,9 @@ class Department {
       },
       {
         id: 'static-dynamic-binding',
+        difficulty: 'hard',
+        tags: ['polymorphism', 'binding'],
+        related: ['polymorphism'],
         question: 'Что такое статическое и динамическое связывание?',
         answer: `**Связывание** — сопоставление вызова метода с его конкретной реализацией.
 

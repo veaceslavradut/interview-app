@@ -14,8 +14,11 @@ import assert from 'node:assert/strict';
 import { categories } from './questions.js';
 import { enContent } from './content.en.js';
 import { quizzes, buildQuiz, hasQuiz } from './quizzes.js';
+import { DIFFICULTIES } from './taxonomy.js';
 
 const ID_RE = /^[a-z0-9-]+$/;
+const TAG_RE = /^[a-z0-9][a-z0-9-]*$/;
+const DIFFICULTY_SET = new Set(DIFFICULTIES);
 
 // A quick lookup: categoryId -> Set of its question ids.
 const questionIdsByCat = new Map(
@@ -58,6 +61,37 @@ test('question ids are unique within each category and well-formed', () => {
       assert.ok(q.question.trim().length > 0, `${c.id}/${q.id} question is empty`);
       assert.equal(typeof q.answer, 'string', `${c.id}/${q.id} answer must be a string`);
       assert.ok(q.answer.trim().length > 0, `${c.id}/${q.id} answer is empty`);
+    }
+  }
+});
+
+test('optional taxonomy fields (difficulty/tags/related) are well-formed', () => {
+  for (const c of categories) {
+    for (const q of c.questions) {
+      const where = `${c.id}/${q.id}`;
+      if (q.difficulty !== undefined) {
+        assert.ok(DIFFICULTY_SET.has(q.difficulty), `${where} bad difficulty: ${q.difficulty}`);
+      }
+      if (q.tags !== undefined) {
+        assert.ok(Array.isArray(q.tags), `${where} tags must be an array`);
+        for (const tag of q.tags) {
+          assert.ok(typeof tag === 'string' && TAG_RE.test(tag), `${where} bad tag: ${tag}`);
+        }
+        assert.equal(new Set(q.tags).size, q.tags.length, `${where} has a duplicate tag`);
+      }
+      if (q.related !== undefined) {
+        assert.ok(Array.isArray(q.related), `${where} related must be an array`);
+        for (const ref of q.related) {
+          assert.equal(typeof ref, 'string', `${where} related ref must be a string`);
+          const [catId, qId] = ref.includes('/') ? ref.split('/') : [c.id, ref];
+          assert.ok(categoryIds.has(catId), `${where} related -> unknown category: ${ref}`);
+          assert.ok(
+            questionIdsByCat.get(catId)?.has(qId),
+            `${where} related -> unknown question: ${ref}`
+          );
+          assert.ok(!(catId === c.id && qId === q.id), `${where} related refers to itself: ${ref}`);
+        }
+      }
     }
   }
 });
