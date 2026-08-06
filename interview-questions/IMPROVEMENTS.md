@@ -171,13 +171,30 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
   text (`cgroups`), and the review flashcard reveals its answer. lint/test/build green
   (7/7 tests; 0 errors).
 
-### [ ] 10. PWA / offline  ·  Effort: M  ·  Status: todo
+### [x] 10. PWA / offline  ·  Effort: M  ·  Status: done
 - **Why:** Content is static and `SpeechPlayer` already handles offline voices — perfect
   for studying on a commute; also makes it installable.
-- **Approach:** `vite-plugin-pwa` (Workbox) — precache the shell + data, offline fallback,
-  install prompt, manifest/icons. Verify GitHub Pages `base` path is respected.
-- **Files:** `vite.config.js`, manifest + icons, deploy workflow if needed.
-- **Acceptance:** Installable; works offline after first load; Pages deploy unaffected.
+- **Done:** `vite-plugin-pwa` (Workbox `generateSW`), declared the right way in
+  `interview-questions/package.json` (devDependency, in the lockfile — not the root
+  `node_modules` hack, per item 2's pattern). `registerType: 'autoUpdate'` so a new
+  deploy's SW takes over silently and serves fresh assets on next load. Web manifest
+  (name/short_name/description, `theme_color` `#4f6df5`, `standalone`, RU lang,
+  `education`/`productivity` categories) + a **canvas-rendered coffee-cup icon set**
+  (`pwa-192`, `pwa-512`, `maskable-512` with safe-zone padding, `apple-touch-icon` 180 —
+  the old `java.png` was only 94×94). Fixed the previously-broken favicon path
+  (`./public/java.png` → base-aware `/pwa-192x192.png`) and added `apple-touch-icon` +
+  `theme-color` meta. Workbox precaches the **whole build** (shell + every lazy
+  per-category answer chunk + quiz banks → full offline after first load) with an
+  SPA `navigateFallback` to the shell. New bilingual **`InstallButton`** in the
+  top-controls bar: listens for `beforeinstallprompt`, replays it on click, hides after
+  install (iOS falls back to manual Add-to-Home-Screen, which the manifest +
+  apple-touch-icon support). `devOptions.enabled:false` keeps the SW out of `npm run dev`.
+- **Verified in `npm run preview`:** SW registers/activates and controls the page;
+  92 precache entries incl. all icons + 83 JS chunks; manifest valid (3 icons);
+  deep SPA route falls back to the cached shell (offline routing); install button renders
+  with the RU label when the browser offers installation. Built with `GITHUB_PAGES=true`:
+  manifest `start_url`/`scope` and all icon/`registerSW.js` links correctly prefixed with
+  `/interview-app/`. lint/test/build green (7/7 tests, 0 errors).
 
 ### [ ] 11. Prerender to static HTML (SSG)  ·  Effort: L  ·  Status: todo
 - **Why:** It's a client‑rendered SPA, so individual questions aren't well indexed or
@@ -238,10 +255,12 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
 
 1. **Item 13 — suggestions moderation/anti‑spam** (now live on public Firestore → real risk).
 2. **Item 12 — resolve the dependency hack** (removes the app's most fragile foundation).
-3. **Item 10 — PWA / offline** (content is static and now per‑route cacheable → natural fit).
+3. **Item 11 — prerender to static HTML (SSG)** (pairs well with the PWA; real per‑question pages).
 
-_Items 1–9 are done. Suggestions were migrated from the initial `localStorage` plan to a
+_Items 1–10 are done. Suggestions were migrated from the initial `localStorage` plan to a
 shared Firestore backend, which promotes item 13 to active. Item 9 split content into a
-light answer‑free manifest + lazy per‑category answer chunks (first‑load JS ~561 → ~104 kB gzip)._
+light answer‑free manifest + lazy per‑category answer chunks (first‑load JS ~561 → ~104 kB gzip);
+item 10 added a `vite-plugin-pwa` service worker that precaches the whole build for offline use
+and makes the app installable._
 
-_Last updated: 2026‑08‑03._
+_Last updated: 2026‑08‑06._
