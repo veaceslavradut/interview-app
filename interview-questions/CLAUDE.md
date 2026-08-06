@@ -17,7 +17,7 @@ npm run lint     # eslint
 npm run preview  # serve the built dist/
 ```
 
-`npm test` runs data-integrity checks on **Node's built-in runner** (`node --test src/data/data-integrity.test.js`) — no test framework/deps added on purpose (item 1). It imports the RU/EN barrels directly (not the manifest) and guards duplicate questions, id drift across the 3 data files, and malformed quiz slots. `npm run lint` + `npm test` + `npm run build` are the full check suite, matching CI. (`npm run build`/`dev` regenerate `content-manifest.js` first via the `pre*` hooks.)
+`npm test` runs checks on **Node's built-in runner** (`node --test` over `src/data/data-integrity.test.js` + `src/data/suggestions.test.js`) — no test framework/deps added on purpose (item 1); to add a suite, append its file to the `test` script. `data-integrity` imports the RU/EN barrels directly (not the manifest) and guards duplicate questions, id drift across the 3 data files, and malformed quiz slots; `suggestions` unit-tests the anti-spam helpers (validation/link-count/cooldown/visibility — pure, no network). `npm run lint` + `npm test` + `npm run build` are the full check suite, matching CI. (`npm run build`/`dev` regenerate `content-manifest.js` first via the `pre*` hooks.)
 
 `npm run lint` exits with 0 errors and ~8 warnings, all expected: one intentional in `QuizPage.jsx` (`attempt` listed as a `useMemo` dep to force a fresh quiz on retry — `react-hooks/exhaustive-deps` can't see that; don't "fix" it), and the rest are `react-refresh/only-export-components` on context/provider files that export a hook alongside the component. New warnings are the signal to check — the count itself isn't.
 

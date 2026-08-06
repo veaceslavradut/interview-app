@@ -1,24 +1,33 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getCategories } from '../data/localized';
-import { addSuggestion } from '../data/suggestions';
+import {
+  addSuggestion,
+  validateSuggestion,
+  canSubmitNow,
+  SUGGEST_LIMITS,
+} from '../data/suggestions';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { useLanguage } from '../i18n/LanguageContext';
 import { t } from '../i18n/translations';
 
 const OTHER = 'other';
+// последняя отправка с этого устройства — для анти-флуда (см. canSubmitNow)
+const LAST_KEY = 'interview-hub-suggest-last';
 
 export default function SuggestPage() {
   const { lang } = useLanguage();
-  const navigate = useNavigate();
   const categories = getCategories(lang);
 
-  const [step, setStep] = useState('form'); // form | confirm
+  const [step, setStep] = useState('form'); // form | confirm | done
   const [topic, setTopic] = useState('');
   const [customTopic, setCustomTopic] = useState('');
   const [question, setQuestion] = useState('');
+  const [honeypot, setHoneypot] = useState(''); // скрытое поле-ловушка для ботов
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  // когда открыли форму — мгновенное подтверждение выдаёт бота (см. minFillMs)
+  const openedAt = useRef(Date.now());
 
   const isOther = topic === OTHER;
   const topicFilled = isOther ? customTopic.trim() !== '' : topic !== '';
@@ -30,6 +39,33 @@ export default function SuggestPage() {
 
   const handleConfirm = async () => {
     setError('');
+
+    // Ловушка сработала или форму «заполнили» мгновенно — это бот. Не пишем в
+    // базу и не тратим квоту, но показываем обычный экран благодарности, чтобы
+    // не подсказывать боту, что его отсекли.
+    const tooFast = Date.now() - openedAt.current < SUGGEST_LIMITS.minFillMs;
+    if (honeypot.trim() !== '' || tooFast) {
+      setStep('done');
+      return;
+    }
+
+    const invalid = validateSuggestion({ question, customTopic });
+    if (invalid) {
+      setError(t(lang, invalid));
+      return;
+    }
+
+    let lastTs = 0;
+    try {
+      lastTs = Number(localStorage.getItem(LAST_KEY)) || 0;
+    } catch {
+      lastTs = 0;
+    }
+    if (!canSubmitNow(Date.now(), lastTs)) {
+      setError(t(lang, 'suggestErrorCooldown'));
+      return;
+    }
+
     setSaving(true);
     try {
       await addSuggestion({
@@ -37,7 +73,13 @@ export default function SuggestPage() {
         customTopic: isOther ? customTopic : '',
         question,
       });
-      navigate('/suggestions');
+      try {
+        localStorage.setItem(LAST_KEY, String(Date.now()));
+      } catch {
+        /* приватный режим без localStorage — не критично */
+      }
+      setSaving(false);
+      setStep('done');
     } catch {
       // сеть недоступна или правила Firestore отклонили запись — форма остаётся
       // заполненной, чтобы можно было просто нажать «Подтвердить» ещё раз
@@ -92,7 +134,7 @@ export default function SuggestPage() {
                     className="suggest-input"
                     type="text"
                     value={customTopic}
-                    maxLength={60}
+                    maxLength={SUGGEST_LIMITS.maxTopic}
                     placeholder={t(lang, 'suggestCustomTopicPlaceholder')}
                     onChange={(event) => setCustomTopic(event.target.value)}
                   />
@@ -107,10 +149,25 @@ export default function SuggestPage() {
                 className="suggest-input suggest-textarea"
                 value={question}
                 rows={4}
-                maxLength={500}
+                maxLength={SUGGEST_LIMITS.maxQuestion}
                 placeholder={t(lang, 'suggestQuestionPlaceholder')}
                 onChange={(event) => setQuestion(event.target.value)}
               />
+
+              {/* Honeypot: невидим для людей, но боты заполняют поля с такими
+                  именами. Любое значение здесь помечает отправку как спам. */}
+              <div className="suggest-hp" aria-hidden="true">
+                <label htmlFor="suggest-website">Website</label>
+                <input
+                  id="suggest-website"
+                  name="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(event) => setHoneypot(event.target.value)}
+                />
+              </div>
 
               <div className="quiz-actions">
                 <button type="submit" className="quiz-button" disabled={!canContinue}>
@@ -119,7 +176,7 @@ export default function SuggestPage() {
               </div>
             </form>
           </>
-        ) : (
+        ) : step === 'confirm' ? (
           <>
             <h1 className="suggest-heading">{t(lang, 'suggestConfirmTitle')}</h1>
             <p className="suggest-subtitle">{t(lang, 'suggestConfirmHint')}</p>
@@ -130,6 +187,8 @@ export default function SuggestPage() {
               </span>
               <p className="suggest-preview-question">{question.trim()}</p>
             </div>
+
+            <p className="untranslated-note">{t(lang, 'suggestModerationNote')}</p>
 
             {error && <p className="suggest-error">{error}</p>}
 
@@ -153,6 +212,19 @@ export default function SuggestPage() {
               >
                 {t(lang, 'suggestEdit')}
               </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="suggest-heading">{t(lang, 'suggestDoneTitle')}</h1>
+            <p className="suggest-subtitle">{t(lang, 'suggestDoneText')}</p>
+            <div className="quiz-actions">
+              <Link to="/suggestions" className="quiz-button">
+                {t(lang, 'suggestDoneSeeList')}
+              </Link>
+              <Link to="/" className="quiz-button quiz-button-secondary">
+                {t(lang, 'suggestDoneHome')}
+              </Link>
             </div>
           </>
         )}

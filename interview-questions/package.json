@@ -11,7 +11,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test src/data/data-integrity.test.js"
+    "test": "node --test src/data/data-integrity.test.js src/data/suggestions.test.js"
   },
   "dependencies": {
     "react": "^19.0.0",

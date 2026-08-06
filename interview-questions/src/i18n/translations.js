@@ -86,6 +86,17 @@ const ui = {
     suggestEdit: '← Исправить',
     suggestSaveError: 'Не удалось отправить вопрос. Проверьте связь и попробуйте ещё раз.',
     suggestSaving: 'Отправляем…',
+    suggestModerationNote:
+      'ℹ️ Вопрос попадёт в список после проверки модератором — так мы отсеиваем спам.',
+    suggestErrorTooShort: 'Слишком коротко. Сформулируйте вопрос подробнее (минимум 10 символов).',
+    suggestErrorTooLong: 'Слишком длинно. Уложитесь в 500 символов.',
+    suggestErrorTooManyLinks: 'Слишком много ссылок. Уберите лишние — это похоже на спам.',
+    suggestErrorTopicTooLong: 'Название темы слишком длинное (максимум 60 символов).',
+    suggestErrorCooldown: 'Вы только что отправили вопрос. Подождите немного перед следующим.',
+    suggestDoneTitle: 'Спасибо! Вопрос отправлен',
+    suggestDoneText: 'Он появится в списке после проверки модератором.',
+    suggestDoneSeeList: 'К списку предложений',
+    suggestDoneHome: 'На главную',
     suggestionsTitle: 'Предложенные вопросы',
     suggestionsEmpty: 'Пока нет ни одного предложенного вопроса.',
     suggestionsEmptyCta: 'Предложите первый!',
@@ -93,6 +104,8 @@ const ui = {
     suggestionsLoadError: 'Не удалось загрузить предложения. Проверьте связь и обновите страницу.',
     suggestionsSharedNote:
       'ℹ️ Предложения видны всем посетителям сайта. Пишите так, чтобы вопрос был понятен без контекста.',
+    suggestionsModerationNote:
+      'Новые предложения появляются здесь после проверки модератором.',
     suggestionsCount: 'предложено',
     suggestionsAddMore: '➕ Предложить ещё',
   },
@@ -182,6 +195,17 @@ const ui = {
     suggestEdit: '← Edit',
     suggestSaveError: 'Could not send the question. Check your connection and try again.',
     suggestSaving: 'Sending…',
+    suggestModerationNote:
+      'ℹ️ Your question appears in the list after a moderator reviews it — this keeps spam out.',
+    suggestErrorTooShort: 'Too short. Phrase the question in more detail (at least 10 characters).',
+    suggestErrorTooLong: 'Too long. Please keep it under 500 characters.',
+    suggestErrorTooManyLinks: 'Too many links. Remove the extra ones — this looks like spam.',
+    suggestErrorTopicTooLong: 'The topic name is too long (60 characters max).',
+    suggestErrorCooldown: 'You just sent a question. Please wait a moment before the next one.',
+    suggestDoneTitle: 'Thanks! Your question was sent',
+    suggestDoneText: 'It will appear in the list once a moderator reviews it.',
+    suggestDoneSeeList: 'Go to suggestions',
+    suggestDoneHome: 'Back home',
     suggestionsTitle: 'Suggested questions',
     suggestionsEmpty: 'No questions have been suggested yet.',
     suggestionsEmptyCta: 'Be the first!',
@@ -189,6 +213,8 @@ const ui = {
     suggestionsLoadError: 'Could not load suggestions. Check your connection and refresh the page.',
     suggestionsSharedNote:
       'ℹ️ Suggestions are visible to every visitor. Write your question so it makes sense without extra context.',
+    suggestionsModerationNote:
+      'New suggestions appear here after a moderator reviews them.',
     suggestionsCount: 'suggested',
     suggestionsAddMore: '➕ Suggest another',
   },
