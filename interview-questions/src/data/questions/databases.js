@@ -7,6 +7,9 @@ export const databases = {
     questions: [
       {
         id: 'acid',
+        difficulty: 'easy',
+        tags: ['transactions', 'acid'],
+        related: ['isolation-levels'],
         question: 'Что такое ACID?',
         answer: `**ACID** — четыре свойства транзакций реляционных БД:
 
@@ -19,6 +22,9 @@ export const databases = {
       },
       {
         id: 'isolation-levels',
+        difficulty: 'hard',
+        tags: ['transactions'],
+        related: ['acid'],
         question: 'Какие уровни изоляции транзакций вы знаете?',
         answer: `Уровни изоляции (от слабого к строгому) и аномалии, которые они допускают:
 
@@ -41,6 +47,9 @@ export const databases = {
       },
       {
         id: 'indexes',
+        difficulty: 'medium',
+        tags: ['indexes'],
+        related: [],
         question: 'Что такое индексы и как они работают?',
         answer: `**Индекс** — структура данных, ускоряющая поиск строк по значениям столбцов ценой замедления записи и дополнительного места.
 
@@ -61,6 +70,9 @@ export const databases = {
       },
       {
         id: 'normalization',
+        difficulty: 'medium',
+        tags: ['design'],
+        related: [],
         question: 'Что такое нормализация базы данных?',
         answer: `**Нормализация** — процесс организации данных для устранения избыточности и аномалий (вставки, обновления, удаления).
 
@@ -77,6 +89,9 @@ export const databases = {
       },
       {
         id: 'sql-nosql',
+        difficulty: 'easy',
+        tags: ['design'],
+        related: [],
         question: 'В чем разница между SQL и NoSQL базами данных?',
         answer: `**SQL (реляционные)** — PostgreSQL, MySQL, Oracle:
 

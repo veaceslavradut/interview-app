@@ -7,6 +7,9 @@ export const hibernate = {
     questions: [
       {
         id: 'what-is-orm',
+        difficulty: 'easy',
+        tags: ['orm', 'basics'],
+        related: ['entity-states', 'hibernate-vs-jdbc'],
         question: 'Что такое ORM, JPA и Hibernate?',
         answer: `**ORM (Object-Relational Mapping)** — технология отображения объектов на таблицы реляционной БД: работа с данными через объекты вместо ручного SQL.
 
@@ -38,6 +41,9 @@ public class User {
       },
       {
         id: 'entity-states',
+        difficulty: 'medium',
+        tags: ['orm', 'entity'],
+        related: ['persist-merge-save', 'flush-commit'],
         question: 'Какие состояния может иметь entity? Что такое Persistence Context?',
         answer: `**Persistence Context** — «кэш первого уровня»: область, где EntityManager отслеживает загруженные сущности и их изменения (dirty checking). Обычно живёт в рамках транзакции.
 
@@ -70,6 +76,9 @@ User managed = em.merge(user); // повторное присоединение 
       },
       {
         id: 'lazy-eager',
+        difficulty: 'medium',
+        tags: ['orm', 'performance'],
+        related: ['n-plus-one'],
         question: 'В чем разница между LAZY и EAGER загрузкой? Что такое LazyInitializationException?',
         answer: `**FetchType** определяет, когда загружаются связанные сущности:
 
@@ -106,6 +115,9 @@ user.getOrders().size();              // LazyInitializationException!
       },
       {
         id: 'n-plus-one',
+        difficulty: 'hard',
+        tags: ['orm', 'performance'],
+        related: ['lazy-eager', 'hibernate-caches'],
         question: 'Что такое проблема N+1 и как её решить?',
         answer: `**Проблема N+1** — вместо одного запроса выполняется 1 (список родителей) + N (по запросу на связь каждого родителя):
 
@@ -145,6 +157,9 @@ List<User> findAll();
       },
       {
         id: 'hibernate-caches',
+        difficulty: 'hard',
+        tags: ['orm', 'caching', 'performance'],
+        related: ['n-plus-one'],
         question: 'Какие уровни кэширования есть в Hibernate?',
         answer: `**Кэш первого уровня (L1)** — Persistence Context / Session:
 
@@ -180,6 +195,9 @@ public class Country { ... }
       },
       {
         id: 'hibernate-vs-jdbc',
+        difficulty: 'easy',
+        tags: ['orm', 'basics'],
+        related: ['what-is-orm'],
         question: 'Чем Hibernate лучше чистого JDBC? В чём его минусы?',
         answer: `**JDBC** — низкоуровневый API: разработчик сам пишет SQL, вручную маппит \`ResultSet\` в объекты, управляет \`Connection\`/\`Statement\`, обрабатывает \`SQLException\`. Много рутинного кода.
 
@@ -200,6 +218,9 @@ public class Country { ... }
       },
       {
         id: 'session-vs-sessionfactory',
+        difficulty: 'easy',
+        tags: ['orm', 'basics'],
+        related: ['entity-states'],
         question: 'Чем Session отличается от SessionFactory?',
         answer: `**\`SessionFactory\`** — тяжёлый, потокобезопасный объект, создаваемый **один раз** на приложение (на каждый persistence unit). Хранит конфигурацию, маппинги, пул соединений и кэш второго уровня. Его создание дорого, поэтому он существует в единственном экземпляре и служит фабрикой сессий.
 
@@ -209,6 +230,9 @@ public class Country { ... }
       },
       {
         id: 'persist-merge-save',
+        difficulty: 'medium',
+        tags: ['orm', 'entity'],
+        related: ['entity-states', 'flush-commit'],
         question: 'В чём разница между persist(), save(), merge() и update()?',
         answer: `Методы перевода объекта в управляемое состояние различаются семантикой:
 
@@ -221,6 +245,9 @@ public class Country { ... }
       },
       {
         id: 'flush-commit',
+        difficulty: 'medium',
+        tags: ['orm', 'entity'],
+        related: ['persist-merge-save', 'entity-states'],
         question: 'В чём разница между flush() и commit()? Что такое dirty checking?',
         answer: `**\`flush()\`** синхронизирует Persistence Context с БД — выполняет накопленные \`INSERT\`/\`UPDATE\`/\`DELETE\`, но **в рамках текущей транзакции** и **без её завершения**. Данные видны внутри транзакции, но ещё могут быть откачены.
 
@@ -232,6 +259,9 @@ public class Country { ... }
       },
       {
         id: 'hql-vs-criteria',
+        difficulty: 'medium',
+        tags: ['orm', 'queries'],
+        related: [],
         question: 'Что такое HQL и чем он отличается от Criteria API?',
         answer: `И то, и другое — способы писать запросы к сущностям (а не к таблицам напрямую).
 
@@ -243,6 +273,9 @@ public class Country { ... }
       },
       {
         id: 'mappedby-joincolumn',
+        difficulty: 'medium',
+        tags: ['orm', 'mapping'],
+        related: ['manytomany-intermediate'],
         question: 'В чём разница между mappedBy и @JoinColumn? Что такое владелец связи?',
         answer: `В двунаправленной ассоциации всегда есть **владелец связи (owning side)** — сторона, чьи изменения Hibernate транслирует в БД (именно она отвечает за внешний ключ). Вторая сторона — **inverse (обратная)**.
 
@@ -255,6 +288,9 @@ public class Country { ... }
       },
       {
         id: 'manytomany-intermediate',
+        difficulty: 'medium',
+        tags: ['orm', 'mapping'],
+        related: ['mappedby-joincolumn'],
         question: 'Когда вместо @ManyToMany нужна отдельная промежуточная сущность?',
         answer: `\`@ManyToMany\` с \`@JoinTable\` подходит, только когда связующая таблица содержит **исключительно два внешних ключа** и никаких собственных данных.
 
@@ -270,6 +306,9 @@ public class Country { ... }
       },
       {
         id: 'element-collection',
+        difficulty: 'medium',
+        tags: ['orm', 'mapping'],
+        related: ['mappedby-joincolumn'],
         question: 'Что такое @ElementCollection и когда его использовать?',
         answer: `**\`@ElementCollection\`** отображает коллекцию **не-сущностей** — примитивов, строк или встраиваемых объектов (\`@Embeddable\`) — в отдельную таблицу, **без создания отдельной сущности**. Элементы полностью принадлежат владельцу и не имеют собственной идентичности.
 

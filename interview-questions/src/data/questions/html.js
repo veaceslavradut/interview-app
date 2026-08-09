@@ -7,6 +7,9 @@ export const html = {
     questions: [
       {
         id: 'what-is-html',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['semantic-html'],
         question: 'Что такое HTML? Какова базовая структура документа?',
         answer: `**HTML (HyperText Markup Language)** — язык разметки гипертекста, описывающий структуру и содержимое веб-страницы с помощью элементов (тегов).
 
@@ -37,6 +40,9 @@ HTML5 добавил: семантические теги, \`<video>\`/\`<audio>
       },
       {
         id: 'semantic-html',
+        difficulty: 'easy',
+        tags: ['semantics'],
+        related: ['what-is-html'],
         question: 'Что такое семантическая верстка?',
         answer: `**Семантическая вёрстка** — использование HTML-тегов в соответствии с их смыслом, а не внешним видом.
 
@@ -75,6 +81,9 @@ HTML5 добавил: семантические теги, \`<video>\`/\`<audio>
       },
       {
         id: 'block-inline',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: [],
         question: 'В чем разница между блочными и строчными элементами?',
         answer: `**Блочные элементы** (\`display: block\`):
 

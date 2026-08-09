@@ -7,6 +7,9 @@ export const spring = {
     questions: [
       {
         id: 'what-is-spring',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['ioc-di', 'spring-boot'],
         question: 'Что такое Spring Framework? Из каких модулей он состоит?',
         answer: `**Spring Framework** — самый популярный фреймворк для разработки Java-приложений. Основа — контейнер инверсии управления (IoC), который управляет жизненным циклом объектов (бинов) и их зависимостями.
 
@@ -30,6 +33,9 @@ export const spring = {
       },
       {
         id: 'ioc-di',
+        difficulty: 'easy',
+        tags: ['core', 'ioc'],
+        related: ['what-is-spring', 'injection-types'],
         question: 'Что такое IoC и DI?',
         answer: `**IoC (Inversion of Control, инверсия управления)** — принцип, при котором управление созданием объектов и их жизненным циклом передаётся фреймворку (контейнеру), а не осуществляется вручную в коде.
 
@@ -62,6 +68,9 @@ class OrderService {
       },
       {
         id: 'bean-lifecycle',
+        difficulty: 'medium',
+        tags: ['beans'],
+        related: ['bean-post-processor', 'bean-scopes'],
         question: 'Расскажите про жизненный цикл бина Spring.',
         answer: `Этапы жизненного цикла бина в ApplicationContext:
 
@@ -91,6 +100,9 @@ class CacheService {
       },
       {
         id: 'bean-scopes',
+        difficulty: 'medium',
+        tags: ['beans'],
+        related: ['bean-lifecycle'],
         question: 'Какие scope бинов существуют в Spring?',
         answer: `**Основные scope:**
 
@@ -123,6 +135,9 @@ class RequestContext { ... }
       },
       {
         id: 'spring-boot',
+        difficulty: 'easy',
+        tags: ['boot'],
+        related: ['what-is-spring', 'configuration-properties'],
         question: 'Что такое Spring Boot? Как работает автоконфигурация?',
         answer: `**Spring Boot** — надстройка над Spring для быстрого создания production-ready приложений с минимальной конфигурацией.
 
@@ -151,6 +166,9 @@ public class DataSourceAutoConfiguration { ... }
       },
       {
         id: 'transactional',
+        difficulty: 'medium',
+        tags: ['transactions'],
+        related: ['transaction-propagation', 'circular-dependency'],
         question: 'Как работает @Transactional?',
         answer: `**@Transactional** — декларативное управление транзакциями через **AOP-прокси**: Spring оборачивает бин в прокси, который открывает транзакцию до метода и делает commit/rollback после.
 
@@ -182,6 +200,9 @@ public class TransferService {
       },
       {
         id: 'spring-aop',
+        difficulty: 'hard',
+        tags: ['aop'],
+        related: ['transactional'],
         question: 'Что такое AOP? Как Spring создает прокси?',
         answer: `**AOP (Aspect-Oriented Programming)** — выделение сквозной функциональности (cross-cutting concerns) — логирование, транзакции, безопасность, кэширование — из бизнес-логики в отдельные модули (аспекты).
 
@@ -219,6 +240,9 @@ public class LoggingAspect {
       },
       {
         id: 'applicationcontext-vs-beanfactory',
+        difficulty: 'medium',
+        tags: ['core', 'beans'],
+        related: ['ioc-di'],
         question: 'Чем ApplicationContext отличается от BeanFactory?',
         answer: `Оба — контейнеры IoC, управляющие бинами, но \`ApplicationContext\` — это расширение \`BeanFactory\` с корпоративной функциональностью.
 
@@ -236,6 +260,9 @@ public class LoggingAspect {
       },
       {
         id: 'autowired-resolution',
+        difficulty: 'medium',
+        tags: ['core', 'beans'],
+        related: ['injection-types'],
         question: 'Как @Autowired разрешает зависимости? Что делать при нескольких кандидатах?',
         answer: `\`@Autowired\` внедряет зависимость **по типу** (by type). Алгоритм:
 
@@ -254,6 +281,9 @@ public class LoggingAspect {
       },
       {
         id: 'injection-types',
+        difficulty: 'medium',
+        tags: ['core', 'beans'],
+        related: ['autowired-resolution', 'ioc-di'],
         question: 'В чём разница между constructor, setter и field injection? Какой предпочтителен?',
         answer: `Три способа внедрения зависимостей:
 
@@ -265,6 +295,9 @@ public class LoggingAspect {
       },
       {
         id: 'stereotypes',
+        difficulty: 'easy',
+        tags: ['core', 'beans'],
+        related: [],
         question: 'Чем отличаются @Component, @Service, @Repository и @Controller?',
         answer: `Все четыре — стереотипные аннотации, помечающие класс как бин, подхватываемый при component scan. Технически \`@Service\`, \`@Repository\` и \`@Controller\` — это специализации \`@Component\`. Различия — семантические и (для двух) функциональные:
 
@@ -277,6 +310,9 @@ public class LoggingAspect {
       },
       {
         id: 'bean-post-processor',
+        difficulty: 'hard',
+        tags: ['beans'],
+        related: ['bean-lifecycle'],
         question: 'Чем BeanPostProcessor отличается от BeanFactoryPostProcessor?',
         answer: `Оба — точки расширения контейнера, но работают на разных этапах.
 
@@ -288,6 +324,9 @@ public class LoggingAspect {
       },
       {
         id: 'circular-dependency',
+        difficulty: 'hard',
+        tags: ['beans', 'aop'],
+        related: ['transactional', 'bean-lifecycle'],
         question: 'Как Spring обрабатывает циклические зависимости и что такое self-invocation?',
         answer: `**Циклическая зависимость** — бин A зависит от B, а B от A.
 
@@ -300,6 +339,9 @@ public class LoggingAspect {
       },
       {
         id: 'configuration-properties',
+        difficulty: 'medium',
+        tags: ['boot'],
+        related: ['spring-boot'],
         question: 'Чем @ConfigurationProperties отличается от @Value? Что такое Spring Profiles?',
         answer: `**\`@Value("\${app.timeout}")\`** внедряет **одно** свойство в поле. Просто, но: нет типобезопасной группировки, слабая поддержка валидации и relaxed binding, неудобно для больших наборов настроек.
 
@@ -309,6 +351,9 @@ public class LoggingAspect {
       },
       {
         id: 'exception-handling',
+        difficulty: 'medium',
+        tags: ['web'],
+        related: [],
         question: 'Как в Spring обрабатывать исключения централизованно (@ControllerAdvice)?',
         answer: `В Spring MVC исключения обрабатывают на нескольких уровнях:
 
@@ -321,6 +366,9 @@ public class LoggingAspect {
       },
       {
         id: 'spring-data-repositories',
+        difficulty: 'medium',
+        tags: ['data'],
+        related: ['query-and-projections', 'pagination'],
         question: 'Чем отличаются CrudRepository, JpaRepository и PagingAndSortingRepository? Как работают derived queries?',
         answer: `Иерархия интерфейсов Spring Data — каждый расширяет предыдущий:
 
@@ -334,6 +382,9 @@ public class LoggingAspect {
       },
       {
         id: 'query-and-projections',
+        difficulty: 'medium',
+        tags: ['data'],
+        related: ['spring-data-repositories'],
         question: 'Когда использовать @Query и нативный SQL? Что такое проекции?',
         answer: `**\`@Query\`** задаёт запрос явно, когда derived-метод неудобен:
 
@@ -352,6 +403,9 @@ public class LoggingAspect {
       },
       {
         id: 'transaction-propagation',
+        difficulty: 'hard',
+        tags: ['transactions', 'data'],
+        related: ['transactional'],
         question: 'Какие бывают уровни распространения транзакций (propagation) в Spring?',
         answer: `**Propagation** определяет, как метод с \`@Transactional\` ведёт себя относительно уже существующей транзакции. Основные варианты:
 
@@ -367,6 +421,9 @@ public class LoggingAspect {
       },
       {
         id: 'pagination',
+        difficulty: 'medium',
+        tags: ['data'],
+        related: ['spring-data-repositories'],
         question: 'Как реализовать пагинацию в Spring Data? Чем Page отличается от Slice?',
         answer: `Spring Data даёт пагинацию через \`Pageable\`:
 
@@ -378,6 +435,9 @@ public class LoggingAspect {
       },
       {
         id: 'spring-security-basics',
+        difficulty: 'medium',
+        tags: ['security'],
+        related: ['jwt-stateless', 'csrf-passwordencoder'],
         question: 'Как устроена цепочка фильтров Spring Security? Что такое SecurityContext?',
         answer: `Spring Security встраивается в веб-приложение как **цепочка сервлет-фильтров**. Входная точка — \`DelegatingFilterProxy\`, который делегирует \`FilterChainProxy\`, а тот прогоняет запрос через \`SecurityFilterChain\` — упорядоченный набор фильтров (аутентификация, авторизация, CSRF, обработка исключений и т.д.). Каждый фильтр отвечает за свой аспект.
 
@@ -387,6 +447,9 @@ public class LoggingAspect {
       },
       {
         id: 'jwt-stateless',
+        difficulty: 'medium',
+        tags: ['security'],
+        related: ['oauth2', 'spring-security-basics'],
         question: 'Как работает JWT-аутентификация и stateless-подход? Зачем refresh-токен?',
         answer: `**Stateless-аутентификация** не хранит серверную сессию: всё нужное для проверки пользователь присылает в каждом запросе. Это упрощает горизонтальное масштабирование (любой инстанс обработает запрос) в отличие от stateful-сессии в памяти/хранилище.
 
@@ -396,6 +459,9 @@ public class LoggingAspect {
       },
       {
         id: 'oauth2',
+        difficulty: 'medium',
+        tags: ['security'],
+        related: ['jwt-stateless'],
         question: 'Что такое OAuth2 и чем он отличается от JWT?',
         answer: `**OAuth2** — протокол **делегированной авторизации**: он позволяет приложению получить ограниченный доступ к ресурсам пользователя без передачи его пароля. Участники: **resource owner** (пользователь), **client** (приложение), **authorization server** (выдаёт токены), **resource server** (хранит данные). Результат потока (например, Authorization Code Flow) — **access-токен**.
 
@@ -405,6 +471,9 @@ public class LoggingAspect {
       },
       {
         id: 'csrf-passwordencoder',
+        difficulty: 'medium',
+        tags: ['security'],
+        related: ['spring-security-basics'],
         question: 'Что такое CSRF и когда его отключают? Как хранить пароли (PasswordEncoder)?',
         answer: `**CSRF (Cross-Site Request Forgery)** — атака, при которой сторонний сайт заставляет браузер жертвы отправить запрос к приложению, где она аутентифицирована, используя её cookie. Защита — **CSRF-токен**: непредсказуемое значение, которое сервер ждёт в изменяющих запросах и которое чужой сайт знать не может.
 
@@ -419,6 +488,9 @@ CSRF-защита актуальна для **сессионной (cookie-based
       },
       {
         id: 'spring-cloud-overview',
+        difficulty: 'medium',
+        tags: ['cloud'],
+        related: ['service-discovery-gateway'],
         question: 'Что такое Spring Cloud и какие проблемы микросервисов он решает?',
         answer: `**Spring Cloud** — набор проектов поверх Spring Boot, закрывающих типовые задачи распределённой микросервисной архитектуры готовыми решениями:
 
@@ -434,6 +506,9 @@ CSRF-защита актуальна для **сессионной (cookie-based
       },
       {
         id: 'service-discovery-gateway',
+        difficulty: 'medium',
+        tags: ['cloud'],
+        related: ['spring-cloud-overview'],
         question: 'Как работают Service Discovery (Eureka) и API Gateway?',
         answer: `**Service Discovery** решает проблему поиска сервисов в динамической среде, где адреса и число инстансов меняются:
 

@@ -7,6 +7,9 @@ export const monitoring = {
     questions: [
       {
         id: 'what-is-monitoring',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['jvm-metrics'],
         question: 'Что такое мониторинг и чем он отличается от логирования?',
         answer: `**Мониторинг** — непрерывный сбор, хранение и анализ показателей работы системы, чтобы **знать её состояние в реальном времени**, замечать проблемы (в идеале — до того, как их заметят пользователи) и понимать причины. Часть более широкого понятия **observability (наблюдаемость)** — способности понять внутреннее состояние системы по её внешним сигналам.
 
@@ -25,6 +28,9 @@ export const monitoring = {
       },
       {
         id: 'jvm-metrics',
+        difficulty: 'medium',
+        tags: ['metrics'],
+        related: ['spring-boot-metrics'],
         question: 'Какие метрики важно мониторить в Java-приложении?',
         answer: `Метрики делят на **прикладные** (о поведении сервиса) и **инфраструктурные/JVM** (о рантайме).
 
@@ -46,6 +52,9 @@ export const monitoring = {
       },
       {
         id: 'spring-boot-metrics',
+        difficulty: 'medium',
+        tags: ['metrics', 'spring'],
+        related: ['jvm-metrics', 'prometheus'],
         question: 'Как включить метрики для мониторинга в Spring Boot?',
         answer: `В Spring Boot метрики дают **Actuator** + **Micrometer**:
 
@@ -67,6 +76,9 @@ management.endpoints.web.exposure.include=health,info,prometheus
       },
       {
         id: 'prometheus',
+        difficulty: 'medium',
+        tags: ['tools'],
+        related: ['grafana'],
         question: 'Что такое Prometheus и как он работает?',
         answer: `**Prometheus** — система мониторинга и **база данных временных рядов (TSDB)** с открытым исходным кодом, стандарт де-факто для метрик.
 
@@ -82,6 +94,9 @@ Prometheus хранит метрики локально (обычно недол
       },
       {
         id: 'grafana',
+        difficulty: 'easy',
+        tags: ['tools'],
+        related: ['prometheus'],
         question: 'Что такое Grafana и зачем она нужна?',
         answer: `**Grafana** — платформа **визуализации и анализа** метрик (и не только). Сама она обычно **не хранит** данные, а подключается к источникам — **Prometheus**, Loki (логи), Elasticsearch, InfluxDB, облачным системам — и строит по ним **дашборды**.
 
@@ -96,6 +111,9 @@ Prometheus хранит метрики локально (обычно недол
       },
       {
         id: 'red-use-metrics',
+        difficulty: 'medium',
+        tags: ['metrics'],
+        related: ['alerting'],
         question: 'Что такое методы RED и USE? Какие метрики критичны для микросервисов?',
         answer: `Это методики выбора «правильного» набора метрик, чтобы не мониторить всё подряд.
 
@@ -121,6 +139,9 @@ Prometheus хранит метрики локально (обычно недол
       },
       {
         id: 'monitoring-distributed-tracing',
+        difficulty: 'medium',
+        tags: ['tracing'],
+        related: [],
         question: 'Что такое distributed tracing и какие инструменты используют?',
         answer: `**Distributed tracing (распределённая трассировка)** отслеживает путь **одного запроса** через все сервисы, показывая цепочку вызовов и время каждого шага. В микросервисах это незаменимо: по метрикам видно «latency выросла», но не видно **где именно** в цепочке из десятка сервисов теряется время — трассировка показывает это.
 
@@ -140,6 +161,9 @@ Prometheus хранит метрики локально (обычно недол
       },
       {
         id: 'alerting',
+        difficulty: 'medium',
+        tags: ['alerting'],
+        related: ['red-use-metrics'],
         question: 'Что такое алертинг и какие метрики должны триггерить алерты?',
         answer: `**Алертинг** — автоматические оповещения, когда метрики выходят за допустимые пределы, чтобы команда узнала о проблеме **раньше пользователей**. Правило обычно задаётся на языке запросов (PromQL) с порогом и длительностью («если error rate > 5% в течение 5 минут»).
 

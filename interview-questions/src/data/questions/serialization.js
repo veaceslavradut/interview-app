@@ -7,6 +7,9 @@ export const serialization = {
     questions: [
       {
         id: 'what-is-serialization',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['transient', 'serialversionuid'],
         question: 'Что такое сериализация и как она реализована в Java?',
         answer: `**Сериализация** — процесс преобразования объекта в поток байтов для сохранения или передачи. **Десериализация** — обратный процесс.
 
@@ -36,6 +39,9 @@ try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("user.bin
       },
       {
         id: 'transient',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['what-is-serialization'],
         question: 'Что такое ключевое слово transient?',
         answer: `**transient** — модификатор поля, исключающий его из стандартной сериализации.
 
@@ -59,6 +65,9 @@ class User implements Serializable {
       },
       {
         id: 'serialversionuid',
+        difficulty: 'medium',
+        tags: ['basics'],
+        related: ['what-is-serialization'],
         question: 'Зачем нужен serialVersionUID?',
         answer: `**serialVersionUID** — уникальный идентификатор версии сериализуемого класса.
 
@@ -74,6 +83,9 @@ private static final long serialVersionUID = 1L;
       },
       {
         id: 'custom-serialization',
+        difficulty: 'hard',
+        tags: ['advanced'],
+        related: ['what-is-serialization'],
         question: 'Как настроить процесс сериализации? (writeObject/readObject, Externalizable)',
         answer: `**Способ 1: методы writeObject/readObject** — кастомизация стандартной сериализации:
 

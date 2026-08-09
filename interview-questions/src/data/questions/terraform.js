@@ -7,6 +7,9 @@ export const terraform = {
     questions: [
       {
         id: 'what-is-terraform',
+        difficulty: 'easy',
+        tags: ['basics', 'iac'],
+        related: ['terraform-vs-others'],
         question: 'Что такое Terraform и Infrastructure as Code (IaC)?',
         answer: `**Infrastructure as Code (IaC)** — подход, при котором инфраструктура (серверы, сети, БД, балансировщики) **описывается кодом** и управляется через него, а не создаётся вручную кликами в UI. Плюсы: версионирование в git, воспроизводимость, ревью изменений, автоматизация, устранение «snowflake»-серверов, собранных руками.
 
@@ -21,6 +24,9 @@ export const terraform = {
       },
       {
         id: 'terraform-vs-others',
+        difficulty: 'easy',
+        tags: ['iac'],
+        related: ['what-is-terraform'],
         question: 'Чем Terraform отличается от Ansible и CloudFormation?',
         answer: `Все три — про автоматизацию инфраструктуры, но с разным фокусом:
 
@@ -38,6 +44,9 @@ export const terraform = {
       },
       {
         id: 'terraform-providers-resources',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: [],
         question: 'Что такое provider и resource в Terraform?',
         answer: `**Provider (провайдер)** — плагин, через который Terraform общается с конкретной платформой (её API). Например, провайдер \`aws\`, \`google\`, \`azurerm\`, \`kubernetes\`. Провайдер настраивается (регион, креденшелы) и скачивается на \`terraform init\`. Именно провайдеры делают Terraform облаконезависимым — язык один, а работать можно с любой платформой, у которой есть провайдер.
 
@@ -60,6 +69,9 @@ Terraform строит **граф зависимостей** ресурсов (�
       },
       {
         id: 'terraform-state',
+        difficulty: 'medium',
+        tags: ['state'],
+        related: ['terraform-remote-state'],
         question: 'Что такое state-файл и что внутри terraform.tfstate?',
         answer: `**State-файл (\`terraform.tfstate\`)** — JSON-файл, в котором Terraform хранит **свою карту соответствия** между ресурсами в вашем коде и **реальными объектами** в облаке. Это память Terraform о том, что он уже создал.
 
@@ -76,6 +88,9 @@ Terraform строит **граф зависимостей** ресурсов (�
       },
       {
         id: 'terraform-remote-state',
+        difficulty: 'medium',
+        tags: ['state'],
+        related: ['terraform-state', 'terraform-state-locking'],
         question: 'Почему нельзя хранить state локально в проде? Как работает remote state?',
         answer: `По умолчанию state лежит **локально** в \`terraform.tfstate\`. Для командной/продакшн-работы это плохо:
 
@@ -95,6 +110,9 @@ Terraform строит **граф зависимостей** ресурсов (�
       },
       {
         id: 'terraform-state-locking',
+        difficulty: 'medium',
+        tags: ['state'],
+        related: ['terraform-remote-state'],
         question: 'Что такое state locking и зачем он нужен?',
         answer: `**State locking (блокировка состояния)** — механизм, не дающий **двум операциям одновременно** менять один и тот же state. Перед \`apply\` (и другими изменяющими командами) Terraform **захватывает блокировку**, а по завершении — освобождает.
 
@@ -109,6 +127,9 @@ Terraform строит **граф зависимостей** ресурсов (�
       },
       {
         id: 'terraform-commands',
+        difficulty: 'easy',
+        tags: ['commands'],
+        related: [],
         question: 'Что делают команды plan, apply, destroy и refresh?',
         answer: `Основные команды рабочего цикла Terraform:
 

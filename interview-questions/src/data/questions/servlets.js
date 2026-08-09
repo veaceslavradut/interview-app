@@ -7,6 +7,9 @@ export const servlets = {
     questions: [
       {
         id: 'what-is-servlet',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['jsp', 'session-tracking'],
         question: 'Что такое сервлет? Каков его жизненный цикл?',
         answer: `**Сервлет** — Java-класс, обрабатывающий HTTP-запросы на стороне сервера. Работает внутри контейнера сервлетов (Tomcat, Jetty).
 
@@ -31,6 +34,9 @@ public class HelloServlet extends HttpServlet {
       },
       {
         id: 'jsp',
+        difficulty: 'easy',
+        tags: ['jsp'],
+        related: ['what-is-servlet'],
         question: 'Что такое JSP и чем отличается от сервлета?',
         answer: `**JSP (JavaServer Pages)** — технология создания динамических веб-страниц: HTML с вкраплениями Java-кода.
 
@@ -53,6 +59,9 @@ public class HelloServlet extends HttpServlet {
       },
       {
         id: 'jstl-el',
+        difficulty: 'medium',
+        tags: ['jsp'],
+        related: ['jsp'],
         question: 'Что такое JSTL и Expression Language (EL)?',
         answer: `**EL (Expression Language)** — язык выражений для доступа к данным в JSP без Java-кода:
 
@@ -84,6 +93,9 @@ public class HelloServlet extends HttpServlet {
       },
       {
         id: 'session-tracking',
+        difficulty: 'medium',
+        tags: ['session'],
+        related: ['what-is-servlet'],
         question: 'Какие способы управления сессией существуют?',
         answer: `HTTP — протокол без состояния, поэтому для отслеживания пользователя между запросами используются:
 

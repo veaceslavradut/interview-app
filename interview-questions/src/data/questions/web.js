@@ -7,6 +7,9 @@ export const web = {
     questions: [
       {
         id: 'http',
+        difficulty: 'easy',
+        tags: ['http'],
+        related: ['rest'],
         question: 'Как работает протокол HTTP? Какие методы и коды ответов вы знаете?',
         answer: `**HTTP (HyperText Transfer Protocol)** — протокол прикладного уровня «запрос-ответ» поверх TCP (HTTP/3 — поверх QUIC/UDP). Без состояния (stateless).
 
@@ -33,6 +36,9 @@ export const web = {
       },
       {
         id: 'rest',
+        difficulty: 'medium',
+        tags: ['rest'],
+        related: ['http'],
         question: 'Что такое REST? Каковы принципы RESTful API?',
         answer: `**REST (Representational State Transfer)** — архитектурный стиль построения распределённых систем на основе HTTP.
 
@@ -62,6 +68,9 @@ GET    /api/users/42/orders — вложенные ресурсы
       },
       {
         id: 'browser-render',
+        difficulty: 'medium',
+        tags: ['browser'],
+        related: [],
         question: 'Что происходит после ввода URL в браузере?',
         answer: `Полный путь запроса:
 
@@ -85,6 +94,9 @@ GET    /api/users/42/orders — вложенные ресурсы
       },
       {
         id: 'web-security',
+        difficulty: 'medium',
+        tags: ['security'],
+        related: [],
         question: 'Какие основные уязвимости веб-приложений вы знаете?',
         answer: `Ключевые уязвимости (по OWASP Top 10):
 

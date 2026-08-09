@@ -7,6 +7,9 @@ export const xml = {
     questions: [
       {
         id: 'what-is-xml',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['xml-parsers'],
         question: 'Что такое XML? Каковы правила корректного XML-документа?',
         answer: `**XML (eXtensible Markup Language)** — расширяемый язык разметки для хранения и передачи структурированных данных. В отличие от HTML, теги не предопределены.
 
@@ -37,6 +40,9 @@ XML vs JSON: XML — схемы, неймспейсы, атрибуты, XSLT; J
       },
       {
         id: 'xml-parsers',
+        difficulty: 'medium',
+        tags: ['parsing'],
+        related: ['what-is-xml'],
         question: 'Какие способы парсинга XML существуют в Java? (DOM, SAX, StAX)',
         answer: `**DOM (Document Object Model)** — загружает весь документ в память как дерево:
 
@@ -66,6 +72,9 @@ NodeList items = doc.getElementsByTagName("item");
       },
       {
         id: 'xsd-xpath',
+        difficulty: 'medium',
+        tags: ['parsing'],
+        related: [],
         question: 'Что такое XSD и XPath?',
         answer: `**XSD (XML Schema Definition)** — язык описания структуры XML-документа: элементы, атрибуты, типы, кратность, ограничения.
 

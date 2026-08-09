@@ -7,6 +7,9 @@ export const buildTools = {
     questions: [
       {
         id: 'what-is-maven',
+        difficulty: 'easy',
+        tags: ['maven'],
+        related: ['maven-lifecycle'],
         question: 'Что такое Maven? Какова структура pom.xml?',
         answer: `**Maven** — инструмент сборки и управления зависимостями Java-проектов. Принцип: **convention over configuration** — стандартная структура проекта и жизненный цикл.
 
@@ -45,6 +48,9 @@ pom.xml              — описание проекта
       },
       {
         id: 'maven-lifecycle',
+        difficulty: 'medium',
+        tags: ['maven'],
+        related: ['what-is-maven'],
         question: 'Расскажите про жизненный цикл сборки Maven.',
         answer: `Maven имеет три независимых жизненных цикла: **default** (сборка), **clean** (очистка), **site** (документация).
 
@@ -71,6 +77,9 @@ mvn dependency:tree          # дерево зависимостей (плаги
       },
       {
         id: 'maven-dependencies',
+        difficulty: 'medium',
+        tags: ['maven', 'dependencies'],
+        related: [],
         question: 'Какие scope зависимостей существуют? Как разрешаются конфликты версий?',
         answer: `**Scope зависимостей:**
 
@@ -112,6 +121,9 @@ mvn dependency:tree          # дерево зависимостей (плаги
       },
       {
         id: 'maven-vs-gradle',
+        difficulty: 'easy',
+        tags: ['maven', 'gradle'],
+        related: [],
         question: 'В чем разница между Maven и Gradle?',
         answer: `**Maven:**
 

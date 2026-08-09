@@ -7,6 +7,9 @@ export const uml = {
     questions: [
       {
         id: 'uml-diagrams',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['class-diagram-relations'],
         question: 'Что такое UML? Какие виды диаграмм вы знаете?',
         answer: `**UML (Unified Modeling Language)** — унифицированный графический язык моделирования для описания, визуализации и документирования программных систем.
 
@@ -31,6 +34,9 @@ export const uml = {
       },
       {
         id: 'class-diagram-relations',
+        difficulty: 'medium',
+        tags: ['diagrams'],
+        related: ['uml-diagrams'],
         question: 'Какие виды связей существуют на диаграмме классов?',
         answer: `Связи на диаграмме классов (от слабой к сильной):
 
@@ -50,6 +56,9 @@ export const uml = {
       },
       {
         id: 'sequence-diagram',
+        difficulty: 'easy',
+        tags: ['diagrams'],
+        related: [],
         question: 'Что показывает диаграмма последовательности?',
         answer: `**Диаграмма последовательности (Sequence Diagram)** показывает взаимодействие объектов во времени: какие сообщения, в каком порядке и между кем передаются.
 

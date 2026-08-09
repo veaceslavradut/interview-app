@@ -7,6 +7,9 @@ export const reactive = {
     questions: [
       {
         id: 'what-is-reactive',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['reactive-streams', 'mono-flux'],
         question: 'Что такое реактивное программирование?',
         answer: `**Реактивное программирование** — парадигма, основанная на асинхронных потоках данных (data streams) и распространении изменений. Программа реагирует на события по мере их поступления.
 
@@ -27,6 +30,9 @@ export const reactive = {
       },
       {
         id: 'reactive-streams',
+        difficulty: 'medium',
+        tags: ['streams'],
+        related: ['what-is-reactive'],
         question: 'Что такое спецификация Reactive Streams?',
         answer: `**Reactive Streams** — стандарт асинхронной обработки потоков данных с неблокирующим backpressure. С Java 9 включён в JDK как \`java.util.concurrent.Flow\`.
 
@@ -58,6 +64,9 @@ interface Processor<T, R> extends Subscriber<T>, Publisher<R> {}
       },
       {
         id: 'mono-flux',
+        difficulty: 'medium',
+        tags: ['reactor'],
+        related: ['what-is-reactive'],
         question: 'Что такое Mono и Flux в Project Reactor?',
         answer: `**Project Reactor** — реактивная библиотека, основа Spring WebFlux. Два основных типа издателей:
 
@@ -88,6 +97,9 @@ users.filter(u -> u.getAge() > 18)
       },
       {
         id: 'reactive-vs-async',
+        difficulty: 'medium',
+        tags: ['basics'],
+        related: ['webflux-vs-mvc'],
         question: 'Когда стоит использовать реактивный подход, а когда нет?',
         answer: `**Реактивный подход оправдан:**
 
@@ -108,6 +120,9 @@ users.filter(u -> u.getAge() > 18)
       },
       {
         id: 'hot-cold-publishers',
+        difficulty: 'hard',
+        tags: ['reactor', 'advanced'],
+        related: ['mono-flux'],
         question: 'В чем разница между холодными (cold) и горячими (hot) издателями?',
         answer: `**Холодный (cold) издатель** — генерирует данные **заново для каждого подписчика**; без подписки ничего не происходит:
 
@@ -138,6 +153,9 @@ Flux<Price> prices = sink.asFlux();
       },
       {
         id: 'webflux-vs-mvc',
+        difficulty: 'medium',
+        tags: ['spring'],
+        related: ['reactive-vs-async'],
         question: 'В чем разница между Spring WebFlux и Spring MVC?',
         answer: `**Spring MVC** — классический сервлетный стек:
 
@@ -168,6 +186,9 @@ public Mono<User> getUser(@PathVariable String id) {
       },
       {
         id: 'reactor-error-backpressure',
+        difficulty: 'hard',
+        tags: ['reactor', 'advanced'],
+        related: ['mono-flux'],
         question: 'Как обрабатывать ошибки и backpressure в Project Reactor?',
         answer: `**Обработка ошибок** — ошибка терминальна: поток завершается сигналом \`onError\`, дальнейшие элементы не поступают.
 
