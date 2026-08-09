@@ -7,6 +7,9 @@ export const logging = {
     questions: [
       {
         id: 'logging-frameworks',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['log-levels'],
         question: 'Какие фреймворки логирования существуют в Java?',
         answer: `**Фасады (API):**
 
@@ -34,6 +37,9 @@ log.info("User {} created order {}", userId, orderId); // параметриза
       },
       {
         id: 'log-levels',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['logging-frameworks'],
         question: 'Какие уровни логирования существуют и когда их использовать?',
         answer: `Уровни (от подробного к критичному): **TRACE < DEBUG < INFO < WARN < ERROR** (+ FATAL в Log4j2).
 
@@ -52,6 +58,9 @@ log.info("User {} created order {}", userId, orderId); // параметриза
       },
       {
         id: 'mdc',
+        difficulty: 'medium',
+        tags: ['best-practices'],
+        related: [],
         question: 'Что такое MDC и структурированное логирование?',
         answer: `**MDC (Mapped Diagnostic Context)** — потоко-локальная карта контекстных данных, автоматически добавляемых к каждой записи лога.
 

@@ -7,6 +7,9 @@ export const patterns = {
     questions: [
       {
         id: 'pattern-groups',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['pattern-vs-antipattern'],
         question: 'Какие группы шаблонов проектирования существуют?',
         answer: `Классические паттерны GoF (Gang of Four, 23 шаблона) делятся на три группы:
 
@@ -36,6 +39,9 @@ export const patterns = {
       },
       {
         id: 'singleton',
+        difficulty: 'easy',
+        tags: ['creational'],
+        related: ['factory-builder', 'patterns-in-jdk'],
         question: 'Расскажите про паттерн Singleton. Как реализовать его правильно?',
         answer: `**Singleton** гарантирует существование единственного экземпляра класса и глобальную точку доступа к нему.
 
@@ -81,6 +87,9 @@ public enum Singleton { INSTANCE; }
       },
       {
         id: 'factory-builder',
+        difficulty: 'medium',
+        tags: ['creational'],
+        related: ['singleton'],
         question: 'В чем разница между Factory Method, Abstract Factory и Builder?',
         answer: `Все три — порождающие паттерны, но решают разные задачи:
 
@@ -120,6 +129,9 @@ User user = User.builder()
       },
       {
         id: 'patterns-in-jdk',
+        difficulty: 'medium',
+        tags: ['basics'],
+        related: ['singleton', 'decorator-proxy-composite'],
         question: 'Какие паттерны используются в JDK и Spring?',
         answer: `**В JDK:**
 
@@ -149,6 +161,9 @@ User user = User.builder()
       },
       {
         id: 'solid',
+        difficulty: 'medium',
+        tags: ['principles'],
+        related: ['dry-kiss-yagni'],
         question: 'Что такое принципы SOLID?',
         answer: `**SOLID** — пять принципов объектно-ориентированного проектирования (Роберт Мартин), делающих код гибким и поддерживаемым:
 
@@ -162,6 +177,9 @@ User user = User.builder()
       },
       {
         id: 'dry-kiss-yagni',
+        difficulty: 'easy',
+        tags: ['principles'],
+        related: ['solid'],
         question: 'Что означают принципы DRY, KISS и YAGNI?',
         answer: `Это принципы, дополняющие SOLID и удерживающие код простым:
 
@@ -173,6 +191,9 @@ User user = User.builder()
       },
       {
         id: 'ddd',
+        difficulty: 'hard',
+        tags: ['ddd', 'architecture'],
+        related: ['architecture-styles', 'cqrs-event-sourcing'],
         question: 'Что такое Domain-Driven Design (DDD) и bounded context?',
         answer: `**DDD (проблемно-ориентированное проектирование)** — подход, ставящий в центр разработки предметную область (домен) и её модель, а не техническую реализацию. Ключевая идея — общий **единый язык (ubiquitous language)** для разработчиков и экспертов домена, отражённый прямо в коде.
 
@@ -187,6 +208,9 @@ User user = User.builder()
       },
       {
         id: 'architecture-styles',
+        difficulty: 'hard',
+        tags: ['architecture'],
+        related: ['ddd'],
         question: 'Чем отличаются слоистая, гексагональная и чистая архитектуры?',
         answer: `Все три разделяют ответственность по слоям; отличаются направлением зависимостей.
 
@@ -198,6 +222,9 @@ User user = User.builder()
       },
       {
         id: 'pattern-vs-antipattern',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['pattern-groups'],
         question: 'Чем паттерн отличается от антипаттерна? Что такое архитектурный паттерн?',
         answer: `**Паттерн проектирования** — проверенное типовое решение часто встречающейся проблемы проектирования в определённом контексте. Не готовый код, а описание подхода.
 
@@ -213,6 +240,9 @@ User user = User.builder()
       },
       {
         id: 'strategy-vs-state',
+        difficulty: 'medium',
+        tags: ['behavioral'],
+        related: ['template-method-vs-strategy'],
         question: 'Что такое паттерн Strategy и чем он отличается от State?',
         answer: `**Strategy (Стратегия)** — поведенческий паттерн: семейство взаимозаменяемых алгоритмов выносится в отдельные классы за общим интерфейсом, и клиент выбирает нужный во время выполнения. Позволяет менять алгоритм независимо от использующего его кода (пример: разные стратегии сортировки, оплаты, расчёта скидки).
 
@@ -225,6 +255,9 @@ User user = User.builder()
       },
       {
         id: 'decorator-proxy-composite',
+        difficulty: 'medium',
+        tags: ['structural'],
+        related: ['adapter'],
         question: 'В чём разница между Decorator, Proxy и Composite?',
         answer: `Все три — структурные паттерны, оборачивающие объект того же интерфейса, но с разной целью:
 
@@ -236,6 +269,9 @@ User user = User.builder()
       },
       {
         id: 'observer',
+        difficulty: 'easy',
+        tags: ['behavioral'],
+        related: [],
         question: 'Что такое паттерн Observer (Наблюдатель)?',
         answer: `**Observer (Наблюдатель)** — поведенческий паттерн: объект-**субъект (subject)** хранит список зависимых **наблюдателей** и автоматически уведомляет их об изменении своего состояния, вызывая их метод. Реализует отношение «один ко многим» со слабой связанностью — субъект знает только про интерфейс наблюдателя.
 
@@ -252,6 +288,9 @@ User user = User.builder()
       },
       {
         id: 'template-method-vs-strategy',
+        difficulty: 'medium',
+        tags: ['behavioral'],
+        related: ['strategy-vs-state'],
         question: 'Что такое Template Method и чем он отличается от Strategy?',
         answer: `**Template Method (Шаблонный метод)** — поведенческий паттерн: базовый класс задаёт **скелет алгоритма** в одном методе, а отдельные шаги делает абстрактными/переопределяемыми, чтобы подклассы дополняли их, не меняя общую структуру. Основан на **наследовании**.
 
@@ -264,6 +303,9 @@ User user = User.builder()
       },
       {
         id: 'adapter',
+        difficulty: 'easy',
+        tags: ['structural'],
+        related: ['decorator-proxy-composite'],
         question: 'Что такое паттерн Adapter (Адаптер)?',
         answer: `**Adapter (Адаптер)** — структурный паттерн: преобразует интерфейс существующего класса в интерфейс, ожидаемый клиентом, позволяя работать вместе классам с несовместимыми интерфейсами. Адаптер оборачивает адаптируемый объект и транслирует вызовы.
 
@@ -278,6 +320,9 @@ User user = User.builder()
       },
       {
         id: 'saga',
+        difficulty: 'hard',
+        tags: ['microservices', 'architecture'],
+        related: ['cqrs-event-sourcing', 'circuit-breaker'],
         question: 'Что такое паттерн SAGA и зачем он нужен?',
         answer: `**SAGA** — паттерн управления **распределённой транзакцией** между микросервисами без общей БД и двухфазного коммита. Вместо одной ACID-транзакции бизнес-операция разбивается на последовательность локальных транзакций в разных сервисах; для каждой определяется **компенсирующая операция**, откатывающая её эффект при сбое.
 
@@ -290,6 +335,9 @@ SAGA даёт не атомарность, а **итоговую согласо�
       },
       {
         id: 'cqrs-event-sourcing',
+        difficulty: 'hard',
+        tags: ['microservices', 'architecture'],
+        related: ['ddd', 'saga'],
         question: 'Что такое CQRS и Event Sourcing? Как они связаны?',
         answer: `**CQRS (Command Query Responsibility Segregation)** — разделение модели на **команды** (изменяют состояние) и **запросы** (читают). Read- и write-модели можно проектировать, масштабировать и хранить независимо: например, нормализованная запись и денормализованные представления для чтения. Плюс — оптимизация и масштабирование чтения/записи по отдельности; минус — усложнение и рассинхронизация моделей (обычно итоговая согласованность).
 
@@ -299,6 +347,9 @@ SAGA даёт не атомарность, а **итоговую согласо�
       },
       {
         id: 'circuit-breaker',
+        difficulty: 'medium',
+        tags: ['microservices'],
+        related: ['idempotency', 'saga'],
         question: 'Что такое Circuit Breaker, Retry и Backoff?',
         answer: `Это паттерны **устойчивости (resilience)** при вызовах ненадёжных удалённых сервисов.
 
@@ -316,6 +367,9 @@ SAGA даёт не атомарность, а **итоговую согласо�
       },
       {
         id: 'idempotency',
+        difficulty: 'medium',
+        tags: ['microservices'],
+        related: ['circuit-breaker'],
         question: 'Что такое идемпотентность и как реализовать идемпотентные запросы?',
         answer: `**Идемпотентность** — свойство операции, при котором повторное её выполнение с теми же параметрами даёт тот же результат и не создаёт побочных эффектов сверх первого выполнения. Важно в распределённых системах, где из-за повторов (retry), таймаутов и «at-least-once» доставки один и тот же запрос может прийти несколько раз.
 

@@ -7,6 +7,9 @@ export const sql = {
     questions: [
       {
         id: 'joins',
+        difficulty: 'easy',
+        tags: ['queries', 'joins'],
+        related: ['self-join', 'join-vs-subquery'],
         question: 'Какие виды JOIN существуют в SQL?',
         answer: `**INNER JOIN** — только строки, имеющие соответствие в обеих таблицах:
 
@@ -34,6 +37,9 @@ LEFT JOIN orders o ON o.user_id = u.id; -- и пользователи без з
       },
       {
         id: 'group-by-having',
+        difficulty: 'easy',
+        tags: ['queries', 'aggregation'],
+        related: ['window-functions'],
         question: 'В чем разница между WHERE и HAVING? Как работает GROUP BY?',
         answer: `**GROUP BY** группирует строки по значениям столбцов, позволяя применять агрегатные функции (\`COUNT\`, \`SUM\`, \`AVG\`, \`MIN\`, \`MAX\`) к каждой группе:
 
@@ -57,6 +63,9 @@ ORDER BY avg_salary DESC;
       },
       {
         id: 'window-functions',
+        difficulty: 'hard',
+        tags: ['queries', 'aggregation'],
+        related: ['group-by-having'],
         question: 'Что такое оконные функции?',
         answer: `**Оконные функции** выполняют вычисления над набором строк («окном»), связанных с текущей строкой, **не сворачивая** строки (в отличие от GROUP BY).
 
@@ -81,6 +90,9 @@ FROM employees;
       },
       {
         id: 'subqueries-cte',
+        difficulty: 'medium',
+        tags: ['queries'],
+        related: ['join-vs-subquery'],
         question: 'Что такое подзапросы и CTE (WITH)?',
         answer: `**Подзапрос** — запрос внутри другого запроса:
 
@@ -115,6 +127,9 @@ WHERE e.salary > d.avg_sal;
       },
       {
         id: 'sql-sublanguages',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: [],
         question: 'Что такое DDL, DML, DCL и TCL? Приведите примеры.',
         answer: `SQL делится на подъязыки по назначению команд:
 
@@ -127,6 +142,9 @@ WHERE e.salary > d.avg_sal;
       },
       {
         id: 'delete-vs-truncate',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: [],
         question: 'Чем отличается DELETE от TRUNCATE?',
         answer: `Обе удаляют строки, но принципиально по-разному:
 
@@ -148,6 +166,9 @@ WHERE e.salary > d.avg_sal;
       },
       {
         id: 'self-join',
+        difficulty: 'medium',
+        tags: ['queries', 'joins'],
+        related: ['joins'],
         question: 'Что такое SELF JOIN и когда он нужен?',
         answer: `**SELF JOIN** — соединение таблицы **с самой собой**. Технически это обычный JOIN, где обе стороны — одна и та же таблица, поэтому ей дают два разных **алиаса**, чтобы различать «экземпляры».
 
@@ -163,6 +184,9 @@ JOIN employees m ON e.manager_id = m.id;
       },
       {
         id: 'join-vs-subquery',
+        difficulty: 'medium',
+        tags: ['queries', 'joins'],
+        related: ['joins', 'subqueries-cte'],
         question: 'Чем JOIN отличается от подзапроса (subquery)? Что выбрать?',
         answer: `**JOIN** объединяет строки из нескольких таблиц по условию, возвращая колонки из всех. **Подзапрос** — запрос внутри запроса, результат которого используется во внешнем (в \`WHERE\`, \`FROM\`, \`SELECT\`).
 
@@ -180,6 +204,9 @@ JOIN employees m ON e.manager_id = m.id;
       },
       {
         id: 'sql-indexes',
+        difficulty: 'medium',
+        tags: ['indexes', 'performance'],
+        related: ['composite-covering-index', 'index-pitfalls'],
         question: 'Что такое индекс, зачем он нужен и какие бывают индексы?',
         answer: `**Индекс** — вспомогательная структура данных, ускоряющая поиск строк по значению столбца(ов), чтобы СУБД не сканировала всю таблицу (Seq/Full Scan). Аналогия — предметный указатель в книге. Цена: индексы **замедляют запись** (\`INSERT\`/\`UPDATE\`/\`DELETE\` обновляют и индекс) и занимают место.
 
@@ -195,6 +222,9 @@ JOIN employees m ON e.manager_id = m.id;
       },
       {
         id: 'composite-covering-index',
+        difficulty: 'hard',
+        tags: ['indexes', 'performance'],
+        related: ['sql-indexes'],
         question: 'Что такое составной и покрывающий (covering) индекс? Когда их использовать?',
         answer: `**Составной (композитный) индекс** — индекс по **нескольким столбцам сразу**, например \`(user_id, status)\`. Ключевое правило — **порядок столбцов**: индекс работает для условий по **префиксу** слева направо. \`(user_id, status)\` ускорит \`WHERE user_id = ?\` и \`WHERE user_id = ? AND status = ?\`, но **не** \`WHERE status = ?\` в одиночку. Поэтому первым ставят наиболее селективный / чаще используемый в условии столбец.
 
@@ -206,6 +236,9 @@ JOIN employees m ON e.manager_id = m.id;
       },
       {
         id: 'index-pitfalls',
+        difficulty: 'hard',
+        tags: ['indexes', 'performance'],
+        related: ['sql-indexes', 'explain-plan'],
         question: 'Когда индексы ухудшают производительность и почему может использоваться Seq Scan при наличии индекса?',
         answer: `**Индексы вредят, когда:**
 
@@ -224,6 +257,9 @@ JOIN employees m ON e.manager_id = m.id;
       },
       {
         id: 'explain-plan',
+        difficulty: 'medium',
+        tags: ['performance'],
+        related: ['join-algorithms', 'index-pitfalls'],
         question: 'Как работает EXPLAIN (PLAN) и как понять, что запрос медленный?',
         answer: `**\`EXPLAIN\`** показывает **план выполнения** запроса, построенный оптимизатором: какие таблицы и в каком порядке читаются, какие индексы используются, как соединяются таблицы и оценку стоимости/числа строк. **\`EXPLAIN ANALYZE\`** дополнительно **реально выполняет** запрос и показывает фактическое время и число строк на каждом шаге — что позволяет сравнить оценку оптимизатора с реальностью.
 
@@ -238,6 +274,9 @@ JOIN employees m ON e.manager_id = m.id;
       },
       {
         id: 'join-algorithms',
+        difficulty: 'hard',
+        tags: ['performance', 'joins'],
+        related: ['explain-plan'],
         question: 'Что такое Nested Loop, Hash Join и Merge Join?',
         answer: `Это три физических алгоритма, которыми СУБД реализует логический JOIN; оптимизатор выбирает подходящий по объёму данных и наличию индексов.
 
@@ -249,6 +288,9 @@ JOIN employees m ON e.manager_id = m.id;
       },
       {
         id: 'sql-locks',
+        difficulty: 'hard',
+        tags: ['transactions'],
+        related: [],
         question: 'Как работают блокировки в БД? Что такое оптимистичная и пессимистичная блокировка и @Version?',
         answer: `**Блокировки (locks)** не дают конкурентным транзакциям испортить данные. По уровню бывают строчные (row-level) и табличные, по типу — **shared (S, чтение)** и **exclusive (X, запись)**. \`UPDATE\`/\`DELETE\` берут exclusive-блокировку на строки; в PostgreSQL/InnoDB читатели обычно не блокируют писателей за счёт **MVCC** (версии строк). Явно блокировать строки можно \`SELECT ... FOR UPDATE\`.
 

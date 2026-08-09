@@ -7,6 +7,9 @@ export const jdbc = {
     questions: [
       {
         id: 'what-is-jdbc',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['statement-preparedstatement'],
         question: 'Что такое JDBC? Опишите основные компоненты.',
         answer: `**JDBC (Java Database Connectivity)** — стандартный API Java для работы с реляционными БД.
 
@@ -37,6 +40,9 @@ try (Connection conn = dataSource.getConnection();
       },
       {
         id: 'statement-preparedstatement',
+        difficulty: 'medium',
+        tags: ['sql'],
+        related: ['what-is-jdbc'],
         question: 'В чем разница между Statement и PreparedStatement?',
         answer: `**Statement** — выполнение статического SQL; параметры конкатенируются в строку:
 
@@ -64,6 +70,9 @@ ps.setString(1, name);
       },
       {
         id: 'jdbc-transactions',
+        difficulty: 'medium',
+        tags: ['transactions'],
+        related: [],
         question: 'Как управлять транзакциями в JDBC?',
         answer: `По умолчанию JDBC работает в режиме **auto-commit**: каждый SQL-оператор — отдельная транзакция.
 
@@ -97,6 +106,9 @@ try {
       },
       {
         id: 'connection-pool',
+        difficulty: 'medium',
+        tags: ['performance'],
+        related: [],
         question: 'Что такое пул соединений и зачем он нужен?',
         answer: `**Пул соединений (Connection Pool)** — кэш открытых соединений с БД, которые переиспользуются вместо создания новых.
 

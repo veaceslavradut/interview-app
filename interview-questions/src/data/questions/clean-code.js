@@ -7,6 +7,9 @@ export const cleanCode = {
     questions: [
       {
         id: 'what-is-clean-code',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['clean-naming', 'clean-functions'],
         question: 'Что такое чистый код и почему он важен?',
         answer: `**Чистый код** — код, который **легко читать, понимать и изменять** другим людям (и вам через полгода). Ключевая идея: код читают **гораздо чаще**, чем пишут, поэтому оптимизировать надо под чтение.
 
@@ -22,6 +25,9 @@ export const cleanCode = {
       },
       {
         id: 'clean-naming',
+        difficulty: 'easy',
+        tags: ['naming'],
+        related: ['what-is-clean-code'],
         question: 'Каким должно быть хорошее имя в коде?',
         answer: `Имя должно **полностью раскрывать смысл** — что это и зачем, — чтобы понять его без комментариев и заглядывания в реализацию. Хорошее имя отвечает на вопросы: почему это существует, что делает, как используется.
 
@@ -38,6 +44,9 @@ export const cleanCode = {
       },
       {
         id: 'clean-functions',
+        difficulty: 'medium',
+        tags: ['functions'],
+        related: ['what-is-clean-code', 'clean-no-duplication'],
         question: 'Каким требованиям должна отвечать хорошая функция (метод)?',
         answer: `Главные принципы (из «Чистого кода»):
 
@@ -52,6 +61,9 @@ export const cleanCode = {
       },
       {
         id: 'clean-comments',
+        difficulty: 'easy',
+        tags: ['best-practices'],
+        related: [],
         question: 'Когда нужны комментарии, а когда они лишние?',
         answer: `Главный принцип: **комментарий объясняет «почему», а не «что»**. Что делает код, должен показывать **сам код** (через хорошие имена и структуру), а не комментарий-пересказ.
 
@@ -74,6 +86,9 @@ export const cleanCode = {
       },
       {
         id: 'clean-error-handling',
+        difficulty: 'medium',
+        tags: ['best-practices'],
+        related: ['domain-return-types'],
         question: 'Как правильно обрабатывать ошибки: исключения или коды/флаги?',
         answer: `Правило: **используйте исключения, а не коды возврата, \`null\` или булевы флаги** для сигнализации об ошибках.
 
@@ -95,6 +110,9 @@ export const cleanCode = {
       },
       {
         id: 'clean-no-duplication',
+        difficulty: 'easy',
+        tags: ['best-practices'],
+        related: ['clean-functions'],
         question: 'Почему дублирование кода — плохо и всегда ли его нужно устранять?',
         answer: `**Дублирование** — один из главных врагов сопровождаемости и суть принципа **DRY (Don't Repeat Yourself)**: каждый фрагмент **знания** должен иметь единственное авторитетное представление.
 
@@ -116,6 +134,9 @@ export const cleanCode = {
       },
       {
         id: 'minimize-mutability',
+        difficulty: 'medium',
+        tags: ['effective-java', 'best-practices'],
+        related: ['money-bigdecimal'],
         question: 'Почему стоит минимизировать изменяемость (immutability)? (Effective Java)',
         answer: `Совет из «Effective Java»: **предпочитайте неизменяемые (immutable) объекты** и в целом минимизируйте изменяемость — делайте поля \`final\`, а классы неизменяемыми, где возможно.
 
@@ -138,6 +159,9 @@ export const cleanCode = {
       },
       {
         id: 'optional-and-streams',
+        difficulty: 'medium',
+        tags: ['effective-java'],
+        related: [],
         question: 'Как грамотно использовать Optional и Stream API? (Effective Java)',
         answer: `**Optional** и **Stream** — мощные инструменты, но у них есть правила уместного применения.
 
@@ -160,6 +184,9 @@ export const cleanCode = {
       },
       {
         id: 'money-bigdecimal',
+        difficulty: 'medium',
+        tags: ['effective-java'],
+        related: ['minimize-mutability'],
         question: 'Почему для денег нельзя использовать float/double и что использовать вместо них?',
         answer: `\`float\` и \`double\` — **двоичные** числа с плавающей точкой: они **не могут точно представить** многие десятичные дроби (например, 0.1). Классический пример: \`0.1 + 0.2\` даёт \`0.30000000000000004\`. Для денег это недопустимо — накапливаются ошибки округления, суммы «не бьются», возникают расхождения в копейках, которые в финансах критичны.
 
@@ -175,6 +202,9 @@ export const cleanCode = {
       },
       {
         id: 'domain-return-types',
+        difficulty: 'medium',
+        tags: ['effective-java', 'best-practices'],
+        related: ['clean-error-handling'],
         question: 'Почему метод лучше возвращать void или доменный объект, а не флаги? (Effective Java)',
         answer: `Идея: результат операции должен быть **самодокументируемым и типобезопасным**. Метод стоит проектировать так, чтобы он возвращал либо **\`void\`** (когда это команда без результата), либо осмысленный **доменный объект-результат** (например, \`TransferResult\`), а не «сырые» \`boolean\`/\`int\`-коды или \`null\`.
 

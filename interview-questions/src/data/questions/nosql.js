@@ -7,6 +7,9 @@ export const nosql = {
     questions: [
       {
         id: 'what-is-nosql',
+        difficulty: 'easy',
+        tags: ['basics', 'databases'],
+        related: ['nosql-vs-sql'],
         question: 'Что такое NoSQL и какие основные типы баз данных существуют?',
         answer: `**NoSQL** (Not Only SQL) — семейство нереляционных БД, которые отказываются от жёсткой табличной модели и строгих ACID-гарантий ради гибкой схемы и горизонтального масштабирования.
 
@@ -21,6 +24,9 @@ export const nosql = {
       },
       {
         id: 'nosql-vs-sql',
+        difficulty: 'medium',
+        tags: ['databases'],
+        related: ['what-is-nosql', 'nosql-data-modeling'],
         question: 'Когда выбирать NoSQL, а когда SQL?',
         answer: `Выбор зависит от модели данных и требований к целостности, а не от «моды».
 
@@ -40,6 +46,9 @@ export const nosql = {
       },
       {
         id: 'scaling-horizontal-vertical',
+        difficulty: 'easy',
+        tags: ['scalability'],
+        related: ['sharding'],
         question: 'В чём разница между горизонтальным и вертикальным масштабированием?',
         answer: `**Вертикальное масштабирование (scale up)** — наращивание ресурсов одной машины (CPU, RAM, диск). Просто, не требует изменений в приложении, но упирается в потолок железа и оставляет единую точку отказа.
 
@@ -49,6 +58,9 @@ NoSQL-базы изначально проектировались под гор
       },
       {
         id: 'cap-theorem',
+        difficulty: 'hard',
+        tags: ['consistency'],
+        related: ['consistency-models', 'network-partition'],
         question: 'Объясните CAP-теорему.',
         answer: `**CAP-теорема:** распределённая система не может одновременно гарантировать все три свойства:
 
@@ -63,6 +75,9 @@ NoSQL-базы изначально проектировались под гор
       },
       {
         id: 'consistency-models',
+        difficulty: 'hard',
+        tags: ['consistency'],
+        related: ['cap-theorem', 'quorum'],
         question: 'Чем strong consistency отличается от eventual consistency? Какие ещё модели бывают?',
         answer: `**Strong consistency (строгая)** — после успешной записи любое последующее чтение с любого узла вернёт это значение. Проще для разработчика, но дороже по latency и доступности.
 
@@ -78,6 +93,9 @@ NoSQL-базы изначально проектировались под гор
       },
       {
         id: 'network-partition',
+        difficulty: 'hard',
+        tags: ['consistency'],
+        related: ['cap-theorem'],
         question: 'Что произойдёт при сетевом разделении и как система решает, чем жертвовать?',
         answer: `При **network partition** узлы теряют связь друг с другом и не могут согласовать данные. Система вынуждена выбрать одно из двух:
 
@@ -88,6 +106,9 @@ NoSQL-базы изначально проектировались под гор
       },
       {
         id: 'sharding',
+        difficulty: 'hard',
+        tags: ['scalability'],
+        related: ['quorum'],
         question: 'Что такое шардирование и как выбрать shard key?',
         answer: `**Шардирование (партиционирование)** — горизонтальное разбиение данных на части (шарды), размещённые на разных узлах, чтобы масштабировать объём и нагрузку. **Shard key** определяет, на какой шард попадёт запись.
 
@@ -100,6 +121,9 @@ NoSQL-базы изначально проектировались под гор
       },
       {
         id: 'nosql-indexes',
+        difficulty: 'medium',
+        tags: ['databases'],
+        related: [],
         question: 'Какие бывают индексы в NoSQL и зачем они нужны?',
         answer: `Индексы ускоряют чтение ценой замедления записи и дополнительной памяти. Без подходящего индекса запрос выполняет full scan всей коллекции.
 
@@ -111,6 +135,9 @@ NoSQL-базы изначально проектировались под гор
       },
       {
         id: 'nosql-data-modeling',
+        difficulty: 'medium',
+        tags: ['data-modeling'],
+        related: ['nosql-vs-sql'],
         question: 'Чем моделирование данных в NoSQL отличается от нормализации в SQL? Embedding или referencing?',
         answer: `В SQL данные **нормализуют** — разбивают на таблицы без дублирования, а связи собирают через JOIN. В NoSQL моделируют **от запросов** (query-driven) и осознанно **денормализуют** — дублируют данные, чтобы читать их одним запросом.
 
@@ -122,6 +149,9 @@ NoSQL-базы изначально проектировались под гор
       },
       {
         id: 'nosql-transactions',
+        difficulty: 'medium',
+        tags: ['databases', 'consistency'],
+        related: [],
         question: 'Как в NoSQL обстоят дела с транзакциями и атомарностью? Что такое upsert?',
         answer: `Обычно гарантируется атомарность на уровне **одного документа / строки / ключа**: операция над одним документом либо применяется целиком, либо не применяется. Это следствие денормализации — связанные данные лежат вместе.
 
@@ -131,6 +161,9 @@ NoSQL-базы изначально проектировались под гор
       },
       {
         id: 'quorum',
+        difficulty: 'hard',
+        tags: ['consistency'],
+        related: ['consistency-models', 'sharding'],
         question: 'Что такое кворум (N/R/W) и как он влияет на консистентность?',
         answer: `В распределённых системах с репликацией:
 
@@ -146,6 +179,9 @@ NoSQL-базы изначально проектировались под гор
       },
       {
         id: 'caching-strategies',
+        difficulty: 'medium',
+        tags: ['caching'],
+        related: [],
         question: 'Redis как кэш: какие стратегии кэширования бывают и какие у кэша проблемы?',
         answer: `**Стратегии кэширования:**
 

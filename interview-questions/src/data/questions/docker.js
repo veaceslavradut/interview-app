@@ -7,6 +7,9 @@ export const docker = {
     questions: [
       {
         id: 'docker-vs-vm',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['dockerfile'],
         question: 'Что такое Docker и чем контейнер отличается от виртуальной машины?',
         answer: `**Docker** — платформа для **контейнеризации**: упаковки приложения со всеми зависимостями в изолированный, переносимый контейнер, который одинаково запускается где угодно («работает у меня» перестаёт быть проблемой).
 
@@ -21,6 +24,9 @@ export const docker = {
       },
       {
         id: 'dockerfile',
+        difficulty: 'easy',
+        tags: ['basics', 'build'],
+        related: ['entrypoint-vs-cmd', 'image-layers-cache'],
         question: 'Что такое Dockerfile и из каких инструкций он состоит?',
         answer: `**Dockerfile** — текстовый файл с инструкциями, по которым \`docker build\` собирает образ. Каждая инструкция описывает шаг сборки.
 
@@ -48,6 +54,9 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
       },
       {
         id: 'entrypoint-vs-cmd',
+        difficulty: 'medium',
+        tags: ['build'],
+        related: ['dockerfile'],
         question: 'В чём разница между ENTRYPOINT и CMD?',
         answer: `Обе задают, что выполнится при старте контейнера, но играют разные роли:
 
@@ -67,6 +76,9 @@ CMD ["--spring.profiles.active=prod"]
       },
       {
         id: 'image-layers-cache',
+        difficulty: 'medium',
+        tags: ['images', 'build'],
+        related: ['multistage-image-size', 'dockerfile'],
         question: 'Как устроены слои образа и как работает кэш сборки в Docker?',
         answer: `Образ Docker состоит из **слоёв (layers)** — каждая инструкция \`FROM\`/\`RUN\`/\`COPY\`/\`ADD\` создаёт новый неизменяемый слой поверх предыдущего. Слои переиспользуются между образами (общий базовый слой хранится один раз) и кэшируются.
 
@@ -85,6 +97,9 @@ RUN mvn package                    # пересобирается только �
       },
       {
         id: 'multistage-image-size',
+        difficulty: 'medium',
+        tags: ['images', 'build'],
+        related: ['image-layers-cache'],
         question: 'Что такое multi-stage build и как уменьшить размер Docker-образа?',
         answer: `**Multi-stage build (многоэтапная сборка)** — в одном Dockerfile несколько стадий \`FROM\`: в первой (тяжёлой, с JDK/Maven) приложение **собирается**, а в финальную (лёгкую, с одним JRE) копируется **только результат** — готовый артефакт. Инструменты сборки в итоговый образ не попадают.
 
@@ -111,6 +126,9 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
       },
       {
         id: 'docker-volumes',
+        difficulty: 'medium',
+        tags: ['storage'],
+        related: ['docker-networks'],
         question: 'Что такое volumes в Docker и зачем они нужны?',
         answer: `Файловая система контейнера **эфемерна**: при удалении контейнера все изменения в ней теряются. **Volumes (тома)** решают проблему **персистентности** — хранят данные вне жизненного цикла контейнера.
 
@@ -130,6 +148,9 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
       },
       {
         id: 'docker-networks',
+        difficulty: 'medium',
+        tags: ['networking'],
+        related: ['docker-compose'],
         question: 'Как работает сеть в Docker? Как связать несколько контейнеров?',
         answer: `Docker создаёт для контейнеров изолированные сети. Основные **сетевые драйверы**:
 
@@ -152,6 +173,9 @@ docker run -d --name api --network app-net myapi   # обращается к Б�
       },
       {
         id: 'docker-registry-versioning',
+        difficulty: 'medium',
+        tags: ['images', 'ops'],
+        related: [],
         question: 'Что такое Docker registry? Как версионировать образы (latest, semver, git hash)?',
         answer: `**Docker registry (реестр)** — хранилище образов. Клиент \`docker push\` загружает образы туда, \`docker pull\` — скачивает. **Docker Hub** — публичный реестр по умолчанию; **приватные реестры** (AWS ECR, GitHub Container Registry, GitLab, Harbor, Nexus) хранят образы компании закрыто, с контролем доступа и сканированием уязвимостей.
 
@@ -167,6 +191,9 @@ docker run -d --name api --network app-net myapi   # обращается к Б�
       },
       {
         id: 'docker-compose',
+        difficulty: 'easy',
+        tags: ['compose'],
+        related: ['docker-networks'],
         question: 'Что такое docker-compose и зачем он нужен?',
         answer: `**Docker Compose** — инструмент для описания и запуска **многоконтейнерных** приложений одним файлом \`docker-compose.yml\` (или \`compose.yaml\`). Вместо десятка ручных \`docker run\` вся система (приложение + БД + кэш + очередь) описывается декларативно и поднимается командой \`docker compose up\`.
 
@@ -199,6 +226,9 @@ volumes:
       },
       {
         id: 'docker-resource-limits',
+        difficulty: 'hard',
+        tags: ['ops'],
+        related: ['spring-boot-docker'],
         question: 'Как ограничить ресурсы контейнера (CPU, RAM) и почему это важно для JVM?',
         answer: `По умолчанию контейнер может занять **все** ресурсы хоста. Ограничения задают через **cgroups**:
 
@@ -217,6 +247,9 @@ volumes:
       },
       {
         id: 'container-security',
+        difficulty: 'medium',
+        tags: ['security'],
+        related: [],
         question: 'Как обеспечить безопасность контейнеров (секреты, уязвимости, rootless)?',
         answer: `Основные аспекты безопасности контейнеров:
 
@@ -242,6 +275,9 @@ volumes:
       },
       {
         id: 'docker-daemon',
+        difficulty: 'medium',
+        tags: ['basics'],
+        related: [],
         question: 'Что такое Docker Daemon и как устроена архитектура Docker?',
         answer: `Docker построен по модели **клиент-сервер**:
 
@@ -259,6 +295,9 @@ volumes:
       },
       {
         id: 'spring-boot-docker',
+        difficulty: 'medium',
+        tags: ['build', 'ops'],
+        related: ['multistage-image-size', 'docker-resource-limits'],
         question: 'Как правильно запаковать Spring Boot приложение в Docker?',
         answer: `Базовый рабочий Dockerfile для Spring Boot — **multi-stage** (сборка отдельно, рантайм отдельно) с кэшированием зависимостей:
 

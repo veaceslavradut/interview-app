@@ -7,6 +7,9 @@ export const testing = {
     questions: [
       {
         id: 'test-types',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['testing-pyramid'],
         question: 'Какие виды тестирования вы знаете?',
         answer: `**По уровню (пирамида тестирования):**
 
@@ -28,6 +31,9 @@ export const testing = {
       },
       {
         id: 'junit5',
+        difficulty: 'easy',
+        tags: ['junit'],
+        related: ['junit4-vs-junit5'],
         question: 'Расскажите про JUnit 5. Основные аннотации.',
         answer: `**JUnit 5** = JUnit Platform + JUnit Jupiter (API) + JUnit Vintage (поддержка JUnit 4).
 
@@ -62,6 +68,9 @@ void add(int a, int b, int sum) {
       },
       {
         id: 'mockito',
+        difficulty: 'medium',
+        tags: ['mockito'],
+        related: ['good-unit-test'],
         question: 'Что такое Mockito? В чем разница между mock, stub и spy?',
         answer: `**Mockito** — библиотека для создания тестовых двойников (test doubles), позволяющая изолировать тестируемый класс от зависимостей.
 
@@ -93,6 +102,9 @@ class OrderServiceTest {
       },
       {
         id: 'good-unit-test',
+        difficulty: 'medium',
+        tags: ['best-practices'],
+        related: ['mockito', 'flaky-tests'],
         question: 'Каким должен быть хороший unit-тест?',
         answer: `Принципы **FIRST**:
 
@@ -120,6 +132,9 @@ void shouldApplyDiscountForVipUser() {
       },
       {
         id: 'testing-pyramid',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['test-types'],
         question: 'Что такое пирамида тестирования? Чем unit-тесты отличаются от интеграционных?',
         answer: `**Пирамида тестирования** — модель распределения тестов по уровням: чем ниже уровень, тем **больше** тестов и тем они **быстрее и дешевле**.
 
@@ -133,6 +148,9 @@ void shouldApplyDiscountForVipUser() {
       },
       {
         id: 'junit4-vs-junit5',
+        difficulty: 'medium',
+        tags: ['junit'],
+        related: ['junit5'],
         question: 'Чем JUnit 5 отличается от JUnit 4?',
         answer: `**JUnit 5** — переработанная версия с модульной архитектурой из трёх частей: **Platform** (запуск тестов), **Jupiter** (новый API и движок), **Vintage** (совместимость со старыми JUnit 3/4). Основные отличия от JUnit 4:
 
@@ -147,6 +165,9 @@ Vintage-движок позволяет запускать старые JUnit 4 
       },
       {
         id: 'spring-boot-testing',
+        difficulty: 'medium',
+        tags: ['spring', 'integration'],
+        related: [],
         question: 'Как тестировать Spring Boot приложение (REST-контроллер, слой БД)?',
         answer: `Spring Boot даёт **срезовые (slice) тесты**, поднимающие только нужную часть контекста — это быстрее полного \`@SpringBootTest\`.
 
@@ -172,6 +193,9 @@ class UserControllerTest {
       },
       {
         id: 'flaky-tests',
+        difficulty: 'medium',
+        tags: ['best-practices'],
+        related: ['good-unit-test'],
         question: 'Что такое flaky-тесты и как с ними бороться?',
         answer: `**Flaky-тест (нестабильный)** — тест, который **то проходит, то падает без изменений в коде**. Это опасно: подрывает доверие к тестам (команда начинает игнорировать красные сборки), маскирует реальные баги, тормозит CI перезапусками.
 
@@ -194,6 +218,9 @@ Retry — крайняя мера, маскирующая проблему, а �
       },
       {
         id: 'contract-testing',
+        difficulty: 'hard',
+        tags: ['integration'],
+        related: [],
         question: 'Что такое контрактное тестирование и зачем оно нужно?',
         answer: `**Контрактное тестирование (contract testing)** проверяет, что **API между поставщиком (provider) и потребителем (consumer) совместимы**, без поднятия всей системы. Особенно важно в микросервисах, где сервисы деплоятся независимо: изменение API одного не должно молча сломать другого.
 

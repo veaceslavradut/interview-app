@@ -7,6 +7,9 @@ export const microservices = {
     questions: [
       {
         id: 'monolith-vs-microservices',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['service-boundaries', 'monolith-migration'],
         question: 'В чем разница между монолитом и микросервисами?',
         answer: `**Монолит** — приложение как единый деплоймент: один процесс, одна БД, один релиз.
 
@@ -27,6 +30,9 @@ export const microservices = {
       },
       {
         id: 'microservices-communication',
+        difficulty: 'medium',
+        tags: ['communication'],
+        related: ['sync-vs-async', 'loose-coupling'],
         question: 'Какие способы взаимодействия между микросервисами существуют?',
         answer: `**Синхронное взаимодействие** (запрос-ответ, вызывающий ждёт):
 
@@ -54,6 +60,9 @@ export const microservices = {
       },
       {
         id: 'microservices-patterns',
+        difficulty: 'medium',
+        tags: ['patterns'],
+        related: ['ms-resilience'],
         question: 'Какие паттерны микросервисной архитектуры вы знаете?',
         answer: `**API Gateway** — единая точка входа: маршрутизация, аутентификация, rate limiting, агрегация ответов (Spring Cloud Gateway, Kong, nginx).
 
@@ -80,6 +89,9 @@ export const microservices = {
       },
       {
         id: 'kubernetes',
+        difficulty: 'medium',
+        tags: ['deployment'],
+        related: [],
         question: 'Что такое Kubernetes? Основные объекты.',
         answer: `**Kubernetes (K8s)** — оркестратор контейнеров: автоматизирует развёртывание, масштабирование, самовосстановление и обновление контейнеризованных приложений в кластере.
 
@@ -107,6 +119,9 @@ export const microservices = {
       },
       {
         id: 'service-boundaries',
+        difficulty: 'medium',
+        tags: ['basics', 'patterns'],
+        related: ['monolith-vs-microservices'],
         question: 'Как определять границы микросервисов? Какие признаки слишком мелкого или крупного сервиса?',
         answer: `Границы выделяют **по бизнес-возможностям (business capabilities)**, а не по техническим слоям. Основной инструмент — **DDD**: сервис соответствует одному **bounded context** — области с единой моделью и языком. Хороший сервис владеет своими данными и меняется по одной бизнес-причине (высокая связность внутри, слабая связанность снаружи).
 
@@ -118,6 +133,9 @@ export const microservices = {
       },
       {
         id: 'monolith-migration',
+        difficulty: 'medium',
+        tags: ['patterns'],
+        related: ['monolith-vs-microservices'],
         question: 'Как подойти к миграции монолита на микросервисы?',
         answer: `Ключевой принцип — **не переписывать всё сразу** (big-bang рискован), а мигрировать инкрементально паттерном **Strangler Fig**: вокруг монолита постепенно «выращивают» микросервисы, перенаправляя на них отдельные функции, пока монолит не станет ненужным.
 
@@ -133,6 +151,9 @@ export const microservices = {
       },
       {
         id: 'sync-vs-async',
+        difficulty: 'medium',
+        tags: ['communication'],
+        related: ['microservices-communication'],
         question: 'Когда выбирать синхронное взаимодействие между сервисами, а когда асинхронное?',
         answer: `**Синхронное** (REST, gRPC) — вызывающий ждёт ответа здесь и сейчас.
 
@@ -150,6 +171,9 @@ export const microservices = {
       },
       {
         id: 'loose-coupling',
+        difficulty: 'medium',
+        tags: ['communication', 'patterns'],
+        related: ['microservices-communication'],
         question: 'Что такое слабая связанность между микросервисами и как её обеспечить?',
         answer: `**Слабая связанность (loose coupling)** — сервисы можно менять и деплоить независимо, потому что они мало знают о внутреннем устройстве друг друга. Противоположность — «распределённый монолит», где сервисы приходится релизить вместе.
 
@@ -166,6 +190,9 @@ export const microservices = {
       },
       {
         id: 'database-per-service',
+        difficulty: 'hard',
+        tags: ['data', 'patterns'],
+        related: ['ms-resilience'],
         question: 'Что такое «база данных на сервис» и как обеспечить согласованность данных?',
         answer: `**Database per service** — у каждого микросервиса собственная БД, к которой имеет доступ только он. Другие сервисы получают данные исключительно через его API или события. Это ключ к слабой связанности и независимому масштабированию, но убирает возможность одной ACID-транзакции и JOIN между сервисами.
 
@@ -180,6 +207,9 @@ export const microservices = {
       },
       {
         id: 'ms-resilience',
+        difficulty: 'hard',
+        tags: ['resilience'],
+        related: ['microservices-patterns', 'database-per-service'],
         question: 'Как обеспечить устойчивость к сбоям при взаимодействии микросервисов?',
         answer: `В распределённой системе сбои неизбежны, поэтому вызовы соседей всегда считают потенциально ненадёжными. Основные механизмы:
 
@@ -194,6 +224,9 @@ export const microservices = {
       },
       {
         id: 'ms-observability',
+        difficulty: 'medium',
+        tags: ['observability'],
+        related: [],
         question: 'Как организовать мониторинг, логирование и трассировку микросервисов?',
         answer: `В распределённой системе поведение нельзя понять по одному сервису — нужны **три столпа observability**:
 
@@ -205,6 +238,9 @@ export const microservices = {
       },
       {
         id: 'ms-security',
+        difficulty: 'medium',
+        tags: ['security'],
+        related: [],
         question: 'Как реализуется аутентификация, авторизация и хранение секретов в микросервисах?',
         answer: `**Аутентификация и авторизация:**
 
@@ -217,6 +253,9 @@ export const microservices = {
       },
       {
         id: 'ms-cicd-testing',
+        difficulty: 'medium',
+        tags: ['deployment'],
+        related: [],
         question: 'Как организовать CI/CD и тестирование микросервисов?',
         answer: `**CI/CD:** каждый сервис имеет **независимый пайплайн** и деплоится отдельно — это одно из главных преимуществ микросервисов. Пайплайн: сборка → тесты → упаковка в контейнер (Docker) → публикация образа → деплой в оркестратор (Kubernetes). Инструменты: Jenkins, GitLab CI, GitHub Actions; для деплоя в k8s — GitOps-подход (**ArgoCD**, Flux). Практики безопасного выката: blue-green и canary-релизы, автоматический откат по метрикам.
 

@@ -7,6 +7,9 @@ export const kafka = {
     questions: [
       {
         id: 'what-is-kafka',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['topic-partition-offset', 'kafka-vs-rabbitmq'],
         question: 'Что такое Apache Kafka? Основные концепции.',
         answer: `**Apache Kafka** — распределённая платформа потоковой передачи событий (event streaming): высокопроизводительный, отказоустойчивый, масштабируемый лог сообщений.
 
@@ -28,6 +31,9 @@ export const kafka = {
       },
       {
         id: 'kafka-guarantees',
+        difficulty: 'medium',
+        tags: ['delivery', 'reliability'],
+        related: ['producer-acks', 'kafka-exactly-once'],
         question: 'Какие гарантии доставки поддерживает Kafka?',
         answer: `**Семантики доставки:**
 
@@ -53,6 +59,9 @@ export const kafka = {
       },
       {
         id: 'consumer-groups',
+        difficulty: 'medium',
+        tags: ['consumers'],
+        related: ['offset-reset-lag'],
         question: 'Как работают Consumer Groups и ребалансировка?',
         answer: `**Consumer Group** — механизм горизонтального масштабирования чтения: консьюмеры с одним \`group.id\` делят между собой партиции топика.
 
@@ -80,6 +89,9 @@ export const kafka = {
       },
       {
         id: 'kafka-vs-rabbitmq',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['what-is-kafka'],
         question: 'В чем разница между Kafka и традиционными брокерами сообщений (RabbitMQ)?',
         answer: `**Модель хранения:**
 
@@ -112,6 +124,9 @@ export const kafka = {
       },
       {
         id: 'topic-partition-offset',
+        difficulty: 'easy',
+        tags: ['basics', 'partitions'],
+        related: ['what-is-kafka'],
         question: 'Что такое topic, partition и offset? Почему Kafka называют commit log?',
         answer: `**Topic** — именованный канал (категория) сообщений. Продюсеры пишут в топик, консьюмеры читают из него.
 
@@ -123,6 +138,9 @@ export const kafka = {
       },
       {
         id: 'kafka-brokers-kraft',
+        difficulty: 'medium',
+        tags: ['basics', 'reliability'],
+        related: ['kafka-replication'],
         question: 'Что такое broker, controller и ZooKeeper/KRaft в Kafka?',
         answer: `**Broker** — сервер Kafka, хранящий партиции и обслуживающий запросы продюсеров и консьюмеров. Кластер состоит из нескольких брокеров; партиции и их реплики распределяются между ними.
 
@@ -132,6 +150,9 @@ export const kafka = {
       },
       {
         id: 'kafka-replication',
+        difficulty: 'hard',
+        tags: ['reliability', 'partitions'],
+        related: ['kafka-brokers-kraft', 'producer-acks'],
         question: 'Как в Kafka обеспечивается отказоустойчивость (репликация, ISR)? Что будет, если лидер партиции упадёт?',
         answer: `Каждая партиция имеет **replication factor** — число копий на разных брокерах. Одна реплика — **лидер** (через неё идут все чтения и записи), остальные — **фолловеры**, которые копируют данные с лидера.
 
@@ -141,6 +162,9 @@ export const kafka = {
       },
       {
         id: 'producer-acks',
+        difficulty: 'medium',
+        tags: ['producers', 'delivery'],
+        related: ['kafka-guarantees', 'idempotent-producer'],
         question: 'Что делает продюсер и как работает настройка acks (0, 1, all)?',
         answer: `**Продюсер** отправляет сообщения в топик, сам выбирая партицию (по ключу через хеш, либо round-robin, если ключа нет), батчит сообщения для производительности и умеет их сжимать.
 
@@ -154,6 +178,9 @@ export const kafka = {
       },
       {
         id: 'idempotent-producer',
+        difficulty: 'medium',
+        tags: ['producers', 'delivery'],
+        related: ['producer-acks', 'kafka-exactly-once'],
         question: 'Что такое идемпотентный продюсер и зачем он нужен?',
         answer: `При повторной отправке (retry после таймаута, когда подтверждение потерялось, но сообщение на самом деле записалось) обычный продюсер может создать **дубликат** — семантика «at-least-once».
 
@@ -163,6 +190,9 @@ export const kafka = {
       },
       {
         id: 'offset-reset-lag',
+        difficulty: 'medium',
+        tags: ['consumers'],
+        related: ['consumer-groups'],
         question: 'Что делает auto.offset.reset (earliest/latest/none)? Что такое consumer lag?',
         answer: `**\`auto.offset.reset\`** определяет, откуда начать читать, когда для группы **нет сохранённого offset** (новая группа) или сохранённый offset больше не существует (устарел по retention):
 
@@ -176,6 +206,9 @@ export const kafka = {
       },
       {
         id: 'kafka-retention-compaction',
+        difficulty: 'medium',
+        tags: ['basics'],
+        related: [],
         question: 'Как работает retention policy и что такое compacted topic?',
         answer: `Kafka хранит сообщения **независимо от того, прочитаны ли они** — сколько именно, задаёт **retention**:
 
@@ -188,6 +221,9 @@ export const kafka = {
       },
       {
         id: 'kafka-exactly-once',
+        difficulty: 'hard',
+        tags: ['delivery', 'producers'],
+        related: ['idempotent-producer', 'kafka-guarantees'],
         question: 'Как работают транзакции Kafka и exactly-once semantics (EOS)?',
         answer: `**Идемпотентный продюсер** убирает дубликаты при записи в одну партицию, но не покрывает атомарную запись в **несколько** партиций/топиков и паттерн «прочитал → обработал → записал».
 
@@ -199,6 +235,9 @@ export const kafka = {
       },
       {
         id: 'kafka-throughput',
+        difficulty: 'hard',
+        tags: ['performance', 'partitions'],
+        related: ['topic-partition-offset'],
         question: 'Как увеличить пропускную способность Kafka? Как число партиций влияет на производительность?',
         answer: `**Пропускную способность** повышают с нескольких сторон:
 
@@ -217,6 +256,9 @@ export const kafka = {
       },
       {
         id: 'dead-letter-topic',
+        difficulty: 'medium',
+        tags: ['consumers', 'reliability'],
+        related: [],
         question: 'Что такое dead-letter topic и зачем он нужен?',
         answer: `**Dead-letter topic (DLT)** — отдельный топик, куда отправляют сообщения, которые **не удалось обработать** после исчерпания повторов (ошибка десериализации, невалидные данные, бизнес-исключение).
 
@@ -230,6 +272,9 @@ export const kafka = {
       },
       {
         id: 'kafka-streams-connect',
+        difficulty: 'medium',
+        tags: ['streams'],
+        related: [],
         question: 'Что такое Kafka Streams и Kafka Connect? В чём разница?',
         answer: `Это две отдельные библиотеки/фреймворка экосистемы Kafka для разных задач.
 

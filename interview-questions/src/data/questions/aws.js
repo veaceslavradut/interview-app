@@ -7,6 +7,9 @@ export const aws = {
     questions: [
       {
         id: 'what-is-ec2',
+        difficulty: 'easy',
+        tags: ['compute'],
+        related: ['ec2-autoscaling'],
         question: 'Что такое Amazon EC2? Какие типы инстансов и модели оплаты существуют?',
         answer: `**Amazon EC2 (Elastic Compute Cloud)** — сервис виртуальных серверов (инстансов) в облаке AWS: вы арендуете вычислительные мощности с полным контролем над ОС, сетью и хранилищем.
 
@@ -35,6 +38,9 @@ export const aws = {
       },
       {
         id: 'ec2-autoscaling',
+        difficulty: 'medium',
+        tags: ['compute', 'scaling'],
+        related: ['what-is-ec2', 'what-is-elb'],
         question: 'Как работает Auto Scaling в EC2?',
         answer: `**Auto Scaling Group (ASG)** — механизм автоматического управления количеством EC2-инстансов: поддерживает нужное число здоровых инстансов и масштабирует его по нагрузке.
 
@@ -61,6 +67,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'what-is-elb',
+        difficulty: 'medium',
+        tags: ['networking', 'scaling'],
+        related: ['ec2-autoscaling'],
         question: 'Что такое Elastic Load Balancing? Какие типы балансировщиков есть в AWS?',
         answer: `**Elastic Load Balancing (ELB)** — управляемый сервис балансировки нагрузки: распределяет входящий трафик между несколькими целями (EC2, контейнеры, IP-адреса, Lambda) в одной или нескольких Availability Zones.
 
@@ -89,6 +98,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'what-is-ecs',
+        difficulty: 'medium',
+        tags: ['compute'],
+        related: ['ecs-vs-eks-fargate'],
         question: 'Что такое Amazon ECS? Основные компоненты.',
         answer: `**Amazon ECS (Elastic Container Service)** — управляемый оркестратор контейнеров от AWS: запуск, масштабирование и управление Docker-контейнерами без установки собственного оркестратора.
 
@@ -116,6 +128,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'ecs-vs-eks-fargate',
+        difficulty: 'medium',
+        tags: ['compute'],
+        related: ['what-is-ecs'],
         question: 'ECS vs EKS: что выбрать? Что такое Fargate?',
         answer: `**ECS vs EKS:**
 
@@ -145,6 +160,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'what-is-s3',
+        difficulty: 'easy',
+        tags: ['storage'],
+        related: ['s3-security', 'aws-storage-types'],
         question: 'Что такое Amazon S3? Классы хранения и модель консистентности.',
         answer: `**Amazon S3 (Simple Storage Service)** — объектное хранилище практически неограниченной ёмкости: файлы (объекты) хранятся в **бакетах** и доступны по HTTP API.
 
@@ -175,6 +193,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 's3-security',
+        difficulty: 'medium',
+        tags: ['storage', 'security'],
+        related: ['what-is-s3'],
         question: 'Как обеспечивается безопасность данных в S3?',
         answer: `**Контроль доступа:**
 
@@ -204,6 +225,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'what-is-vpc',
+        difficulty: 'medium',
+        tags: ['networking'],
+        related: ['security-group-vs-nacl', 'subnets-igw-nat'],
         question: 'Что такое VPC? Из каких компонентов состоит сеть в AWS?',
         answer: `**VPC (Virtual Private Cloud)** — логически изолированная виртуальная сеть в AWS, в которой запускаются ваши ресурсы. Вы полностью управляете адресацией, подсетями, маршрутизацией и доступом.
 
@@ -231,6 +255,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'security-group-vs-nacl',
+        difficulty: 'medium',
+        tags: ['networking', 'security'],
+        related: ['what-is-vpc'],
         question: 'В чём разница между Security Group и Network ACL?',
         answer: `Оба механизма — виртуальные файрволы в VPC, но работают на разных уровнях.
 
@@ -260,6 +287,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'cloud-service-models',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: [],
         question: 'Что такое AWS и в чём разница между IaaS, PaaS и SaaS?',
         answer: `**AWS (Amazon Web Services)** — облачная платформа, предоставляющая вычисления, хранилище, сети, базы данных и другие сервисы по модели **оплаты за использование** (pay-as-you-go), без покупки собственного железа.
 
@@ -273,6 +303,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'iam',
+        difficulty: 'medium',
+        tags: ['security'],
+        related: ['kms'],
         question: 'Что такое IAM? В чём разница между пользователями, ролями, политиками и MFA?',
         answer: `**IAM (Identity and Access Management)** — сервис управления доступом к ресурсам AWS: **кто** (аутентификация) и **что может делать** (авторизация). Базовый принцип — **least privilege** (минимально необходимые права).
 
@@ -287,6 +320,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'kms',
+        difficulty: 'medium',
+        tags: ['security'],
+        related: ['iam'],
         question: 'Что такое AWS KMS и где он используется?',
         answer: `**KMS (Key Management Service)** — управляемый сервис для создания и управления **ключами шифрования** и выполнения криптоопераций. Он хранит **мастер-ключи (CMK / KMS keys)**, которые никогда не покидают сервис в открытом виде, и контролирует доступ к ним через IAM-политики и audit-логи (CloudTrail).
 
@@ -303,6 +339,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'lambda-serverless',
+        difficulty: 'medium',
+        tags: ['serverless', 'compute'],
+        related: [],
         question: 'Что такое AWS Lambda и serverless? Когда использовать вместо сервера?',
         answer: `**Serverless** — модель, где вы пишете код, а провайдер **сам управляет серверами**, масштабированием и доступностью. Серверы есть, но вы о них не думаете и платите **только за фактическое выполнение**, а не за простаивающие инстансы.
 
@@ -318,6 +357,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'aws-storage-types',
+        difficulty: 'medium',
+        tags: ['storage'],
+        related: ['what-is-s3'],
         question: 'Чем различаются S3, EBS и Glacier? Когда что использовать?',
         answer: `Три сервиса — три разных типа хранения:
 
@@ -329,6 +371,9 @@ Best practices: stateless-приложения (состояние — в БД/�
       },
       {
         id: 'aws-rds',
+        difficulty: 'medium',
+        tags: ['database'],
+        related: ['dynamodb-vs-rds'],
         question: 'Что такое RDS и как подключить к нему Spring Boot?',
         answer: `**RDS (Relational Database Service)** — управляемый сервис реляционных БД (PostgreSQL, MySQL, MariaDB, Oracle, SQL Server, а также Amazon Aurora). AWS берёт на себя рутину: установку, патчинг, резервные копии, репликацию, восстановление, мониторинг — вы отвечаете только за схему и запросы (модель PaaS для БД).
 
@@ -351,6 +396,9 @@ spring.datasource.password=\${DB_PASSWORD}
       },
       {
         id: 'dynamodb-vs-rds',
+        difficulty: 'medium',
+        tags: ['database'],
+        related: ['aws-rds'],
         question: 'Когда использовать DynamoDB, а когда RDS?',
         answer: `**RDS** — управляемая **реляционная** БД (SQL): таблицы со схемой, связи, JOIN, транзакции ACID, сложные запросы. **DynamoDB** — управляемая **NoSQL** key-value / документная БД: без схемы, горизонтально масштабируется, предсказуемая низкая задержка на любом объёме, оплата по запросам/ёмкости.
 
@@ -371,6 +419,9 @@ spring.datasource.password=\${DB_PASSWORD}
       },
       {
         id: 'subnets-igw-nat',
+        difficulty: 'hard',
+        tags: ['networking'],
+        related: ['what-is-vpc'],
         question: 'Как устроены public/private подсети, Internet Gateway и NAT? Что такое CIDR?',
         answer: `**CIDR (Classless Inter-Domain Routing)** задаёт диапазон IP-адресов сети через маску: например, VPC \`10.0.0.0/16\` (65 536 адресов), а подсеть \`10.0.1.0/24\` (256 адресов). Число после \`/\` — сколько бит фиксировано под сеть: чем оно больше, тем меньше адресов.
 

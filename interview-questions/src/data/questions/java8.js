@@ -7,6 +7,9 @@ export const java8 = {
     questions: [
       {
         id: 'java8-features',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['lambda', 'stream-api'],
         question: 'Какие основные нововведения появились в Java 8?',
         answer: `Ключевые нововведения Java 8:
 
@@ -23,6 +26,9 @@ export const java8 = {
       },
       {
         id: 'lambda',
+        difficulty: 'easy',
+        tags: ['lambda', 'functional'],
+        related: ['functional-interfaces'],
         question: 'Что такое лямбда-выражения?',
         answer: `**Лямбда-выражение** — компактная запись анонимной функции, реализующей функциональный интерфейс (интерфейс с одним абстрактным методом).
 
@@ -49,6 +55,9 @@ Function<Integer, Integer> square = x -> x * x;
       },
       {
         id: 'stream-api',
+        difficulty: 'medium',
+        tags: ['streams'],
+        related: ['stream-intermediate-terminal', 'collectors'],
         question: 'Что такое Stream API? Какие бывают операции?',
         answer: `**Stream API** — средство функциональной обработки последовательностей данных.
 
@@ -77,6 +86,9 @@ List<String> names = users.stream()
       },
       {
         id: 'optional',
+        difficulty: 'easy',
+        tags: ['optional'],
+        related: [],
         question: 'Что такое Optional и зачем он нужен?',
         answer: `**Optional<T>** — контейнер, который может содержать значение или быть пустым. Создан для явного выражения «значение может отсутствовать» и борьбы с \`NullPointerException\`.
 
@@ -103,6 +115,9 @@ Best practices:
       },
       {
         id: 'functional-interfaces',
+        difficulty: 'easy',
+        tags: ['functional', 'lambda'],
+        related: ['lambda'],
         question: 'Какие функциональные интерфейсы вы знаете?',
         answer: `**Функциональный интерфейс** — интерфейс с одним абстрактным методом (SAM). Аннотация \`@FunctionalInterface\` проверяет это на этапе компиляции.
 
@@ -122,6 +137,9 @@ Best practices:
       },
       {
         id: 'default-methods',
+        difficulty: 'medium',
+        tags: ['basics'],
+        related: [],
         question: 'Что такое default-методы в интерфейсах?',
         answer: `**Default-метод** — метод интерфейса с реализацией по умолчанию (ключевое слово \`default\`). Появились в Java 8 для эволюции API без нарушения обратной совместимости (например, \`Collection.stream()\`).
 
@@ -148,6 +166,9 @@ class Car implements A, B {
       },
       {
         id: 'map-flatmap',
+        difficulty: 'medium',
+        tags: ['streams'],
+        related: ['stream-api'],
         question: 'В чем разница между map() и flatMap()?',
         answer: `**map()** — преобразует каждый элемент в один другой элемент (1 → 1):
 
@@ -179,6 +200,9 @@ sentences.stream()
       },
       {
         id: 'parallel-streams',
+        difficulty: 'hard',
+        tags: ['streams'],
+        related: ['stream-api'],
         question: 'Что такое параллельные стримы и когда их стоит использовать?',
         answer: `**Параллельный стрим** разбивает данные на части и обрабатывает их в нескольких потоках через общий \`ForkJoinPool.commonPool()\` (размер = ядра CPU − 1).
 
@@ -205,6 +229,9 @@ stream.parallel()...
       },
       {
         id: 'stream-intermediate-terminal',
+        difficulty: 'medium',
+        tags: ['streams'],
+        related: ['stream-api'],
         question: 'Чем промежуточные операции Stream отличаются от терминальных? Что такое ленивость?',
         answer: `Операции Stream делятся на два вида:
 
@@ -221,6 +248,9 @@ stream.parallel()...
       },
       {
         id: 'collectors',
+        difficulty: 'medium',
+        tags: ['streams', 'collectors'],
+        related: ['stream-api'],
         question: 'Что такое Collectors? Как делать группировку и партиционирование?',
         answer: `**\`Collectors\`** — набор готовых «сборщиков» для терминальной операции \`collect()\`, превращающих поток в коллекцию или агрегат.
 
@@ -243,6 +273,9 @@ Map<Dept, List<Employee>> byDept =
       },
       {
         id: 'stream-reduce',
+        difficulty: 'medium',
+        tags: ['streams'],
+        related: ['collectors'],
         question: 'Как работает reduce() в Stream API?',
         answer: `**\`reduce()\`** сворачивает поток элементов в **один результат**, последовательно применяя ассоциативную операцию (аккумулятор). Три формы:
 

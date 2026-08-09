@@ -7,6 +7,9 @@ export const git = {
     questions: [
       {
         id: 'git-basics',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['merge-rebase'],
         question: 'Что такое Git? Основные понятия и команды.',
         answer: `**Git** — распределённая система контроля версий: у каждого разработчика полная копия репозитория с историей.
 
@@ -41,6 +44,9 @@ git diff / git diff --staged # просмотр изменений
       },
       {
         id: 'merge-rebase',
+        difficulty: 'medium',
+        tags: ['branching', 'history'],
+        related: ['fast-forward-merge', 'interactive-rebase-squash'],
         question: 'В чем разница между merge и rebase?',
         answer: `Обе команды объединяют изменения веток, но по-разному:
 
@@ -77,6 +83,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'branching-strategies',
+        difficulty: 'medium',
+        tags: ['branching', 'workflow'],
+        related: [],
         question: 'Какие стратегии ветвления вы знаете?',
         answer: `**Git Flow** — классическая тяжёлая модель:
 
@@ -106,6 +115,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'fetch-vs-pull',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: [],
         question: 'Чем git fetch отличается от git pull?',
         answer: `Оба забирают изменения с удалённого репозитория, но по-разному:
 
@@ -116,6 +128,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'reset-revert-checkout',
+        difficulty: 'medium',
+        tags: ['undo'],
+        related: ['merge-conflicts'],
         question: 'Как отменять изменения в Git? Чем отличаются reset --soft, --mixed и --hard?',
         answer: `Три разных инструмента отмены:
 
@@ -133,6 +148,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'fast-forward-merge',
+        difficulty: 'medium',
+        tags: ['branching'],
+        related: ['merge-rebase'],
         question: 'Что такое fast-forward merge?',
         answer: `**Fast-forward** слияние возможно, когда у целевой ветки (например, \`main\`) **не было новых коммитов** с момента ответвления feature-ветки — то есть история линейна. Тогда Git просто **передвигает указатель** \`main\` вперёд на коммит feature-ветки, **не создавая merge-коммит**. История остаётся плоской, будто коммиты делались прямо в \`main\`.
 
@@ -146,6 +164,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'interactive-rebase-squash',
+        difficulty: 'hard',
+        tags: ['history', 'advanced'],
+        related: ['merge-rebase'],
         question: 'Что такое интерактивный rebase (git rebase -i) и когда делать squash коммитов?',
         answer: `**\`git rebase -i <base>\`** открывает список коммитов для редактирования истории перед публикацией. Можно:
 
@@ -161,6 +182,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'cherry-pick',
+        difficulty: 'medium',
+        tags: ['advanced'],
+        related: [],
         question: 'Что делает git cherry-pick и когда его используют?',
         answer: `**\`git cherry-pick <commit>\`** переносит **отдельный коммит** (или диапазон) из одной ветки в текущую, создавая его копию с новым хешем — не сливая всю ветку целиком.
 
@@ -174,6 +198,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'git-bisect',
+        difficulty: 'medium',
+        tags: ['advanced'],
+        related: [],
         question: 'Как найти коммит, в котором появилась ошибка (git bisect)?',
         answer: `**\`git bisect\`** ищет коммит, внёсший баг, **бинарным поиском** по истории — за \`log₂(N)\` шагов вместо перебора всех коммитов.
 
@@ -190,6 +217,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'merge-conflicts',
+        difficulty: 'medium',
+        tags: ['branching', 'undo'],
+        related: ['merge-rebase', 'reset-revert-checkout'],
         question: 'Как решать merge-конфликты?',
         answer: `**Конфликт** возникает, когда две ветки изменили **одни и те же строки** одного файла (или один удалил файл, а другой изменил) — Git не может решить автоматически, какую версию оставить.
 
@@ -205,6 +235,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'detached-head',
+        difficulty: 'medium',
+        tags: ['basics'],
+        related: [],
         question: 'Что такое detached HEAD и чем это опасно?',
         answer: `Обычно **HEAD** указывает на ветку (а та — на последний коммит). **Detached HEAD** — состояние, когда HEAD указывает **напрямую на конкретный коммит**, а не на ветку. Возникает при \`git checkout <commit-hash>\`, \`git checkout <tag>\` или переходе на \`origin/main\` без локальной ветки.
 
@@ -214,6 +247,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'git-hooks',
+        difficulty: 'medium',
+        tags: ['advanced', 'workflow'],
+        related: [],
         question: 'Что такое Git hooks и для чего их применяют?',
         answer: `**Git hooks** — скрипты, которые Git автоматически запускает на определённых событиях жизненного цикла (в каталоге \`.git/hooks\` или через инструменты вроде Husky/pre-commit). Делятся на клиентские и серверные.
 
@@ -232,6 +268,9 @@ git merge feature    # fast-forward — линейная история
       },
       {
         id: 'committed-secrets',
+        difficulty: 'medium',
+        tags: ['workflow'],
+        related: [],
         question: 'Что делать, если случайно закоммитил секреты (пароли, ключи)?',
         answer: `Главное сразу понять: если коммит **запушен**, секрет считается **скомпрометированным** — удаление из истории не отменяет того, что его могли увидеть или склонировать.
 

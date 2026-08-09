@@ -7,6 +7,9 @@ export const css = {
     questions: [
       {
         id: 'css-selectors',
+        difficulty: 'easy',
+        tags: ['selectors'],
+        related: [],
         question: 'Какие селекторы CSS вы знаете? Что такое специфичность?',
         answer: `**Основные селекторы:**
 
@@ -38,6 +41,9 @@ p::before { }        /* псевдоэлементы: ::after, ::first-line, ::p
       },
       {
         id: 'box-model',
+        difficulty: 'easy',
+        tags: ['box-model'],
+        related: ['position'],
         question: 'Что такое блочная модель (box model)?',
         answer: `**Блочная модель** — представление каждого элемента как прямоугольника из четырёх слоёв (изнутри наружу):
 
@@ -71,6 +77,9 @@ p::before { }        /* псевдоэлементы: ::after, ::first-line, ::p
       },
       {
         id: 'flexbox-grid',
+        difficulty: 'medium',
+        tags: ['layout'],
+        related: [],
         question: 'В чем разница между Flexbox и Grid?',
         answer: `**Flexbox** — одномерная раскладка (строка ИЛИ колонка):
 
@@ -108,6 +117,9 @@ p::before { }        /* псевдоэлементы: ::after, ::first-line, ::p
       },
       {
         id: 'position',
+        difficulty: 'medium',
+        tags: ['layout'],
+        related: ['box-model'],
         question: 'Какие значения свойства position существуют?',
         answer: `**static** (по умолчанию) — элемент в обычном потоке; top/left/z-index не работают.
 

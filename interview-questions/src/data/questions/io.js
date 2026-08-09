@@ -7,6 +7,9 @@ export const io = {
     questions: [
       {
         id: 'io-streams',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: ['io-vs-nio'],
         question: 'Какие виды потоков ввода-вывода существуют в Java?',
         answer: `Потоки I/O в Java делятся по двум признакам:
 
@@ -29,6 +32,9 @@ export const io = {
       },
       {
         id: 'io-vs-nio',
+        difficulty: 'medium',
+        tags: ['nio'],
+        related: ['io-streams'],
         question: 'В чем разница между IO и NIO?',
         answer: `**IO (java.io)** — классический блокирующий ввод-вывод:
 
@@ -49,6 +55,9 @@ export const io = {
       },
       {
         id: 'try-with-resources',
+        difficulty: 'easy',
+        tags: ['basics'],
+        related: [],
         question: 'Что такое try-with-resources?',
         answer: `**try-with-resources** (Java 7) — конструкция для автоматического закрытия ресурсов, реализующих интерфейс \`AutoCloseable\`.
 
@@ -69,6 +78,9 @@ try (BufferedReader reader = new BufferedReader(new FileReader("file.txt"));
       },
       {
         id: 'files-path',
+        difficulty: 'medium',
+        tags: ['nio', 'files'],
+        related: ['io-vs-nio'],
         question: 'Как работать с файлами через Files и Path (NIO.2)?',
         answer: `**Path** — абстракция пути к файлу (замена \`File\`), **Files** — утилитный класс операций.
 
