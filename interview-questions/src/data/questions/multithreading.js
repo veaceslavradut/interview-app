@@ -7,6 +7,9 @@ export const multithreading = {
     questions: [
       {
         id: 'thread-creation',
+        difficulty: 'easy',
+        tags: ['concurrency', 'threads'],
+        related: ['executor-service'],
         question: 'Какие способы создания потоков существуют в Java?',
         answer: `Основные способы:
 
@@ -49,6 +52,9 @@ executor.submit(task);
       },
       {
         id: 'synchronized',
+        difficulty: 'medium',
+        tags: ['concurrency', 'synchronization', 'locks'],
+        related: ['volatile', 'reentrantlock'],
         question: 'Как работает ключевое слово synchronized?',
         answer: `**synchronized** обеспечивает взаимное исключение (mutual exclusion): только один поток может выполнять защищённый код, захватив монитор объекта.
 
@@ -76,6 +82,9 @@ synchronized (lock) { count++; }
       },
       {
         id: 'volatile',
+        difficulty: 'medium',
+        tags: ['concurrency', 'memory-model'],
+        related: ['synchronized', 'java-memory-model'],
         question: 'Что такое volatile и в чем его отличие от synchronized?',
         answer: `**volatile** — модификатор поля, гарантирующий:
 
@@ -103,6 +112,9 @@ count++; // НЕ атомарно: read -> modify -> write, возможна г�
       },
       {
         id: 'deadlock',
+        difficulty: 'medium',
+        tags: ['concurrency', 'synchronization'],
+        related: ['thread-safety-problems'],
         question: 'Что такое deadlock и как его избежать?',
         answer: `**Deadlock (взаимная блокировка)** — ситуация, когда два или более потоков вечно ждут друг друга, удерживая ресурсы, нужные другим.
 
@@ -128,6 +140,9 @@ synchronized (b) { synchronized (a) { ... } }
       },
       {
         id: 'executor-service',
+        difficulty: 'medium',
+        tags: ['concurrency', 'executors'],
+        related: ['thread-creation', 'completablefuture'],
         question: 'Что такое ExecutorService и какие пулы потоков вы знаете?',
         answer: `**ExecutorService** — высокоуровневый API для управления потоками: отделяет отправку задач от механики их выполнения.
 
@@ -146,6 +161,9 @@ synchronized (b) { synchronized (a) { ... } }
       },
       {
         id: 'concurrent-collections',
+        difficulty: 'medium',
+        tags: ['concurrency', 'collections'],
+        related: ['blockingqueue'],
         question: 'Какие потокобезопасные коллекции вы знаете?',
         answer: `Основные потокобезопасные коллекции из \`java.util.concurrent\`:
 
@@ -170,6 +188,9 @@ synchronized (b) { synchronized (a) { ... } }
       },
       {
         id: 'wait-notify-sleep',
+        difficulty: 'medium',
+        tags: ['concurrency', 'synchronization'],
+        related: ['synchronized'],
         question: 'В чем разница между wait() и sleep()? Как работают wait/notify?',
         answer: `**Разница wait() и sleep():**
 
@@ -208,6 +229,9 @@ synchronized (lock) {
       },
       {
         id: 'threadlocal',
+        difficulty: 'medium',
+        tags: ['concurrency', 'threads'],
+        related: [],
         question: 'Что такое ThreadLocal?',
         answer: `**ThreadLocal<T>** — переменная, у которой **своя копия значения для каждого потока**. Потоки не видят значения друг друга — синхронизация не нужна.
 
@@ -233,6 +257,9 @@ FORMAT.remove();             // очистка
       },
       {
         id: 'completablefuture',
+        difficulty: 'hard',
+        tags: ['concurrency', 'executors'],
+        related: ['executor-service'],
         question: 'Что такое CompletableFuture?',
         answer: `**CompletableFuture<T>** (Java 8) — расширение Future для асинхронного программирования: композиция цепочек операций без блокировки.
 
@@ -256,6 +283,9 @@ CompletableFuture.supplyAsync(() -> fetchUser(id), executor)   // асинхро
       },
       {
         id: 'concurrency-vs-parallelism',
+        difficulty: 'easy',
+        tags: ['concurrency', 'threads'],
+        related: [],
         question: 'В чём разница между concurrency и parallelism? Что такое процесс и поток?',
         answer: `**Процесс** — выполняющаяся программа со своим изолированным адресным пространством и ресурсами. **Поток (thread)** — единица выполнения внутри процесса; потоки одного процесса **разделяют** его память (кучу), но имеют собственный стек и program counter. Потоки легче процессов и быстрее переключаются, но требуют синхронизации из-за общей памяти.
 
@@ -267,6 +297,9 @@ CompletableFuture.supplyAsync(() -> fetchUser(id), executor)   // асинхро
       },
       {
         id: 'daemon-threads',
+        difficulty: 'easy',
+        tags: ['concurrency', 'threads'],
+        related: ['thread-creation'],
         question: 'В чём разница между user-потоком и daemon-потоком?',
         answer: `Потоки в Java делятся на два типа:
 
@@ -281,6 +314,9 @@ CompletableFuture.supplyAsync(() -> fetchUser(id), executor)   // асинхро
       },
       {
         id: 'java-memory-model',
+        difficulty: 'hard',
+        tags: ['concurrency', 'memory-model'],
+        related: ['volatile', 'atomic-cas'],
         question: 'Что такое Java Memory Model (JMM) и happens-before?',
         answer: `**Java Memory Model (JMM)** — часть спецификации языка, определяющая, **как и когда** изменения памяти, сделанные одним потоком, становятся **видимыми** другим, и какие переупорядочивания операций допустимы. Без JMM многопоточное поведение было бы непредсказуемым: компилятор, JIT и процессор могут **переставлять инструкции** и кэшировать значения в регистрах/кэшах ядра.
 
@@ -300,6 +336,9 @@ CompletableFuture.supplyAsync(() -> fetchUser(id), executor)   // асинхро
       },
       {
         id: 'thread-safety-problems',
+        difficulty: 'medium',
+        tags: ['concurrency', 'synchronization'],
+        related: ['deadlock'],
         question: 'Какие проблемы возникают при неправильной синхронизации (race condition, deadlock, livelock, starvation)?',
         answer: `Основные ошибки многопоточности:
 
@@ -313,6 +352,9 @@ CompletableFuture.supplyAsync(() -> fetchUser(id), executor)   // асинхро
       },
       {
         id: 'reentrantlock',
+        difficulty: 'hard',
+        tags: ['concurrency', 'locks'],
+        related: ['synchronized'],
         question: 'Что такое ReentrantLock и чем он отличается от synchronized?',
         answer: `**\`ReentrantLock\`** (из \`java.util.concurrent.locks\`) — явная блокировка с теми же гарантиями взаимного исключения, что и \`synchronized\`, но с большими возможностями. «Reentrant» — как и \`synchronized\`, допускает **повторный** захват тем же потоком.
 
@@ -336,6 +378,9 @@ finally { lock.unlock(); } // разблокировать обязательн�
       },
       {
         id: 'atomic-cas',
+        difficulty: 'hard',
+        tags: ['concurrency', 'memory-model'],
+        related: ['java-memory-model'],
         question: 'Что такое атомарные классы (AtomicInteger) и CAS?',
         answer: `**Атомарные классы** (\`AtomicInteger\`, \`AtomicLong\`, \`AtomicReference\` и др. из \`java.util.concurrent.atomic\`) обеспечивают потокобезопасные операции над одной переменной **без блокировок** (lock-free). Например, \`incrementAndGet()\` атомарно выполняет read-modify-write, которое у обычного \`i++\` не атомарно.
 
@@ -347,6 +392,9 @@ CAS — фундамент неблокирующих структур и бол
       },
       {
         id: 'semaphore-latch-barrier',
+        difficulty: 'hard',
+        tags: ['concurrency', 'synchronization'],
+        related: ['reentrantlock'],
         question: 'Чем различаются Semaphore, CountDownLatch и CyclicBarrier?',
         answer: `Три разных примитива синхронизации из \`java.util.concurrent\`:
 
@@ -358,6 +406,9 @@ CAS — фундамент неблокирующих структур и бол
       },
       {
         id: 'forkjoinpool',
+        difficulty: 'hard',
+        tags: ['concurrency', 'executors'],
+        related: ['executor-service'],
         question: 'Что такое ForkJoinPool и work-stealing?',
         answer: `**\`ForkJoinPool\`** — специализированный пул потоков (Java 7) для задач, которые можно **рекурсивно разбить** на подзадачи (divide-and-conquer): каждая задача при необходимости делится (\`fork\`), а потом результаты объединяются (\`join\`). Основа параллельных стримов (\`parallelStream\` использует общий \`ForkJoinPool.commonPool()\`).
 
@@ -369,6 +420,9 @@ CAS — фундамент неблокирующих структур и бол
       },
       {
         id: 'virtual-threads',
+        difficulty: 'medium',
+        tags: ['concurrency', 'threads'],
+        related: ['thread-creation'],
         question: 'Что такое виртуальные потоки (Virtual Threads) и чем они отличаются от обычных?',
         answer: `**Виртуальные потоки** (Project Loom, стабильны в **Java 21**) — очень лёгкие потоки, управляемые **JVM**, а не операционной системой.
 
@@ -382,6 +436,9 @@ CAS — фундамент неблокирующих структур и бол
       },
       {
         id: 'blockingqueue',
+        difficulty: 'medium',
+        tags: ['concurrency', 'collections'],
+        related: ['concurrent-collections'],
         question: 'Что такое BlockingQueue и где она применяется?',
         answer: `**\`BlockingQueue\`** — потокобезопасная очередь из \`java.util.concurrent\`, которая **блокирует** поток на границах: при попытке взять из **пустой** очереди (\`take()\`) поток ждёт, пока не появится элемент; при попытке положить в **полную** (ограниченную) очередь (\`put()\`) — ждёт, пока освободится место. Это снимает с разработчика ручную работу с \`wait/notify\`.
 

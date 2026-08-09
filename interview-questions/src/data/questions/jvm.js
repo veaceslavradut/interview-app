@@ -7,6 +7,9 @@ export const jvm = {
     questions: [
       {
         id: 'what-is-jvm',
+        difficulty: 'easy',
+        tags: ['jvm'],
+        related: ['memory-areas'],
         question: 'Что такое JVM, JRE и JDK?',
         answer: `**JVM (Java Virtual Machine)** — виртуальная машина Java, исполняющая байт-код. Обеспечивает платформонезависимость («write once, run anywhere»), управление памятью, сборку мусора, JIT-компиляцию.
 
@@ -18,6 +21,9 @@ export const jvm = {
       },
       {
         id: 'memory-areas',
+        difficulty: 'medium',
+        tags: ['jvm', 'memory'],
+        related: ['metaspace-permgen', 'garbage-collection'],
         question: 'Какие области памяти есть в JVM?',
         answer: `Основные области памяти JVM:
 
@@ -31,6 +37,9 @@ export const jvm = {
       },
       {
         id: 'garbage-collection',
+        difficulty: 'medium',
+        tags: ['jvm', 'gc'],
+        related: ['gc-algorithms', 'gc-roots-reachability'],
         question: 'Как работает сборка мусора (Garbage Collection)?',
         answer: `**Сборщик мусора (GC)** автоматически освобождает память, занятую объектами, на которые больше нет ссылок из GC Roots (локальные переменные потоков, статические поля, JNI-ссылки).
 
@@ -48,6 +57,9 @@ export const jvm = {
       },
       {
         id: 'classloaders',
+        difficulty: 'medium',
+        tags: ['jvm', 'classloading'],
+        related: [],
         question: 'Что такое загрузчики классов (ClassLoader)?',
         answer: `**ClassLoader** — механизм JVM, отвечающий за загрузку классов в память во время выполнения.
 
@@ -63,6 +75,9 @@ export const jvm = {
       },
       {
         id: 'jit',
+        difficulty: 'medium',
+        tags: ['jvm', 'performance'],
+        related: [],
         question: 'Что такое JIT-компиляция?',
         answer: `**JIT (Just-In-Time) компиляция** — компиляция байт-кода в нативный машинный код во время выполнения программы.
 
@@ -77,6 +92,9 @@ export const jvm = {
       },
       {
         id: 'oom-types',
+        difficulty: 'medium',
+        tags: ['jvm', 'memory'],
+        related: ['memory-leaks', 'metaspace-permgen'],
         question: 'Какие виды OutOfMemoryError вы знаете?',
         answer: `Основные виды \`OutOfMemoryError\`:
 
@@ -91,6 +109,9 @@ export const jvm = {
       },
       {
         id: 'metaspace-permgen',
+        difficulty: 'medium',
+        tags: ['jvm', 'memory'],
+        related: ['memory-areas'],
         question: 'Что такое Metaspace и чем он отличается от PermGen?',
         answer: `И **PermGen**, и **Metaspace** хранят **метаданные классов** (структуру классов, методы, пул констант рантайма). Разница — где и как:
 
@@ -110,6 +131,9 @@ export const jvm = {
       },
       {
         id: 'gc-roots-reachability',
+        difficulty: 'medium',
+        tags: ['jvm', 'gc'],
+        related: ['garbage-collection'],
         question: 'Какие объекты собирает GC? Что такое GC Roots и достижимость?',
         answer: `Сборщик мусора удаляет объекты, которые стали **недостижимы** — до них нельзя добраться по ссылкам от так называемых **GC Roots**. Важно: критерий — **достижимость**, а не «нет ссылок вообще» (поэтому циклические ссылки между двумя мусорными объектами всё равно собираются — они недостижимы от корней).
 
@@ -127,6 +151,9 @@ GC обходит граф от корней (mark), помечает дости
       },
       {
         id: 'gc-algorithms',
+        difficulty: 'hard',
+        tags: ['jvm', 'gc'],
+        related: ['g1-gc', 'garbage-collection'],
         question: 'Какие сборщики мусора есть в JVM (Serial, Parallel, CMS, G1, ZGC)?',
         answer: `Сборщики различаются компромиссом между **пропускной способностью (throughput)** и **паузами (latency)**:
 
@@ -140,6 +167,9 @@ GC обходит граф от корней (mark), помечает дости
       },
       {
         id: 'g1-gc',
+        difficulty: 'hard',
+        tags: ['jvm', 'gc'],
+        related: ['gc-algorithms'],
         question: 'Как работает G1 GC?',
         answer: `**G1 (Garbage-First)** делит кучу не на большие непрерывные Young/Old области, а на множество **одинаковых регионов** (обычно 1–32 МБ). Каждый регион в любой момент играет роль Eden, Survivor, Old или **Humongous** (для очень крупных объектов). Логическое разделение на поколения сохраняется, но физически «размазано» по регионам.
 
@@ -154,6 +184,9 @@ GC обходит граф от корней (mark), помечает дости
       },
       {
         id: 'memory-leaks',
+        difficulty: 'medium',
+        tags: ['jvm', 'memory'],
+        related: ['oom-types'],
         question: 'Что такое утечка памяти в Java, если есть сборщик мусора? Как её найти?',
         answer: `Несмотря на GC, **утечка памяти** в Java возможна: это объекты, которые **больше не нужны, но остаются достижимыми** от GC Roots, поэтому сборщик их не удаляет. Память растёт, пока не наступит \`OutOfMemoryError\`.
 

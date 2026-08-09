@@ -7,6 +7,9 @@ export const collections = {
     questions: [
       {
         id: 'collections-hierarchy',
+        difficulty: 'easy',
+        tags: ['collections'],
+        related: ['arraylist-linkedlist'],
         question: 'Расскажите об иерархии коллекций в Java.',
         answer: `Два корневых интерфейса: \`Collection\` и \`Map\` (Map не наследуется от Collection).
 
@@ -22,6 +25,9 @@ export const collections = {
       },
       {
         id: 'arraylist-linkedlist',
+        difficulty: 'easy',
+        tags: ['collections', 'list'],
+        related: ['collections-hierarchy'],
         question: 'В чем разница между ArrayList и LinkedList?',
         answer: `**ArrayList** — основан на динамическом массиве:
 
@@ -41,6 +47,9 @@ export const collections = {
       },
       {
         id: 'hashmap-internals',
+        difficulty: 'hard',
+        tags: ['collections', 'map', 'internals'],
+        related: ['hashmap-treemap-linkedhashmap', 'hashset-internals'],
         question: 'Как устроена HashMap?',
         answer: `\`HashMap\` — хеш-таблица, хранящая пары «ключ-значение».
 
@@ -58,6 +67,9 @@ export const collections = {
       },
       {
         id: 'hashmap-treemap-linkedhashmap',
+        difficulty: 'medium',
+        tags: ['collections', 'map'],
+        related: ['hashmap-internals'],
         question: 'В чем разница между HashMap, TreeMap и LinkedHashMap?',
         answer: `**HashMap:**
 
@@ -82,6 +94,9 @@ export const collections = {
       },
       {
         id: 'fail-fast-fail-safe',
+        difficulty: 'medium',
+        tags: ['collections', 'iterators'],
+        related: ['iterator'],
         question: 'Что такое fail-fast и fail-safe итераторы?',
         answer: `**Fail-fast** итераторы бросают \`ConcurrentModificationException\`, если коллекция была структурно изменена после создания итератора (не через сам итератор). Работают на основе счётчика модификаций \`modCount\`.
 
@@ -103,6 +118,9 @@ for (String s : list) {
       },
       {
         id: 'comparable-comparator',
+        difficulty: 'easy',
+        tags: ['collections', 'sorting'],
+        related: [],
         question: 'В чем разница между Comparable и Comparator?',
         answer: `Оба интерфейса используются для сравнения и сортировки объектов.
 
@@ -131,6 +149,9 @@ users.sort(byAge.thenComparing(User::getName).reversed());
       },
       {
         id: 'hashset-internals',
+        difficulty: 'medium',
+        tags: ['collections', 'set', 'internals'],
+        related: ['hashmap-internals'],
         question: 'Как устроен HashSet? Что будет, если изменить объект после добавления в Set?',
         answer: `**HashSet** внутри — это \`HashMap\`, где элементы хранятся как **ключи**, а значением служит один общий объект-заглушка (\`PRESENT\`):
 
@@ -161,6 +182,9 @@ set.remove(u);                 // false — удалить невозможно,
       },
       {
         id: 'iterator',
+        difficulty: 'easy',
+        tags: ['collections', 'iterators'],
+        related: ['fail-fast-fail-safe'],
         question: 'Что такое Iterator? Как правильно удалять элементы при итерации?',
         answer: `**Iterator** — объект для последовательного обхода коллекции (паттерн Итератор). Методы: \`hasNext()\`, \`next()\`, \`remove()\`.
 
