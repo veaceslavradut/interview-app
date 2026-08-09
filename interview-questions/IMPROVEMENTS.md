@@ -305,21 +305,35 @@ Turn the reference site into a tool people return to. All `localStorage`‑backe
   tag filtering (incl. AND → empty → reset), badges on list + question page, related links
   navigate (intra‑category).
 
-### [ ] 15. Remaining Notion content  ·  Effort: M  ·  Status: todo
-- **Why:** System Design (5 write‑ups) and Algorithms weren't imported — they're prose/
-  design‑docs, not clean Q&A.
-- **Approach:** Decide format: reshape into Q&A where possible, or add a distinct
-  "System Design" article/long‑form section that doesn't force the question/answer + quiz
-  mold. Keep the data pipeline consistent.
-- **Files:** new category/section data + EN + (optional) quiz, or a new content type.
-- **Acceptance:** Content is captured without degrading the Q&A/quiz experience.
+### [x] 15. System Design content  ·  Effort: M  ·  Status: done (System Design; Algorithms deferred)
+- **Why:** System Design was missing — a core senior‑interview topic — and the Notion
+  write‑ups were prose, not clean Q&A.
+- **Chosen format:** **reshape into Q&A** (option over a bespoke long‑form content type), so
+  the new topic reuses the entire existing pipeline — search, progress/SRS, the item‑14
+  filters, and the item‑11 prerender — with zero new UI.
+- **Done:** New `system-design` category (`src/data/questions/system-design.js`, 🏗️) with **20
+  original questions** covering the SD‑interview canon: the interview approach, functional vs
+  non‑functional requirements, back‑of‑the‑envelope estimation, vertical/horizontal scaling,
+  load balancing, caching + CDN, CAP/PACELC, consistency models, SQL vs NoSQL, replication,
+  sharding, consistent hashing, message queues, rate limiting, idempotency, REST API design,
+  micro vs monolith, observability, and a full URL‑shortener design. Every question carries
+  item‑14 `difficulty`/`tags`/`related`. Wired into the `questions.js` barrel; added a
+  10‑slot **quiz** bank (`quiz/systemDesign.js`) mapped in `quizzes.js`. RU‑only for now
+  (untranslated is a valid state); no EN override yet.
+- **Files:** `questions/system-design.js`, `quiz/systemDesign.js`, `questions.js`, `quizzes.js`.
+- **Verified:** 16/16 tests (no duplicate text; taxonomy + `related` well‑formed; quiz
+  well‑formed), lint 0 errors, build (35 categories / 549 questions; prerender wrote 590 pages).
+  Preview: category renders 20 items with difficulty + tag filters and a quiz link; a question
+  renders its markdown incl. inline code (backticks escaped correctly), difficulty badge, and 4
+  related links.
+- **Deferred:** the Algorithms write‑ups — better served by a future dedicated effort.
 
 ---
 
 ## Suggested next three
 
-1. **Item 15 — remaining Notion content** (System Design / Algorithms write‑ups) — the last unstarted item.
-2. **Item 14 backfill** — extend `difficulty`/`tags`/`related` beyond `oop` to the other categories.
+1. **Item 14 backfill** — extend `difficulty`/`tags`/`related` beyond `oop` (System Design already ships tagged) to the other categories.
+2. **EN + Algorithms content** — add English overrides for `system-design` and the deferred Algorithms write‑ups.
 3. **Full‑content SSG** — revisit item 11 with a router‑agnostic prerender (puppeteer) if answer text in the static HTML becomes worth it.
 
 _**All roadmap items 1–14 are done.** Highlights: item 9 split content into a light answer‑free
@@ -329,6 +343,8 @@ manifest + lazy per‑category answer chunks (first‑load JS ~561 → ~104 kB g
 `firestore.rules` premoderation plus honeypot/cooldown deterrents — **the rules must be deployed
 once**; item 14 added optional `difficulty`/`tags`/`related` per question (only `oop` backfilled so
 far); item 11 added a meta‑only prerender (per‑route `<title>`/OG/canonical for indexing + link
-previews; answer bodies stay client‑hydrated per item 9)._
+previews; answer bodies stay client‑hydrated per item 9); item 15 added an original 20‑question
+`system-design` Q&A topic (+ quiz), reusing the whole pipeline. **All 15 roadmap items are now
+done** (Algorithms content + EN overrides remain as follow‑ups)._
 
 _Last updated: 2026‑08‑06._
