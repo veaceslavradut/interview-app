@@ -11,6 +11,7 @@ import { javaCore } from './quiz-en/java-core.js';
 import { jvm } from './quiz-en/jvm.js';
 import { java8 } from './quiz-en/java8.js';
 import { multithreading } from './quiz-en/multithreading.js';
+import { spring } from './quiz-en/spring.js';
 
 export const quizzesEn = {
   oop,
@@ -19,4 +20,5 @@ export const quizzesEn = {
   jvm,
   java8,
   multithreading,
+  spring,
 };
