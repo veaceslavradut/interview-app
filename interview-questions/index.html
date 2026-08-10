@@ -2,9 +2,26 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="./public/java.png" />
+    <link rel="icon" type="image/png" href="/pwa-192x192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#4f6df5" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Java Interview Hub — подготовка к собеседованию Senior Java Developer</title>
+    <script>
+      // Set the theme before first paint to avoid a flash of the wrong theme.
+      // Kept in sync afterwards by ThemeContext.
+      (function () {
+        try {
+          var t = localStorage.getItem('interview-hub-theme');
+          if (t !== 'light' && t !== 'dark') {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.dataset.theme = t;
+        } catch (e) {
+          /* localStorage/matchMedia unavailable — fall back to CSS default (light) */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

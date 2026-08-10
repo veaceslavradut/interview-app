@@ -17,23 +17,18 @@ npm run lint     # eslint
 npm run preview  # serve the built dist/
 ```
 
-There is no test framework and no test script — don't go looking for one. `npm run lint` and `npm run build` are the full check suite, matching CI.
+`npm test` runs checks on **Node's built-in runner** (`node --test` over `src/data/data-integrity.test.js` + `src/data/suggestions.test.js`) — no test framework/deps added on purpose (item 1); to add a suite, append its file to the `test` script. `data-integrity` imports the RU/EN barrels directly (not the manifest) and guards duplicate questions, id drift across the 3 data files, and malformed quiz slots; `suggestions` unit-tests the anti-spam helpers (validation/link-count/cooldown/visibility — pure, no network). `npm run lint` + `npm test` + `npm run build` are the full check suite, matching CI. (`npm run build`/`dev` regenerate `content-manifest.js` first via the `pre*` hooks.)
 
-`npm run lint` currently exits clean with 3 warnings. One is intentional: `QuizPage.jsx` lists `attempt` as a `useMemo` dep specifically to force a fresh quiz on retry (`react-hooks/exhaustive-deps` can't see that). Don't "fix" it.
+`npm run lint` exits with 0 errors and ~8 warnings, all expected: one intentional in `QuizPage.jsx` (`attempt` listed as a `useMemo` dep to force a fresh quiz on retry — `react-hooks/exhaustive-deps` can't see that; don't "fix" it), and the rest are `react-refresh/only-export-components` on context/provider files that export a hook alongside the component. New warnings are the signal to check — the count itself isn't.
 
-## Repo layout — read this before touching dependencies
+## Repo layout — dependencies
 
-The git root is the **parent** directory (`interview-app/`), not `interview-questions/`. Dependencies are split across two `package.json` files, and this is load-bearing:
+The git root is the **parent** directory (`interview-app/`), but the app is a single self-contained npm project under `interview-questions/`: **one `package.json`, one lockfile**. All runtime deps — `react`, `react-dom`, `react-router-dom`, `react-markdown`, `remark-gfm`, `rehype-highlight` — are declared there, and `npm ci` inside `interview-questions/` installs everything CI and the Pages deploy need.
 
-- `interview-questions/package.json` — react, react-dom, vite, eslint. Has a lockfile; `npm ci` uses it.
-- `interview-app/package.json` (git root) — `react-router-dom`, `react-markdown`, `remark-gfm`. **Its `node_modules/` is committed to git** (~102 packages, ~1660 files).
+- Add a dependency with `npm install` **inside `interview-questions/`** so it lands in that `package.json` + lockfile. There is nothing to install at the git root.
+- The git root is **not** an npm project — no `package.json`, no `node_modules` (both are `.gitignore`d via the root `.gitignore`). Don't recreate them.
 
-`src/` imports all three of those root-level packages, but they are absent from `interview-questions/package.json`. They resolve only because Node walks up the directory tree into the committed `interview-app/node_modules/`. CI does `npm ci` inside `interview-questions/`, which never installs them — so the checked-in `node_modules/` at the root is the *only* reason the build and deploy work.
-
-Consequences:
-- Do not gitignore or delete the root `node_modules/`. It looks like an accident; it is currently the dependency source for routing and markdown rendering. Removing it breaks `npm run build` and the Pages deploy.
-- Adding a router/markdown-adjacent dependency the same way means committing its `node_modules/` tree too. Prefer instead to declare the dep properly in `interview-questions/package.json` and let the lockfile carry it.
-- If you consolidate this (a reasonable cleanup: move the three deps into `interview-questions/package.json`, regenerate the lockfile, untrack root `node_modules/`), do it as a deliberate, self-contained change and verify `npm ci && npm run build` from a clean checkout — not as a drive-by.
+> History (item 12): routing/markdown deps used to live in a second `package.json` at the git root whose `node_modules/` was **committed** (~1615 files), because Node resolution walked up into it. That hack was removed — the three deps were moved into `interview-questions/package.json`, the lockfile regenerated, and the root `node_modules/` + `package.json` + lockfile untracked and deleted. Verified with a clean `npm ci && npm run build` (the root tree removed). If you ever see routing fail to resolve, the fix is to declare the dep here — never to re-commit a `node_modules/`.
 
 ## Architecture
 
@@ -45,11 +40,16 @@ Consequences:
 
 Russian is the source of truth; English is an override layer that degrades gracefully.
 
-- `questions.js` — the canonical `categories` array: `{ id, title, icon, description, questions: [{ id, question, answer }] }`. Answers are markdown template literals (fenced code blocks included), rendered by `react-markdown` + `remark-gfm`.
-- `content.en.js` — `enContent[categoryId]` with optional `title` / `description` / `questions[questionId]`.
-- `localized.js` — merges the two. `getCategories` / `getCategory` / `getQuestion(categoryId, questionId, lang)`; the last also returns `prev`/`next` for question navigation. Anything without an English override is returned as Russian with `translated: false`, which drives the "only available in Russian" note and keeps speech synthesis in Russian for that answer. **English translation is intentionally partial — untranslated content is a normal state, not a bug.**
+- `questions.js` — a **barrel** that assembles the canonical `categories` array. Each category lives in its own file under `questions/<categoryId>.js` (e.g. `questions/kafka.js`) exporting `export const <camelCaseId> = { id, title, icon, description, questions: [{ id, question, answer }] }`; the barrel imports them and lists them in the array **in display order** (that order drives the home page). Answers are markdown template literals (fenced code blocks included), rendered by `react-markdown` + `remark-gfm`. `questions.js` also still exports `getCategory` / `getQuestion`.
+- `content.en.js` — a **barrel** for `enContent[categoryId]`. Each category's English overrides live in `content-en/<categoryId>.js` exporting `export const <camelCaseId> = { title?, description?, questions? }`; the barrel maps them (hyphenated ids like `'java-core'` are quoted keys → `javaCore` var).
+- To add/edit content: edit the per-category file. A **new category** also needs one line in each barrel (an import + a slot in the array/object) and — if it has a quiz — a `quizzes.js` map entry. Category id is the filename and the join key; keep the RU file, EN file, and quiz all under the same id.
+- `localized.js` — merges RU + EN. `getCategories` / `getCategory` / `getQuestion(categoryId, questionId, lang)`; the last also returns `prev`/`next` for question navigation. Anything without an English override is returned as Russian with `translated: false`, which drives the "only available in Russian" note and keeps speech synthesis in Russian for that answer. **English translation is intentionally partial — untranslated content is a normal state, not a bug.**
 
-Pages never import `questions.js` or `content.en.js` directly; they go through `localized.js`. Keep it that way.
+**Content is split into a light layer and a heavy layer (code splitting, item 9). Understand this before touching the data flow:**
+- Only three consumers ever read a question's `answer` — `QuestionPage`, `ReviewSessionPage`, and the search index. Everything else needs no more than category meta + question text.
+- `src/data/content-manifest.js` is **auto-generated** (committed) by `scripts/gen-content-manifest.mjs`, wired into `predev`/`prebuild` (also `npm run gen:manifest`). It is the RU/EN barrels with every `answer` stripped: category meta + question text only. Don't hand-edit it — edit the per-category source files and it regenerates. A stale manifest shows up as a git diff after a build.
+- `localized.js`'s **synchronous** API (`getCategories`/`getCategory`/`getQuestion`) reads from the manifest, so those questions have **no `answer` field**. Answers are the **heavy** layer, lazy-loaded per category via `import.meta.glob` through async loaders: `loadAnswer(categoryId, questionId, lang)`, `loadCategoryFull`, `loadAllFull`. If you need an answer in a component, `await` a loader — don't expect it on the sync objects.
+- Consequence: **the app never imports `questions.js` / `content.en.js` anymore** — only the manifest generator and the Node tests do. Each `questions/<id>.js` is dynamic-imported into its own lazy chunk; the barrels + `content-manifest.js` are the only places that know the full category list. Route components are `React.lazy` in `App.jsx` (landing page eager). Keep the light/heavy seam intact: putting `answer` back on the sync path re-inflates first load to the old ~1.8 MB single chunk.
 
 ### Quizzes (`src/data/quiz/*.js` → `quizzes.js`)
 
@@ -75,12 +75,15 @@ Reads answers aloud via the Web Speech API; returns `null` when unsupported. Two
 
 ## Adding content
 
-- **Question**: add to the category's `questions` array in `questions.js`. Optionally add the same `questionId` under `enContent[categoryId].questions` in `content.en.js`; skipping it is fine.
-- **Quiz slot**: add to the topic's bank. 2+ variants per slot is the norm; each variant needs 4 options and a `correct` index.
-- **New topic**: add a category to `questions.js`, then (optionally) a bank in `src/data/quiz/` wired into the `quizzes` map under the identical id. Without a map entry the topic simply has no quiz link.
+- **Question**: add to the `questions` array in `src/data/questions/<categoryId>.js`. Optionally add the same `questionId` under `questions` in `src/data/content-en/<categoryId>.js` (the English override); skipping it is fine — untranslated is a normal state.
+- **Optional taxonomy (item 14)**: a question may carry `difficulty` (`'easy'|'medium'|'hard'`), `tags: []` (lowercase tokens), and `related: []` (each a bare question id = same category, or `'categoryId/questionId'` = cross‑category). All optional and language‑neutral (authored on the RU source, carried through the light manifest like `subtopic`); untagged questions stay valid and just show no badge / no filter bar. Allowed difficulty values live in `src/data/taxonomy.js`; the data‑integrity test guards the shape. Only `oop` is backfilled so far.
+- **Quiz slot**: add to the topic's bank in `src/data/quiz/`. 2+ variants per slot is the norm; each variant needs 4 options and a `correct` index.
+- **New topic**: create `src/data/questions/<id>.js` (exporting the category object), wire it into the `questions.js` barrel (import + a slot in the `categories` array at the desired position). Optionally add `src/data/content-en/<id>.js` wired into the `content.en.js` barrel, and a quiz bank in `src/data/quiz/` wired into the `quizzes` map — all under the identical `<id>`. Without the barrel wiring the category is invisible; without the `quizzes` entry the topic simply has no quiz link.
 
 ## Deployment
 
-`.github/workflows/deploy.yml` builds on push to `main` with `GITHUB_PAGES=true`, which switches Vite's `base` to `/interview-app/` (see `vite.config.js`). It then copies `dist/index.html` to `dist/404.html` as the SPA fallback, since Pages has no server-side rewrite — that copy is what makes deep links work. `ci.yml` runs lint + build on PRs to `main`.
+`.github/workflows/deploy.yml` builds on push to `main` with `GITHUB_PAGES=true`, which switches Vite's `base` to `/interview-app/` (see `vite.config.js`). It then copies `dist/index.html` to `dist/404.html` as the SPA fallback, since Pages has no server-side rewrite — that copy is what makes *un-prerendered* deep links work. `ci.yml` runs lint + build on PRs to `main`.
+
+**Prerender (item 11):** `npm run build` runs `scripts/prerender.mjs` as its `postbuild` step (so `npm run build` in CI/deploy triggers it automatically — no workflow change). It's a **meta-only** prerender: for the home page, every category, and every question it writes a static `dist/<route>/index.html` — a copy of the built shell with a route-specific `<title>` + description + Open Graph / Twitter / canonical tags (titles/descriptions come from `src/data/pageMeta.js`, shared with the client). The React body still hydrates client-side, so **item 9's lazy answers are untouched** — the answer markdown is *not* in the static HTML. GitHub Pages serves `dist/<route>/index.html` at `/<base><route>/`, so a fresh fetch (crawler, link-preview bot) gets correct meta; `useDocumentTitle` keeps `document.title` right across client-side navigation. Note: `vite preview` reads `base` from `vite.config` at preview time, so to smoke-test a `GITHUB_PAGES=true` build locally you must also run preview with `GITHUB_PAGES=true` (otherwise base mismatches and assets 404 into the SPA fallback).
 
 A local `dist/` may be present but is gitignored and never served — Pages deploys the CI-built artifact.
