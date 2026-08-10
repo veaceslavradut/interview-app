@@ -6,7 +6,15 @@
 // порядок опций менять нельзя). Непереведённые категории просто отсутствуют —
 // их квиз грациозно остаётся на русском.
 import { oop } from './quiz-en/oop.js';
+import { collections } from './quiz-en/collections.js';
+import { javaCore } from './quiz-en/java-core.js';
+import { jvm } from './quiz-en/jvm.js';
+import { java8 } from './quiz-en/java8.js';
 
 export const quizzesEn = {
   oop,
+  collections,
+  'java-core': javaCore,
+  jvm,
+  java8,
 };
