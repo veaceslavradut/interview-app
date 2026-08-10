@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import { categories } from './questions.js';
 import { enContent } from './content.en.js';
 import { quizzes, buildQuiz, hasQuiz } from './quizzes.js';
+import { quizzesEn } from './quizzes.en.js';
 import { DIFFICULTIES } from './taxonomy.js';
 
 const ID_RE = /^[a-z0-9-]+$/;
@@ -148,6 +149,40 @@ test('quiz banks reference real categories and are well-formed', () => {
           `${at} 'correct' index out of range`
         );
       }
+    }
+  }
+});
+
+test('EN quiz overrides align with the RU quiz structure', () => {
+  for (const [catId, enBank] of Object.entries(quizzesEn)) {
+    assert.ok(quizzes[catId], `quizzesEn has unknown category: ${catId}`);
+    const ruSlots = new Map(quizzes[catId].questions.map((s) => [s.id, s]));
+    for (const [slotId, enVariants] of Object.entries(enBank)) {
+      const ruSlot = ruSlots.get(slotId);
+      assert.ok(ruSlot, `quizzesEn[${catId}] has unknown slot: ${slotId}`);
+      assert.ok(Array.isArray(enVariants), `${catId}/${slotId} EN must be an array of variants`);
+      // Each present slot must translate all its variants; options must line up
+      // 1:1 with RU, since buildQuiz reads `correct` from RU by option index.
+      assert.equal(
+        enVariants.length,
+        ruSlot.variants.length,
+        `${catId}/${slotId} EN variant count must match RU`
+      );
+      enVariants.forEach((ev, i) => {
+        const at = `${catId}/${slotId}[${i}]`;
+        assert.equal(typeof ev.question, 'string', `${at} EN question must be a string`);
+        assert.ok(ev.question.trim().length > 0, `${at} EN question is empty`);
+        assert.ok(Array.isArray(ev.options), `${at} EN options must be an array`);
+        assert.equal(
+          ev.options.length,
+          ruSlot.variants[i].options.length,
+          `${at} EN options length must match RU`
+        );
+        assert.ok(
+          ev.options.every((o) => typeof o === 'string' && o.trim()),
+          `${at} EN has an empty option`
+        );
+      });
     }
   }
 });

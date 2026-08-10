@@ -13,8 +13,8 @@ export default function QuizPage() {
   const category = getCategory(categoryId, lang);
 
   const [attempt, setAttempt] = useState(0);
-  // Новый вариант теста собирается при каждой попытке
-  const quiz = useMemo(() => buildQuiz(categoryId), [categoryId, attempt]);
+  // Новый вариант теста собирается при каждой попытке (и при смене языка)
+  const quiz = useMemo(() => buildQuiz(categoryId, lang), [categoryId, attempt, lang]);
 
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState(null);
