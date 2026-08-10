@@ -10,6 +10,7 @@ import { collections } from './quiz-en/collections.js';
 import { javaCore } from './quiz-en/java-core.js';
 import { jvm } from './quiz-en/jvm.js';
 import { java8 } from './quiz-en/java8.js';
+import { multithreading } from './quiz-en/multithreading.js';
 
 export const quizzesEn = {
   oop,
@@ -17,4 +18,5 @@ export const quizzesEn = {
   'java-core': javaCore,
   jvm,
   java8,
+  multithreading,
 };
