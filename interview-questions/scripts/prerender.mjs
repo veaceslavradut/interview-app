@@ -18,6 +18,8 @@ import { categoriesMeta } from '../src/data/content-manifest.js';
 import {
   homeTitle,
   homeDescription,
+  interviewTitle,
+  interviewDescription,
   categoryTitle,
   categoryDescription,
   questionTitle,
@@ -81,6 +83,9 @@ const emit = (route, meta) => {
 
 // Home
 emit('', { title: homeTitle('ru'), description: homeDescription('ru') });
+
+// Mock interview — a real landing page (own title + description).
+emit('interview', { title: interviewTitle('ru'), description: interviewDescription('ru') });
 
 // Interactive pages — no rich content, but a correct title on first load.
 const staticPages = {

@@ -22,6 +22,7 @@ const SuggestionsPage = lazy(() => import('./pages/SuggestionsPage'));
 const StudyListPage = lazy(() => import('./pages/StudyListPage'));
 const RandomPage = lazy(() => import('./pages/RandomPage'));
 const ReviewSessionPage = lazy(() => import('./pages/ReviewSessionPage'));
+const InterviewPage = lazy(() => import('./pages/InterviewPage'));
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
                   <Route path="/review" element={<StudyListPage mode="review" />} />
                   <Route path="/review/session" element={<ReviewSessionPage />} />
                   <Route path="/random" element={<RandomPage />} />
+                  <Route path="/interview" element={<InterviewPage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Suspense>

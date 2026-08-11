@@ -23,6 +23,18 @@ export function homeDescription(lang = 'ru') {
     : 'Подготовка к собеседованию Java-разработчика: сотни вопросов с ответами и квизы по Java, Spring, многопоточности, JVM и не только.';
 }
 
+export function interviewTitle(lang = 'ru') {
+  return lang === 'en'
+    ? `Mock Interview — Senior Java Developer · ${SITE}`
+    : `Мок-интервью — Senior Java Developer · ${SITE}`;
+}
+
+export function interviewDescription(lang = 'ru') {
+  return lang === 'en'
+    ? 'A cross-topic mock interview for a Senior Java Developer: a randomized set of questions across the JVM, concurrency, Spring, system design and more.'
+    : 'Кросс-темное мок-интервью на позицию Senior Java Developer: случайный набор вопросов по JVM, многопоточности, Spring, System Design и не только.';
+}
+
 export function categoryTitle(cat) {
   return `${cat.title} · ${SITE}`;
 }
