@@ -16,6 +16,8 @@ import { patterns } from './quiz-en/patterns.js';
 import { sql } from './quiz-en/sql.js';
 import { aws } from './quiz-en/aws.js';
 import { kafka } from './quiz-en/kafka.js';
+import { nosql } from './quiz-en/nosql.js';
+import { microservices } from './quiz-en/microservices.js';
 
 export const quizzesEn = {
   oop,
@@ -29,4 +31,6 @@ export const quizzesEn = {
   sql,
   aws,
   kafka,
+  nosql,
+  microservices,
 };
