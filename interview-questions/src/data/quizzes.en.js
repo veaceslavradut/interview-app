@@ -20,6 +20,8 @@ import { nosql } from './quiz-en/nosql.js';
 import { microservices } from './quiz-en/microservices.js';
 import { hibernate } from './quiz-en/hibernate.js';
 import { git } from './quiz-en/git.js';
+import { docker } from './quiz-en/docker.js';
+import { systemDesign } from './quiz-en/system-design.js';
 
 export const quizzesEn = {
   oop,
@@ -37,4 +39,6 @@ export const quizzesEn = {
   microservices,
   hibernate,
   git,
+  docker,
+  'system-design': systemDesign,
 };
