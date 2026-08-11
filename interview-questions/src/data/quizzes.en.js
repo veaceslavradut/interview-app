@@ -29,6 +29,17 @@ import { monitoring } from './quiz-en/monitoring.js';
 import { reactive } from './quiz-en/reactive.js';
 import { terraform } from './quiz-en/terraform.js';
 import { databases } from './quiz-en/databases.js';
+import { jdbc } from './quiz-en/jdbc.js';
+import { io } from './quiz-en/io.js';
+import { serialization } from './quiz-en/serialization.js';
+import { servlets } from './quiz-en/servlets.js';
+import { web } from './quiz-en/web.js';
+import { css } from './quiz-en/css.js';
+import { buildTools } from './quiz-en/build-tools.js';
+import { html } from './quiz-en/html.js';
+import { uml } from './quiz-en/uml.js';
+import { xml } from './quiz-en/xml.js';
+import { logging } from './quiz-en/logging.js';
 
 export const quizzesEn = {
   oop,
@@ -55,4 +66,15 @@ export const quizzesEn = {
   reactive,
   terraform,
   databases,
+  jdbc,
+  io,
+  serialization,
+  servlets,
+  web,
+  css,
+  'build-tools': buildTools,
+  html,
+  uml,
+  xml,
+  logging,
 };
