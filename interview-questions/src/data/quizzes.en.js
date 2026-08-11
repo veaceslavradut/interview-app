@@ -12,6 +12,8 @@ import { jvm } from './quiz-en/jvm.js';
 import { java8 } from './quiz-en/java8.js';
 import { multithreading } from './quiz-en/multithreading.js';
 import { spring } from './quiz-en/spring.js';
+import { patterns } from './quiz-en/patterns.js';
+import { sql } from './quiz-en/sql.js';
 
 export const quizzesEn = {
   oop,
@@ -21,4 +23,6 @@ export const quizzesEn = {
   java8,
   multithreading,
   spring,
+  patterns,
+  sql,
 };
