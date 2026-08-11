@@ -30,6 +30,7 @@ import { systemDesignQuiz } from './quiz/systemDesign.js';
 import { algorithmsQuiz } from './quiz/algorithms.js';
 import { claudeCertifiedDeveloperQuiz } from './quiz/claude.js';
 import { ccdvImportedQuiz } from './quiz/ccdvImported.js';
+import { quizzesEn } from './quizzes.en.js';
 
 export const quizzes = {
   oop: {
@@ -486,18 +487,28 @@ function shuffle(array) {
 
 // Собирает конкретный вариант теста: случайный вариант вопроса в каждом слоте,
 // перемешанный порядок вопросов и ответов.
-export function buildQuiz(categoryId) {
+//
+// Локализация (lang='en'): если для слота есть английский оверрайд того же
+// варианта (quizzesEn[cat][slotId][variantIndex]), берём его текст/опции. Опции
+// в оверрайде хранятся в ТОМ ЖЕ порядке, что и в RU-исходнике, поэтому `correct`
+// остаётся валидным индексом. Непереведённое грациозно остаётся на русском.
+export function buildQuiz(categoryId, lang = 'ru') {
   const quiz = quizzes[categoryId];
   if (!quiz) return null;
+  const enBank = lang === 'en' ? quizzesEn[categoryId] : null;
   const questions = shuffle(quiz.questions).map((slot) => {
-    const variant = slot.variants[Math.floor(Math.random() * slot.variants.length)];
-    const options = variant.options.map((text, index) => ({
+    const variantIndex = Math.floor(Math.random() * slot.variants.length);
+    const variant = slot.variants[variantIndex];
+    const enVariant = enBank?.[slot.id]?.[variantIndex];
+    const questionText = enVariant?.question ?? variant.question;
+    const optionTexts = enVariant?.options ?? variant.options;
+    const options = optionTexts.map((text, index) => ({
       text,
       isCorrect: index === variant.correct,
     }));
     return {
       id: slot.id,
-      question: variant.question,
+      question: questionText,
       options: shuffle(options),
     };
   });
