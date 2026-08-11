@@ -31,6 +31,9 @@ export default function HomePage() {
       </header>
 
       <nav className="study-nav">
+        <Link to="/interview" className="study-nav-link study-nav-link-primary">
+          🎓 {t(lang, 'interviewNav')}
+        </Link>
         <Link to="/bookmarks" className="study-nav-link">
           ★ {t(lang, 'studyBookmarks')} <span className="study-nav-count">{bookmarkCount}</span>
         </Link>
