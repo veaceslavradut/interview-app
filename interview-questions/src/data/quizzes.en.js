@@ -14,6 +14,8 @@ import { multithreading } from './quiz-en/multithreading.js';
 import { spring } from './quiz-en/spring.js';
 import { patterns } from './quiz-en/patterns.js';
 import { sql } from './quiz-en/sql.js';
+import { aws } from './quiz-en/aws.js';
+import { kafka } from './quiz-en/kafka.js';
 
 export const quizzesEn = {
   oop,
@@ -25,4 +27,6 @@ export const quizzesEn = {
   spring,
   patterns,
   sql,
+  aws,
+  kafka,
 };
