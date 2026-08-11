@@ -18,6 +18,8 @@ import { aws } from './quiz-en/aws.js';
 import { kafka } from './quiz-en/kafka.js';
 import { nosql } from './quiz-en/nosql.js';
 import { microservices } from './quiz-en/microservices.js';
+import { hibernate } from './quiz-en/hibernate.js';
+import { git } from './quiz-en/git.js';
 
 export const quizzesEn = {
   oop,
@@ -33,4 +35,6 @@ export const quizzesEn = {
   kafka,
   nosql,
   microservices,
+  hibernate,
+  git,
 };
