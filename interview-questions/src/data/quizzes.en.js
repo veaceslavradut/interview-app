@@ -22,6 +22,9 @@ import { hibernate } from './quiz-en/hibernate.js';
 import { git } from './quiz-en/git.js';
 import { docker } from './quiz-en/docker.js';
 import { systemDesign } from './quiz-en/system-design.js';
+import { algorithms } from './quiz-en/algorithms.js';
+import { testing } from './quiz-en/testing.js';
+import { cleanCode } from './quiz-en/clean-code.js';
 
 export const quizzesEn = {
   oop,
@@ -41,4 +44,7 @@ export const quizzesEn = {
   git,
   docker,
   'system-design': systemDesign,
+  algorithms,
+  testing,
+  'clean-code': cleanCode,
 };
