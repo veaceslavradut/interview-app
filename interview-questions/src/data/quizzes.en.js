@@ -25,6 +25,10 @@ import { systemDesign } from './quiz-en/system-design.js';
 import { algorithms } from './quiz-en/algorithms.js';
 import { testing } from './quiz-en/testing.js';
 import { cleanCode } from './quiz-en/clean-code.js';
+import { monitoring } from './quiz-en/monitoring.js';
+import { reactive } from './quiz-en/reactive.js';
+import { terraform } from './quiz-en/terraform.js';
+import { databases } from './quiz-en/databases.js';
 
 export const quizzesEn = {
   oop,
@@ -47,4 +51,8 @@ export const quizzesEn = {
   algorithms,
   testing,
   'clean-code': cleanCode,
+  monitoring,
+  reactive,
+  terraform,
+  databases,
 };
