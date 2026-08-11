@@ -40,6 +40,8 @@ import { html } from './quiz-en/html.js';
 import { uml } from './quiz-en/uml.js';
 import { xml } from './quiz-en/xml.js';
 import { logging } from './quiz-en/logging.js';
+import { claudeCertifiedDeveloperEn } from './quiz-en/claude.js';
+import { ccdvImportedEn } from './quiz-en/ccdvImported.js';
 
 export const quizzesEn = {
   oop,
@@ -77,4 +79,6 @@ export const quizzesEn = {
   uml,
   xml,
   logging,
+  // CCD: original slots (claude.js) + imported slots (from the English master)
+  'claude-certified-developer': { ...claudeCertifiedDeveloperEn, ...ccdvImportedEn },
 };
