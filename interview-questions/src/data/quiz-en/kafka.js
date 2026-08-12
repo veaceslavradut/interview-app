@@ -294,4 +294,70 @@ export const kafka = {
       ],
     },
   ],
+  'kafka-broker-or-streaming': [
+    {
+      question: 'How does Kafka differ from a classic message broker like RabbitMQ?',
+      options: [
+        'Kafka stores messages as an ordered log with retention and lets different groups re-read them',
+        'Kafka deletes a message right after the first read, while RabbitMQ keeps it forever',
+        'Kafka does not support multiple consumers of one stream',
+        'Kafka does not scale and runs only on a single node',
+      ],
+    },
+  ],
+  'more-consumers-than-partitions': [
+    {
+      question: 'What happens when there are more consumers than partitions in a group?',
+      options: [
+        'The extra consumers stay idle and serve as hot standbys in case of a rebalance',
+        'Each partition is read by several consumers in parallel at once',
+        'Kafka automatically creates additional partitions',
+        'The group stops reading the topic until the number of consumers is reduced',
+      ],
+    },
+  ],
+  'fewer-consumers-than-partitions': [
+    {
+      question: 'What happens when there are fewer consumers than partitions in a group?',
+      options: [
+        'Each consumer gets several partitions — this is a normal working mode',
+        'Some partitions are not read at all',
+        'Kafka merges the partitions into one',
+        'Messages are lost due to the shortage of consumers',
+      ],
+    },
+  ],
+  'kafka-ordering': [
+    {
+      question: 'Within what scope does Kafka guarantee message ordering?',
+      options: [
+        'Only within a single partition; across a multi-partition topic ordering is not guaranteed',
+        'Strictly across the whole topic regardless of the number of partitions',
+        'Ordering is not guaranteed anywhere at all',
+        'Ordering is guaranteed across partitions but not within a partition',
+      ],
+    },
+  ],
+  'partition-key': [
+    {
+      question: 'What does the partition key determine?',
+      options: [
+        'Which partition a message goes to: the same key → one partition (hash(key) % N)',
+        'Which topic the message is sent to',
+        'The message retention period',
+        'The producer\'s acks acknowledgement level',
+      ],
+    },
+  ],
+  'choose-partition-key': [
+    {
+      question: 'What should a good partition key be like?',
+      options: [
+        'Uniform (high cardinality) and aligned with the unit of ordering/grouping',
+        'With as few unique values as possible so everything goes to one partition',
+        'Always null, so Kafka decides the distribution itself',
+        'Built from frequently changing message fields',
+      ],
+    },
+  ],
 };

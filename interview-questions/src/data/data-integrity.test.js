@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 
 import { categories } from './questions.js';
 import { enContent } from './content.en.js';
-import { quizzes, buildQuiz, hasQuiz } from './quizzes.js';
+import { quizzes, buildQuiz, buildMockInterview, MOCK_INTERVIEW_SIZE, hasQuiz } from './quizzes.js';
 import { quizzesEn } from './quizzes.en.js';
 import { DIFFICULTIES } from './taxonomy.js';
 
@@ -183,6 +183,38 @@ test('EN quiz overrides align with the RU quiz structure', () => {
           `${at} EN has an empty option`
         );
       });
+    }
+  }
+});
+
+test('buildMockInterview produces a valid cross-topic quiz tagged with real categories', () => {
+  for (const lang of ['ru', 'en']) {
+    const mock = buildMockInterview(lang);
+    assert.ok(mock && Array.isArray(mock.questions), `mock (${lang}) has no questions array`);
+    // Weighted sampling with a per-category cap; the pool is far larger than the
+    // target size, so it should always fill to MOCK_INTERVIEW_SIZE.
+    assert.equal(
+      mock.questions.length,
+      MOCK_INTERVIEW_SIZE,
+      `mock (${lang}) should have ${MOCK_INTERVIEW_SIZE} questions`
+    );
+    const seen = new Set();
+    const perCat = {};
+    for (const q of mock.questions) {
+      assert.ok(categoryIds.has(q.categoryId), `mock question has unknown category: ${q.categoryId}`);
+      assert.notEqual(q.categoryId, 'claude-certified-developer', 'CCD must be excluded from the mock interview');
+      const key = `${q.categoryId}/${q.id}`;
+      assert.ok(!seen.has(key), `mock interview repeats a slot: ${key}`);
+      seen.add(key);
+      perCat[q.categoryId] = (perCat[q.categoryId] || 0) + 1;
+      assert.equal(typeof q.question, 'string', `mock built question must be a string`);
+      const correct = q.options.filter((o) => o.isCorrect).length;
+      assert.equal(correct, 1, `${key} must have exactly one correct option, got ${correct}`);
+      assert.ok(q.options.every((o) => typeof o.text === 'string' && o.text.trim()), `${key} built option empty`);
+    }
+    // No single topic should dominate the session.
+    for (const [catId, n] of Object.entries(perCat)) {
+      assert.ok(n <= 3, `mock interview over-samples ${catId}: ${n}`);
     }
   }
 });

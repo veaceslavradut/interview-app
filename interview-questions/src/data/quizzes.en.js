@@ -18,6 +18,8 @@ import { aws } from './quiz-en/aws.js';
 import { kafka } from './quiz-en/kafka.js';
 import { nosql } from './quiz-en/nosql.js';
 import { microservices } from './quiz-en/microservices.js';
+import { eventDriven } from './quiz-en/event-driven.js';
+import { ddd } from './quiz-en/ddd.js';
 import { hibernate } from './quiz-en/hibernate.js';
 import { git } from './quiz-en/git.js';
 import { docker } from './quiz-en/docker.js';
@@ -57,6 +59,8 @@ export const quizzesEn = {
   kafka,
   nosql,
   microservices,
+  'event-driven': eventDriven,
+  ddd,
   hibernate,
   git,
   docker,

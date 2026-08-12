@@ -1536,6 +1536,18 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Mock-interview tab — accented so the "final exam" stands out from the others. */
+.study-nav-link-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.study-nav-link-primary:hover {
+  box-shadow: var(--shadow-sm);
+  filter: brightness(1.05);
+}
+
 .study-nav-count {
   min-width: 1.4rem;
   padding: 0.05rem 0.4rem;

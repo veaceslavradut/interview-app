@@ -21,6 +21,8 @@ import {
 import { patternsQuiz } from './quiz/patterns.js';
 import { springQuiz, hibernateQuiz } from './quiz/frameworks.js';
 import { kafkaQuiz, microservicesQuiz, awsQuiz } from './quiz/infra.js';
+import { eventDrivenQuiz } from './quiz/event-driven.js';
+import { dddQuiz } from './quiz/ddd.js';
 import { nosqlQuiz } from './quiz/nosql.js';
 import { dockerQuiz } from './quiz/docker.js';
 import { monitoringQuiz } from './quiz/monitoring.js';
@@ -463,6 +465,8 @@ export const quizzes = {
   'build-tools': { questions: buildToolsQuiz },
   git: { questions: gitQuiz },
   microservices: { questions: microservicesQuiz },
+  'event-driven': { questions: eventDrivenQuiz },
+  ddd: { questions: dddQuiz },
   aws: { questions: awsQuiz },
   nosql: { questions: nosqlQuiz },
   docker: { questions: dockerQuiz },
@@ -492,27 +496,122 @@ function shuffle(array) {
 // варианта (quizzesEn[cat][slotId][variantIndex]), берём его текст/опции. Опции
 // в оверрайде хранятся в ТОМ ЖЕ порядке, что и в RU-исходнике, поэтому `correct`
 // остаётся валидным индексом. Непереведённое грациозно остаётся на русском.
+// Собирает один вопрос из слота: случайный вариант, EN-оверрайд (если есть и
+// lang==='en'), опции — в объекты { text, isCorrect } с финальным перемешиванием.
+// `categoryId` кладётся в результат, чтобы мок-интервью могло связать вопрос с темой
+// (buildQuiz по одной теме его просто игнорирует).
+function buildSlotQuestion(categoryId, slot, enBank, lang) {
+  const variantIndex = Math.floor(Math.random() * slot.variants.length);
+  const variant = slot.variants[variantIndex];
+  const enVariant = lang === 'en' ? enBank?.[slot.id]?.[variantIndex] : null;
+  const questionText = enVariant?.question ?? variant.question;
+  const optionTexts = enVariant?.options ?? variant.options;
+  const options = optionTexts.map((text, index) => ({
+    text,
+    isCorrect: index === variant.correct,
+  }));
+  return {
+    id: slot.id,
+    categoryId,
+    question: questionText,
+    options: shuffle(options),
+  };
+}
+
 export function buildQuiz(categoryId, lang = 'ru') {
   const quiz = quizzes[categoryId];
   if (!quiz) return null;
   const enBank = lang === 'en' ? quizzesEn[categoryId] : null;
-  const questions = shuffle(quiz.questions).map((slot) => {
-    const variantIndex = Math.floor(Math.random() * slot.variants.length);
-    const variant = slot.variants[variantIndex];
-    const enVariant = enBank?.[slot.id]?.[variantIndex];
-    const questionText = enVariant?.question ?? variant.question;
-    const optionTexts = enVariant?.options ?? variant.options;
-    const options = optionTexts.map((text, index) => ({
-      text,
-      isCorrect: index === variant.correct,
-    }));
-    return {
-      id: slot.id,
-      question: questionText,
-      options: shuffle(options),
-    };
-  });
+  const questions = shuffle(quiz.questions).map((slot) =>
+    buildSlotQuestion(categoryId, slot, enBank, lang)
+  );
   return { questions };
+}
+
+// Мок-интервью на позицию Senior Java Developer — одна кросс-темная сессия,
+// собранная из банков квизов и взвешенная по тому, что реально спрашивают у
+// сеньоров: ядро (JVM/GC, многопоточность, Java 8, коллекции, Spring, Hibernate,
+// SQL, микросервисы, System Design, паттерны, ядро языка) встречается чаще
+// периферии (git, docker, вёрстка и т.п.). claude-certified-developer намеренно
+// не входит — это отдельный трек. Веса заданы только для тем, у которых есть банк
+// квиза; тема без веса в интервью не попадает.
+const INTERVIEW_WEIGHTS = {
+  jvm: 3,
+  multithreading: 3,
+  java8: 3,
+  collections: 3,
+  'java-core': 3,
+  spring: 3,
+  hibernate: 3,
+  sql: 3,
+  microservices: 3,
+  'system-design': 3,
+  patterns: 3,
+  'event-driven': 3,
+  ddd: 2,
+  oop: 2,
+  kafka: 2,
+  databases: 2,
+  nosql: 2,
+  reactive: 2,
+  algorithms: 2,
+  docker: 2,
+  'clean-code': 2,
+  aws: 2,
+  io: 1,
+  serialization: 1,
+  servlets: 1,
+  jdbc: 1,
+  testing: 1,
+  logging: 1,
+  uml: 1,
+  xml: 1,
+  html: 1,
+  css: 1,
+  web: 1,
+  'build-tools': 1,
+  git: 1,
+  monitoring: 1,
+  terraform: 1,
+};
+
+export const MOCK_INTERVIEW_SIZE = 22;
+// Чтобы одна тема не заполонила интервью — не больше стольких вопросов из неё.
+const MOCK_MAX_PER_CATEGORY = 3;
+
+// Взвешенно выбирает тему среди ещё «доступных» (остались неиспользованные слоты
+// и не достигнут лимит на тему). null — пул исчерпан.
+function pickCategory(cats, remaining, picks) {
+  const eligible = cats.filter(
+    (id) => remaining[id].length > 0 && (picks[id] || 0) < MOCK_MAX_PER_CATEGORY
+  );
+  if (eligible.length === 0) return null;
+  const total = eligible.reduce((sum, id) => sum + INTERVIEW_WEIGHTS[id], 0);
+  let r = Math.random() * total;
+  for (const id of eligible) {
+    r -= INTERVIEW_WEIGHTS[id];
+    if (r <= 0) return id;
+  }
+  return eligible[eligible.length - 1];
+}
+
+export function buildMockInterview(lang = 'ru', count = MOCK_INTERVIEW_SIZE) {
+  const cats = Object.keys(INTERVIEW_WEIGHTS).filter((id) => quizzes[id]?.questions?.length);
+  // Неиспользованные слоты каждой темы (перемешаны), чтобы брать без повторов.
+  const remaining = {};
+  for (const id of cats) remaining[id] = shuffle(quizzes[id].questions.slice());
+  const picks = {};
+  const questions = [];
+  while (questions.length < count) {
+    const id = pickCategory(cats, remaining, picks);
+    if (!id) break; // пул исчерпан (лимиты/слоты) — отдаём сколько набралось
+    const slot = remaining[id].pop();
+    picks[id] = (picks[id] || 0) + 1;
+    const enBank = lang === 'en' ? quizzesEn[id] : null;
+    questions.push(buildSlotQuestion(id, slot, enBank, lang));
+  }
+  // Финальное перемешивание, чтобы темы шли вперемешку, а не блоками.
+  return { questions: shuffle(questions) };
 }
 
 export function hasQuiz(categoryId) {

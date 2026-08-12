@@ -214,5 +214,257 @@ Additionally: **health checks** (\`/actuator/health\`) for the orchestrator, ale
 
 The idea: keep expensive e2e tests to a minimum, and verify service compatibility with fast contract tests.`,
       },
+      'api-gateway': {
+        question: 'What is an API Gateway and why is it needed?',
+        answer: `An **API Gateway** is a single entry point for external clients into a microservice system. The client talks to the gateway, which routes requests to the right services.
+
+Why it is needed:
+
+- **a single entry point** — the client does not need to know the addresses of dozens of services or track their changes;
+- **cross-cutting concerns** in one place: authentication/authorization, rate limiting, CORS, TLS termination, logging, caching;
+- **routing and composition** — direct a request to the right service; sometimes **aggregate** several calls into one response;
+- **decoupling** the external API from the internal service decomposition (the internal split changes, the external contract stays stable);
+- **protocol translation** — REST/GraphQL outside, gRPC inside.
+
+\`\`\`text
+Client → [API Gateway] → Auth service
+                       → Orders service
+                       → Catalog service
+\`\`\`
+
+The **BFF (Backend for Frontend)** pattern — a separate gateway per client type (web, mobile).
+
+Risks: the gateway can become a **bottleneck** and a single point of failure — it is kept stateless and scaled horizontally; no business logic goes into it (only routing and cross-cutting). Examples: Spring Cloud Gateway, Kong, NGINX, AWS API Gateway.`,
+      },
+      'service-discovery': {
+        question: 'What is Service Discovery?',
+        answer: `**Service Discovery** is a mechanism that lets services **find each other's network addresses** dynamically, without hardcoding IPs/ports. In the cloud instances come and go and change addresses (autoscaling, restarts), so static configuration does not work.
+
+Components:
+
+- a **Service Registry** — a registry where instances **register** at startup and send heartbeats (Eureka, Consul, etcd, Zookeeper);
+- **discovery** — a consumer asks the registry for current addresses and picks an instance.
+
+Two models:
+
+- **client-side discovery** — the client itself queries the registry and load-balances (e.g. the old Netflix Eureka + Ribbon);
+- **server-side discovery** — the client goes to a load balancer/gateway that looks into the registry (e.g. a Kubernetes Service + kube-dns/kube-proxy).
+
+In **Kubernetes** discovery is built in: a \`Service\` provides a stable DNS name and virtual IP behind the changing \`Pod\`s; so a separate Eureka is often unnecessary.
+
+Tied to balancing: given the list of live instances, requests are spread among them (round-robin, etc.), and unhealthy ones are excluded via health checks.`,
+      },
+      'circuit-breaker': {
+        question: 'What is a Circuit Breaker?',
+        answer: `A **Circuit Breaker** is a resilience pattern that **stops sending requests to a faulty dependency**, so as not to pile up hung calls and bring the whole system down in a cascade.
+
+The analogy is an electrical fuse. Three states:
+
+- **Closed** — requests flow normally; failures are counted. When the failure threshold is exceeded → transition to Open;
+- **Open** — requests are **rejected immediately** (fail fast), not loading the sick service; often a **fallback** is returned (cache, stub). After a timeout → Half-Open;
+- **Half-Open** — a trial batch of requests is let through: success → Closed, failures again → Open.
+
+\`\`\`text
+Closed ──(many errors)──▶ Open ──(timeout)──▶ Half-Open ──(success)──▶ Closed
+                                                    └──(error)──▶ Open
+\`\`\`
+
+Why: without a breaker, calls to a downed service **pile up**, exhaust the caller's threads/connections and take it down too — a **cascading failure**. The circuit breaker localizes the failure and gives the dependency time to recover.
+
+Usually combined with **timeout**, **retry (with backoff)**, **bulkhead** (pool isolation) and a fallback. Implementations: Resilience4j (current), Netflix Hystrix (deprecated), a service mesh (Istio).`,
+      },
+      'saga-pattern': {
+        question: 'What is the Saga pattern and how does it ensure consistency?',
+        answer: `A **Saga** is a pattern for managing a **distributed business transaction** across several services (each with its own DB), where an ordinary ACID transaction and 2PC do not apply.
+
+The idea: split the operation into a sequence of **local transactions**, each in its own service. If a step fails, **compensating transactions** run to undo the already-done steps (a semantic rollback, not a DB rollback).
+
+\`\`\`text
+Order:  create order → charge payment → reserve stock → ship
+Failure at reserve → compensations: refund payment → cancel order
+\`\`\`
+
+Two coordination styles:
+
+- **choreography** — services react to each other's events without a central conductor; simpler, but the logic is spread out and harder to trace;
+- **orchestration** — a central **saga orchestrator** explicitly drives the steps and compensations; the logic is in one place, but a coordinator appears.
+
+Notes: consistency is **eventual** (not instant); steps and compensations must be **idempotent**; compensation is not always physically possible (the email was already sent) — then it is designed semantically. Often combined with the **outbox** for reliable event publishing.`,
+      },
+      'cqrs': {
+        question: 'What is CQRS?',
+        answer: `**CQRS (Command Query Responsibility Segregation)** is the separation of the model into **commands** (change state: create/update/delete) and **queries** (read only). Instead of one "does-everything" model — separate write and read models.
+
+\`\`\`text
+Commands → Write model (normalized, invariants) → write DB
+Queries  → Read model (denormalized for queries) → read DB/projections
+\`\`\`
+
+Why:
+
+- **independent scaling** of reads and writes (reads are usually many times more frequent);
+- **task-specific optimization** — the write model guards invariants (often together with DDD aggregates), the read model is denormalized for specific screens/reports and answers fast;
+- combines nicely with **event sourcing** and event-driven integration.
+
+Synchronization: the read model is updated from write events → it is **eventually consistent** (may lag slightly).
+
+Important: CQRS is **not free complexity** (two models, synchronization, lag). Apply it selectively, in subsystems with heavy read load or complex reporting, and **not** everywhere. For simple CRUD it is overkill.`,
+      },
+      'modular-monolith': {
+        question: 'What is a modular monolith and how is it different from a monolith with packages?',
+        answer: `A **modular monolith** is a single deployable application (one process, one deployment), but **internally split into modules with explicit, enforced boundaries**. The key word is "enforced".
+
+An ordinary monolith "with packages" is also split into packages, but the boundaries are **decorative**: any class can reach any other, and over time everything couples to everything (a "big ball of mud").
+
+A modular monolith differs in that the boundaries are **real**:
+
+- **explicit module boundaries** — a module = a bounded context, not a technical layer;
+- **limited dependencies** — a module is visible to others only through a **public contract (API/port)**; internal classes are encapsulated;
+- **clear ownership** of data — a module owns its tables, others do not reach into them directly;
+- **no arbitrary cross-module access** — "pulling" a neighbor's internals is forbidden (checked with ArchUnit).
+
+\`\`\`text
+Monolith with packages:  boundaries on paper, any class → any class
+Modular monolith:        boundaries enforced, module → only a neighbor's API
+\`\`\`
+
+Result: the same operational simplicity as a monolith, but with the boundary discipline of microservices — and the option to later extract a module into a service.`,
+      },
+      'modular-monolith-first': {
+        question: 'Why is it often better to start with a modular monolith instead of microservices?',
+        answer: `Starting with microservices early is a classic case of **premature complexity**. A modular monolith is usually wiser because:
+
+- **the domain is still evolving** — context boundaries have not settled; drawing them in code (modules) is **cheap**, while between services (network, APIs, deployment) it is expensive and hard to redo;
+- **stabilize boundaries first** — modules let you move boundaries by refactoring until it is clear where they are right;
+- **lower operational overhead** — one deployment, one DB, no distributed failures, retries, tracing, contract versioning;
+- **easier refactoring, testing and debugging** — everything in one process, no network boundaries;
+- **extraction comes later, through contracts** — when a module matures and there is an operational justification, it is carved out into a service along the ready contract.
+
+This is the **"monolith first"** approach: gain the benefits of clear boundaries (like microservices) without their operational price, and distribute the system **evolutionarily**, under specific pressure (scaling, team autonomy), rather than dogmatically from the start.`,
+      },
+      'modular-monolith-vs-microservices': {
+        question: 'What are the trade-offs between a modular monolith and microservices?',
+        answer: `It is not "good/bad" but a **trade-off**; a modular monolith is often a sensible middle ground.
+
+**Modular monolith:**
+
+- ✓ simple operations (one deployment), simple debugging, **low latency** (in-process calls), one transaction/DB — strong consistency is easy;
+- ✓ easy refactoring of boundaries;
+- ✗ **single deployment** — modules cannot be released/scaled independently;
+- ✗ a shared process — a failure/leak in one module affects all; limited to one stack.
+
+**Microservices:**
+
+- ✓ **independent** deployment and scaling, team autonomy, failure isolation, technology freedom;
+- ✗ **distributed complexity**: network failures, retries, timeouts, duplicate delivery, **eventual consistency**;
+- ✗ you need observability/tracing, contract versioning, orchestration, more operational cost.
+
+Choice rule: **modular monolith** — while the domain is young, the team small, and you want simplicity and strong consistency; **microservices** — when real pressure appears (independent scaling, team autonomy, differing release cadence). Often the path is modular monolith → extracting individual services as needed.`,
+      },
+      'when-extract-microservice': {
+        question: 'When would you extract a module into a microservice?',
+        answer: `Extraction is justified by **specific pressure**, not by the dogma "everything must be services". Real reasons:
+
+- **independent scaling** — the module is loaded differently from the rest and is worth scaling separately;
+- **separate deployment cadence** — the module changes often and you want to release it independently, without touching the rest;
+- **team ownership** — a separate team owns the module and needs release autonomy;
+- **clear domain autonomy** — the context boundary has settled, integration with the rest is minimal and goes through a contract;
+- **operational justification** — different requirements for availability/failure isolation/security/resources.
+
+Precondition: the module already has a **clean boundary and a contract** (in the modular monolith). Then extraction is a mechanical swap of an in-process call for REST/messaging.
+
+Anti-signals (extracting **too early**): "it's trendy", "microservices = modern", the wish for independent deployment while **strongly** coupled to the rest (you get a distributed monolith — the worst of both worlds). No pressure — no reason to pay the distributed price.`,
+      },
+      'prepare-monolith-extraction': {
+        question: 'How do you prepare a monolith for future extraction without over-engineering?',
+        answer: `The idea is to **design for growth through boundaries, not through infrastructure**. You do not need to build Kafka and Kubernetes upfront; you need the modules to be **ready to detach**:
+
+- **identify bounded contexts** — understand and fix the domain boundaries (see modular monolith);
+- **isolate modules** — each context in its own module with encapsulated internals;
+- **communicate via interfaces/contracts** — modules depend on a neighbor's API, not its implementation; this is the future swap point for REST/messaging;
+- **avoid direct shared internal coupling** — no shared domain objects and no reaching into foreign tables;
+- **separate domain and integration** — integration code behind a separate layer (ACL);
+- **clear ownership of data and rules** — each module has its own schema/tables; cross-access only via the API (prepares "database per service").
+
+The key — **no over-engineering**: while it is one process and one DB (just with logically separated schemas), synchronous calls go through interfaces. Distributed infrastructure is added **only at actual extraction**. Then carving out a module = replacing a local implementation of the contract with a remote one.`,
+      },
+      'microservices-harder': {
+        question: 'What becomes harder after moving to microservices?',
+        answer: `Distribution adds a whole layer of complexity that did not exist in a single process:
+
+- **network failures** — a call may not arrive/may hang; the network is unreliable by definition;
+- **retries and timeouts** — needed on every remote call (with backoff), otherwise cascading failures;
+- **duplicate delivery** — delivery is usually at-least-once → **idempotency** is mandatory;
+- **eventual consistency** — no single transaction across services; consistency via events (saga, outbox);
+- **distributed tracing** — the request flow is spread across services; you need correlation IDs, tracing (Jaeger/Zipkin), aggregated logs;
+- **contract versioning** — APIs change independently; backward compatibility and contract tests are needed;
+- **operational overhead** — deploying dozens of services, service discovery, configuration, secrets, monitoring, message schemas.
+
+Plus **debugging** is harder (no single stack trace) and **local runs** are harder (spinning up many services). That is why you distribute only when needed: you pay this complexity for autonomy and scalability.`,
+      },
+      'context-not-always-service': {
+        question: 'Is every bounded context a separate microservice?',
+        answer: `**No.** A Bounded Context is a **logical** boundary of model, language and responsibility. A microservice is a **physical** deployment decision. These are two **different** decisions that need not map one-to-one.
+
+- one Bounded Context **may** be a separate service — but does not have to be;
+- **several** contexts can live in one deployable unit (e.g. in a modular monolith — a module per context, but a single deployment);
+- sometimes a context is too small to justify a separate service (extra network and operational overhead).
+
+The right order: **first** identify the logical boundaries (bounded contexts), **then** separately decide how to deploy them — together or apart — based on scaling, team autonomy, release cadence.
+
+The "one context = one service" formula is a common **oversimplification of DDD**, leading either to over-fine services (distributed complexity for no benefit) or to bending boundaries to fit infrastructure. Logical decomposition and physical deployment are independent axes.`,
+      },
+      'decompose-evolving': {
+        question: 'How do you decompose a system when requirements are still evolving?',
+        answer: `Under uncertainty, the main thing is **not to fix expensive boundaries too early**. The approach:
+
+- **start from business capabilities** — split by business capability/responsibility, not by tables, CRUD entities or UI screens;
+- **define boundaries and responsibility** — what the module does and, importantly, **what is out of its scope**;
+- **keep contracts clean** — communication between parts via explicit interfaces, so a boundary can be moved without rewriting everyone;
+- **avoid premature distribution** — while boundaries are flexible, keep them **in code** (a modular monolith), not on the network; moving modules is cheap, services are expensive;
+- **evolve under pressure** — distribute/split where real pain appears (scale, autonomy, release cadence), not "just in case".
+
+The essence: first **cheap, movable** boundaries (modules + contracts), stabilize the language and responsibilities, and only then fix them and, if needed, carve out services. Boundary design is an iterative process, not a one-off decision at the start.`,
+      },
+      'good-decomposition-criteria': {
+        question: 'How do you know your decomposition is good?',
+        answer: `A good decomposition has **verifiable criteria**, not just "I like it":
+
+- **clear responsibility** — for each module/service you can say in one sentence what it is responsible for;
+- **explicit out-of-scope** — it is clear not only what it does but also what it does **not** do;
+- **different reasons to change are separated** — parts that change for independent business reasons live in different boundaries (cohesion by reason for change);
+- **acceptable coupling** — few inter-module dependencies, going through contracts and in one direction, with no cycles; no "chatty" integration;
+- **understandable language** — inside a boundary terms are unambiguous (the ubiquitous language does not "break");
+- **evolution is easier** — a typical change touches **one** module rather than sprawling across many; a boundary can be moved/extracted without rewriting everything.
+
+Bad counter-signs: changing one feature touches half the modules, constant synchronous hops between boundaries, shared data, "shotgun surgery". A good decomposition localizes change and keeps the system **understandable and evolvable**.`,
+      },
+      'decomposition-mistakes': {
+        question: 'What are common mistakes when identifying domains and services?',
+        answer: `Common architectural decomposition mistakes:
+
+- **splitting by DB tables** — a service/module per table; the boundaries end up technical rather than business, and everything is tied together by joins/calls;
+- **splitting by CRUD entities** — "UserService", "OrderService" as wrappers over entities instead of business capabilities; logic smears between them;
+- **splitting by UI screens** — the boundary mirrors the interface, not the domain; when the UI changes, everything breaks;
+- **mixing different contexts** — e.g. profile (who you are) and access (what you may do) in one; different reasons to change get glued together;
+- **contexts too big** — a "god service" that is a mess inside again; or **too small** — distributed complexity for no benefit, chatty integration;
+- **extracting microservices too early** — distributing before boundaries stabilize → a distributed monolith (tight coupling + network overhead, the worst of both worlds).
+
+The common root: splitting by **technical structure** (tables/CRUD/screens) rather than by **business capabilities and language**. The right way — from capabilities, invariants and reasons to change, and decide physical deployment separately.`,
+      },
+      'evolve-inprocess-to-rest-kafka': {
+        question: 'How would you evolve in-process module communication into REST or Kafka?',
+        answer: `The evolution relies on modules already communicating **through interfaces (contracts)** — then only the call's implementation changes, not the calling code.
+
+The order:
+
+1. **start with interfaces** — in a modular monolith a module depends on a neighbor's port, not its implementation; this is the future swap point;
+2. **separate sync and async needs** — where an immediate answer is needed (a query/check) → a synchronous call; where learning about a fact later is enough (notify, propagate a change) → asynchronous;
+3. **replace the local implementation with REST** for **queries/checks** (query, "give me data", "check a permission") — a synchronous call over the contract; add timeouts, retries, a circuit breaker;
+4. **use Kafka for async propagation/events** — instead of a direct call the module **publishes a domain event**, subscribers react; decoupling and resilience to unavailability;
+5. **acknowledge the new trade-offs** — network failures, eventual consistency, duplicates (→ idempotency), contract versioning, tracing appear; reliable event publishing after a DB change is provided by the **outbox**.
+
+The essence: a clean contract turns the move "in-process → REST/Kafka" from a rewrite into a **swap of implementation** — while consciously accepting the distributed price where it is justified.`,
+      },
     },
   };
