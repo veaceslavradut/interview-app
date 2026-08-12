@@ -304,4 +304,125 @@ export const microservices = {
       ],
     },
   ],
+  'modular-monolith': [
+    {
+      question: 'How does a modular monolith differ from an ordinary monolith "with packages"?',
+      options: [
+        'Module boundaries are actually enforced: access only via a public contract, internals encapsulated',
+        'It is always split into several separate deployments',
+        'It has no packages or modules at all',
+        'It is the same thing, just a different name',
+      ],
+    },
+  ],
+  'modular-monolith-first': [
+    {
+      question: 'Why is it often sensible to start with a modular monolith instead of microservices?',
+      options: [
+        'The domain is still evolving; boundaries are cheaper to move in code, lower ops overhead, extraction later via contracts',
+        'Microservices are technically impossible to build at project start',
+        'A modular monolith is always faster than any microservices under any load',
+        'Because microservices do not support databases',
+      ],
+    },
+  ],
+  'modular-monolith-vs-microservices': [
+    {
+      question: 'What is the trade-off between a modular monolith and microservices?',
+      options: [
+        'Monolith: simple ops, low latency, single deploy; microservices: autonomy and scaling, but distributed complexity',
+        'Microservices are always simpler to operate and debug',
+        'A modular monolith cannot be scaled at all',
+        'There is no difference, the choice is purely cosmetic',
+      ],
+    },
+  ],
+  'when-extract-microservice': [
+    {
+      question: 'What is a solid reason to extract a module into a separate microservice?',
+      options: [
+        'Independent scaling, separate deployment cadence, team ownership, settled domain autonomy',
+        'Microservices are trendy and modern',
+        'A wish for independent deployment while strongly coupled to the other modules',
+        'Every module must always be carved into a service',
+      ],
+    },
+  ],
+  'prepare-monolith-extraction': [
+    {
+      question: 'How do you prepare a monolith for future extraction without over-engineering?',
+      options: [
+        'Identify contexts, isolate modules, communicate via contracts, separate data — without early distributed infrastructure',
+        'Immediately deploy Kafka and Kubernetes at project start',
+        'Mix all modules and data to simplify the code',
+        'Do not prepare at all: rewrite everything from scratch at extraction',
+      ],
+    },
+  ],
+  'microservices-harder': [
+    {
+      question: 'What becomes harder after moving to microservices?',
+      options: [
+        'Network failures, retries/timeouts, duplicate delivery, eventual consistency, tracing, contract versioning',
+        'Nothing — everything only gets simpler',
+        'Only the UI layout',
+        'Solely the choice of programming language',
+      ],
+    },
+  ],
+  'context-not-always-service': [
+    {
+      question: 'Must every Bounded Context be a separate microservice?',
+      options: [
+        'No: a context is a logical boundary, deployment is a separate decision; several contexts can live in one unit',
+        'Yes, one context is always exactly one service',
+        'No, contexts have nothing to do with services at all',
+        'Yes, otherwise DDD will not work',
+      ],
+    },
+  ],
+  'decompose-evolving': [
+    {
+      question: 'How do you decompose a system when requirements are still evolving?',
+      options: [
+        'From business capabilities, with clean contracts and boundaries in code; avoid premature distribution',
+        'Immediately split into as many microservices as possible, just in case',
+        'Split strictly by database tables',
+        'Postpone any decomposition until requirements are fully frozen',
+      ],
+    },
+  ],
+  'good-decomposition-criteria': [
+    {
+      question: 'By what signs is a decomposition considered good?',
+      options: [
+        'Clear responsibility and out-of-scope, different reasons to change separated, acceptable coupling, easy evolution',
+        'The maximum number of services at any cost',
+        'All modules can access each other\'s internals',
+        'One feature change touches as many modules as possible',
+      ],
+    },
+  ],
+  'decomposition-mistakes': [
+    {
+      question: 'Which of the following is a common decomposition mistake?',
+      options: [
+        'Splitting by tables, CRUD entities or UI screens, and extracting microservices too early',
+        'Splitting by business capabilities and reasons to change',
+        'Isolating modules and communicating via contracts',
+        'Postponing distribution until real pressure appears',
+      ],
+    },
+  ],
+  'evolve-inprocess-to-rest-kafka': [
+    {
+      question: 'How do you evolve in-process module communication into REST or Kafka?',
+      options: [
+        'Rely on interfaces: sync queries → REST, async events → Kafka, accepting the new distributed trade-offs',
+        'Just remove all interfaces and call foreign internal classes over the network',
+        'Move absolutely all calls to synchronous REST only',
+        'Change nothing — the network works the same as an in-memory call',
+      ],
+    },
+  ],
 };

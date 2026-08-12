@@ -231,4 +231,37 @@ export const ddd = {
       ],
     },
   ],
+  'entity-aggregate-context': [
+    {
+      question: 'How do Entity, Aggregate and Bounded Context relate by level of abstraction?',
+      options: [
+        'Entity — an object with identity, Aggregate — a consistency boundary, Bounded Context — a model/language boundary',
+        'They are three names for the same concept',
+        'Bounded Context is the smallest level and Entity the largest',
+        'An Aggregate is a DB table and an Entity is a row in it',
+      ],
+    },
+  ],
+  'separate-domain-decision': [
+    {
+      question: 'What guides the decision to make something a separate domain?',
+      options: [
+        'Cohesion and coupling: different language, different reasons to change and owners → a separate domain',
+        'Code size: if there are many files, always split into a separate domain',
+        'ORM convenience: a domain = one database table',
+        'The number of developers on the team',
+      ],
+    },
+  ],
+  'clean-boundaries-in-code': [
+    {
+      question: 'How do you keep domain boundaries clean in code?',
+      options: [
+        'Explicit modules, communication via interfaces/contracts, encapsulated internals, controlled dependency direction',
+        'Let any module read another\'s internal classes and tables directly',
+        'Put all the code in one package with no separation',
+        'Duplicate the domain model in every module',
+      ],
+    },
+  ],
 };
