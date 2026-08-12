@@ -28,6 +28,8 @@ import { hibernate } from './questions/hibernate.js';
 import { buildTools } from './questions/build-tools.js';
 import { git } from './questions/git.js';
 import { microservices } from './questions/microservices.js';
+import { eventDriven } from './questions/event-driven.js';
+import { ddd } from './questions/ddd.js';
 import { aws } from './questions/aws.js';
 import { nosql } from './questions/nosql.js';
 import { docker } from './questions/docker.js';
@@ -66,6 +68,8 @@ export const categories = [
   buildTools,
   git,
   microservices,
+  eventDriven,
+  ddd,
   aws,
   nosql,
   docker,
