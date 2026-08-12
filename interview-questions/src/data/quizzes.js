@@ -21,6 +21,8 @@ import {
 import { patternsQuiz } from './quiz/patterns.js';
 import { springQuiz, hibernateQuiz } from './quiz/frameworks.js';
 import { kafkaQuiz, microservicesQuiz, awsQuiz } from './quiz/infra.js';
+import { eventDrivenQuiz } from './quiz/event-driven.js';
+import { dddQuiz } from './quiz/ddd.js';
 import { nosqlQuiz } from './quiz/nosql.js';
 import { dockerQuiz } from './quiz/docker.js';
 import { monitoringQuiz } from './quiz/monitoring.js';
@@ -463,6 +465,8 @@ export const quizzes = {
   'build-tools': { questions: buildToolsQuiz },
   git: { questions: gitQuiz },
   microservices: { questions: microservicesQuiz },
+  'event-driven': { questions: eventDrivenQuiz },
+  ddd: { questions: dddQuiz },
   aws: { questions: awsQuiz },
   nosql: { questions: nosqlQuiz },
   docker: { questions: dockerQuiz },
@@ -543,6 +547,8 @@ const INTERVIEW_WEIGHTS = {
   microservices: 3,
   'system-design': 3,
   patterns: 3,
+  'event-driven': 3,
+  ddd: 2,
   oop: 2,
   kafka: 2,
   databases: 2,

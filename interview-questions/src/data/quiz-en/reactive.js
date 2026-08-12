@@ -140,4 +140,180 @@ export const reactive = {
       ],
     },
   ],
+  'project-reactor': [
+    {
+      question: 'What is Project Reactor?',
+      options: [
+        'A reactive library for the JVM implementing Reactive Streams and underpinning Spring WebFlux',
+        'An ORM for accessing relational databases',
+        'A project build tool, an alternative to Maven and Gradle',
+        'A library for writing unit tests',
+      ],
+    },
+  ],
+  'reactive-laziness': [
+    {
+      question: 'What does it mean that reactive streams are lazy?',
+      options: [
+        'Nothing runs until a subscription happens (subscribe)',
+        'Data is cached and never recomputed',
+        'Operators run on a separate thread on a timer',
+        'The stream processes only the first element and ignores the rest',
+      ],
+    },
+  ],
+  'backpressure': [
+    {
+      question: 'What is backpressure?',
+      options: [
+        'A mechanism by which a slow consumer controls the rate of a fast producer',
+        'Automatic growth of the thread pool under load',
+        'Compression of messages before sending them over the network',
+        'Prioritization of requests by importance',
+      ],
+    },
+  ],
+  'reactor-implements-reactive-streams': [
+    {
+      question: 'How does Reactor relate to the Reactive Streams specification?',
+      options: [
+        'It is an implementation of it: Mono and Flux are Publishers, backpressure goes via request(n)',
+        'Reactor and Reactive Streams are unrelated',
+        'Reactor replaces Reactive Streams with its own incompatible protocol',
+        'Reactive Streams is a part of Reactor invented by the Spring team',
+      ],
+    },
+  ],
+  'map-vs-flatmap': [
+    {
+      question: 'What is the difference between map and flatMap in Reactor?',
+      options: [
+        'map is a synchronous value transform; flatMap unwraps the returned Publisher (async)',
+        'map is asynchronous while flatMap is synchronous',
+        'They are completely identical and interchangeable',
+        'flatMap only filters elements while map deletes them',
+      ],
+    },
+  ],
+  'publishon-vs-subscribeon': [
+    {
+      question: 'What is the difference between publishOn and subscribeOn?',
+      options: [
+        'subscribeOn sets the source thread for the whole chain; publishOn switches the thread for downstream operators',
+        'publishOn affects the source while subscribeOn affects the subscriber',
+        'Both do the same thing, there is no difference',
+        'subscribeOn cancels the subscription while publishOn creates it',
+      ],
+    },
+  ],
+  'reactor-schedulers': [
+    {
+      question: 'What are Schedulers in Reactor?',
+      options: [
+        'An abstraction over thread pools that defines on which threads work runs',
+        'A cron task scheduler inside the application',
+        'A retry mechanism for errors',
+        'A store of subscription state',
+      ],
+    },
+  ],
+  'bounded-elastic': [
+    {
+      question: 'What is Schedulers.boundedElastic() intended for?',
+      options: [
+        'Isolating blocking and long operations off the event loop with a bounded thread pool',
+        'CPU-bound computation on a pool sized to the number of cores',
+        'Running code strictly on the current thread with no switch',
+        'Guaranteeing the processing order of elements',
+      ],
+    },
+  ],
+  'blocking-in-pipeline': [
+    {
+      question: 'What happens if you run blocking code on an event-loop thread?',
+      options: [
+        'The thread gets stuck and stops serving other requests assigned to it',
+        'Nothing — Reactor moves the call to a separate thread by itself',
+        'The call automatically becomes non-blocking',
+        'The event-loop pool instantly doubles in size',
+      ],
+    },
+  ],
+  'blocking-dangerous-webflux': [
+    {
+      question: 'Why is blocking especially dangerous in Spring WebFlux specifically?',
+      options: [
+        'A small number of event-loop threads serve thousands of connections — a block hangs many requests',
+        'WebFlux does not support multithreading at all',
+        'In WebFlux each request gets its own thread, so blocks are harmless',
+        'Blocking in WebFlux is no more dangerous than in MVC',
+      ],
+    },
+  ],
+  'when-choose-webflux': [
+    {
+      question: 'When is it justified to choose WebFlux over Spring MVC?',
+      options: [
+        'For high concurrency of I/O-bound load, streaming, and a fully reactive dependency chain',
+        'Always, since WebFlux is strictly faster than MVC in all cases',
+        'For CPU-bound computation where maximum calculation speed matters',
+        'When all dependencies are blocking (JDBC, legacy clients)',
+      ],
+    },
+  ],
+  'jpa-with-webflux': [
+    {
+      question: 'Is it appropriate to use JPA (over JDBC) together with WebFlux?',
+      options: [
+        'It is an anti-pattern: JDBC is blocking; you need R2DBC or to isolate calls on boundedElastic',
+        'Yes, JPA is fully non-blocking and perfect for WebFlux',
+        'Yes, WebFlux automatically makes JDBC non-blocking',
+        'No, JPA is technically impossible to call from WebFlux',
+      ],
+    },
+  ],
+  'r2dbc-why': [
+    {
+      question: 'Why is R2DBC preferred in a fully reactive application?',
+      options: [
+        'It gives non-blocking access to a relational DB and end-to-end backpressure, preserving scalability',
+        'It is a faster ORM than Hibernate, with a cache and lazy associations',
+        'It is the only driver that supports SQL',
+        'It is blocking but uses less memory than JDBC',
+      ],
+    },
+  ],
+  'reactor-cancellation': [
+    {
+      question: 'How does cancellation work in Reactor?',
+      options: [
+        'The subscriber calls Subscription.cancel(); the signal goes upstream, the source stops and releases resources',
+        'Cancellation is impossible: the stream always runs to the end',
+        'Cancellation removes already-received elements from the subscriber\'s memory',
+        'cancel() restarts the stream from the first element',
+      ],
+    },
+  ],
+  'doon-operators': [
+    {
+      question: 'What is the purpose of doOnNext, doOnError, and doFinally?',
+      options: [
+        'They are side-effect hooks (logging, cleanup) that do not change the stream data',
+        'They transform stream elements, replacing map and flatMap',
+        'They handle the error and recover the stream instead of onErrorResume',
+        'They control the backpressure buffer size',
+      ],
+    },
+  ],
+  'manual-subscribe-bad': [
+    {
+      question: 'Why is calling subscribe() manually inside service code usually a bad idea?',
+      options: [
+        'Composition, backpressure, cancellation and context are lost, and errors are swallowed — the framework should subscribe',
+        'subscribe() is too slow and always blocks the thread',
+        'A manual subscribe is forbidden by the compiler',
+        'It causes duplication of elements in the stream',
+      ],
+    },
+  ],
 };

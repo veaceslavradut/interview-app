@@ -225,5 +225,123 @@ In Spring Kafka, a DLT is implemented via \`DeadLetterPublishingRecoverer\` and 
 
 In short: **Streams processes and transforms** data inside Kafka; **Connect moves** data between Kafka and the outside world.`,
       },
+      'kafka-broker-or-streaming': {
+        question: 'Is Kafka a message broker, an event streaming platform, or both?',
+        answer: `**Both** — Kafka grew from a broker into a full-fledged **event streaming platform**.
+
+As a **message broker** Kafka:
+
+- accepts messages from producers and delivers them to consumers (pub/sub);
+- decouples sender and receiver in time.
+
+But unlike classic brokers (RabbitMQ), Kafka:
+
+- **stores** messages as an **ordered, immutable log (commit log)** for a configured time (retention), rather than deleting them right after reading;
+- lets **many** different groups read one stream **independently** and **re-read** it from any offset;
+- scales via **partitions** and delivers very high throughput;
+- includes a stream-processing ecosystem: **Kafka Streams**, **ksqlDB**, **Kafka Connect**.
+
+That is why Kafka is called an **event streaming platform**: it is at once a transport (broker), a log store, and a foundation for stream processing. A classic broker usually only delivers and deletes messages.`,
+      },
+      'more-consumers-than-partitions': {
+        question: 'What happens when there are more consumers than partitions?',
+        answer: `**The extra consumers will be idle.**
+
+In a consumer group each partition is assigned to **exactly one** consumer of the group at any moment. This is the unit of parallelism: **partition ↔ consumer**.
+
+\`\`\`text
+topic: 3 partitions,  group: 5 consumers
+P0 → C1
+P1 → C2
+P2 → C3
+      C4  (idle)
+      C5  (idle)
+\`\`\`
+
+Consequences:
+
+- **the group's read parallelism is capped by the number of partitions** — more consumers than partitions will not speed up processing;
+- the extra consumers are not useless as **hot standbys**: if an active consumer fails, a **rebalance** happens and one of the free ones takes over its partitions;
+- to raise parallelism you increase the **number of partitions** (provision with headroom up front, since you cannot decrease them).
+
+Bottom line: scaling consumption is limited by the number of partitions.`,
+      },
+      'fewer-consumers-than-partitions': {
+        question: 'What happens when there are fewer consumers than partitions?',
+        answer: `**Each consumer gets several partitions** — this is a normal, working mode.
+
+Kafka distributes partitions among the group's consumers (strategies \`RangeAssignor\`, \`RoundRobin\`, \`CooperativeSticky\`). If there are more partitions than consumers, some consumers get 2+ partitions each.
+
+\`\`\`text
+topic: 6 partitions,  group: 2 consumers
+C1 → P0, P1, P2
+C2 → P3, P4, P5
+\`\`\`
+
+Notes:
+
+- one consumer processes its partitions, interleaving them; order is preserved **within each** partition;
+- the group's throughput is split among fewer consumers → each is loaded more heavily;
+- adding consumers (up to the number of partitions) triggers a **rebalance** and redistributes the load, increasing parallelism.
+
+This is the standard way to operate: partitions are provisioned with headroom, while the number of consumers is scaled to load — up to "one partition per consumer" as the maximum parallelism.`,
+      },
+      'kafka-ordering': {
+        question: 'How does Kafka preserve ordering? Is ordering guaranteed across the whole topic?',
+        answer: `**Ordering is guaranteed only within a partition, not across the whole topic.**
+
+A partition is an ordered, immutable log: messages are appended to its end and read in the same order by increasing **offset**. Kafka guarantees FIFO **within a single partition**.
+
+Across different partitions the order is **undefined**: a topic with N partitions is read in parallel, and messages from P0 and P1 may be processed in any relative order.
+
+Practical consequences:
+
+- to make related messages go strictly in order, route them to **one partition** — via the same **key** (e.g. all events of one \`orderId\`);
+- global ordering across the whole topic is only possible with a **single partition** — but that kills parallelism and throughput;
+- on the producer side, for strict ordering under retries, enable the **idempotent producer** (otherwise a retry may reorder messages) and mind \`max.in.flight.requests.per.connection\`.
+
+Rule: design the **partition key** so that the "unit of ordering" is the partition.`,
+      },
+      'partition-key': {
+        question: 'What is a partition key?',
+        answer: `A **partition key** is the message key by which Kafka decides **which partition** of the topic to write it to.
+
+Default mechanics:
+
+- with a key → partition = \`hash(key) % number_of_partitions\` (murmur2 by default). So **all messages with the same key land in the same partition**;
+- without a key (\`null\`) → messages are spread evenly (sticky/round-robin).
+
+\`\`\`java
+// all events of one order → one partition → their order is preserved
+producer.send(new ProducerRecord<>("orders", order.getId(), event));
+\`\`\`
+
+Why it is needed:
+
+- **ordering** of related messages (order is guaranteed within a partition);
+- **locality** for stateful processing (Kafka Streams groups by key);
+- control over how load is spread across partitions.
+
+Important: when the **number of partitions changes**, the result of \`hash % N\` changes, and a key may "move" to a different partition — which breaks the historical key→partition mapping.`,
+      },
+      'choose-partition-key': {
+        question: 'How do you choose a good partition key?',
+        answer: `A good key balances **two goals**: even load distribution and the required grouping/ordering.
+
+Criteria:
+
+- **high cardinality and uniformity** — so data lands evenly across partitions without skew. Few unique values or a dominant key → a **hot partition**: one partition is overloaded while the rest sit idle;
+- **matches the unit of ordering** — if you need ordering of events per entity, use its id as the key (\`orderId\`, \`userId\`), so all its events go to one partition;
+- **matches the grouping key** for stateful processing (Kafka Streams aggregations by the same key — data is local);
+- **stable over time** — do not build the key from changing/"heavy" fields.
+
+Common mistakes:
+
+- a skewed key (e.g. country where 90% of traffic is one) → a hot partition;
+- too "wide" a key (unique for almost every message) where grouping is needed → locality/ordering is lost;
+- relying on global ordering with multiple partitions.
+
+Partitions are provisioned **with headroom** up front: changing their number reshuffles \`hash % N\` and breaks the key→partition mapping.`,
+      },
     },
   };

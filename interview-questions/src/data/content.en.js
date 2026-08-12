@@ -27,6 +27,8 @@ import { hibernate } from './content-en/hibernate.js';
 import { buildTools } from './content-en/build-tools.js';
 import { git } from './content-en/git.js';
 import { microservices } from './content-en/microservices.js';
+import { eventDriven } from './content-en/event-driven.js';
+import { ddd } from './content-en/ddd.js';
 import { aws } from './content-en/aws.js';
 import { nosql } from './content-en/nosql.js';
 import { docker } from './content-en/docker.js';
@@ -64,6 +66,8 @@ export const enContent = {
   'build-tools': buildTools,
   git,
   microservices,
+  'event-driven': eventDriven,
+  ddd,
   aws,
   nosql,
   docker,
