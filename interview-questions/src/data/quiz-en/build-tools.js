@@ -80,4 +80,48 @@ export const buildTools = {
       ],
     },
   ],
+  'gradle-basics': [
+    {
+      question: 'What is a Gradle build based on?',
+      options: [
+        'A task graph; scripts in Groovy/Kotlin DSL with incremental builds and caching',
+        'A single declarative XML with no programmability',
+        'Sequential execution of shell scripts',
+        'Compilation only through the IDE',
+      ],
+    },
+  ],
+  'gradle-dependencies': [
+    {
+      question: 'What is the difference between the implementation and api configurations in Gradle?',
+      options: [
+        'api is visible to consumers transitively; implementation is hidden from them and speeds up rebuilds',
+        'implementation is visible to consumers, while api is not',
+        'They are the same, just synonyms',
+        'api adds the dependency only in tests',
+      ],
+    },
+  ],
+  'gradle-plugins': [
+    {
+      question: 'What do Gradle plugins do?',
+      options: [
+        'Add tasks, conventions, configurations and extensions — almost all functionality comes from them',
+        'Only download dependencies from a repository',
+        'Replace the JVM during the build',
+        'Are solely responsible for code formatting',
+      ],
+    },
+  ],
+  'gradle-multimodule': [
+    {
+      question: 'How does Gradle define the makeup of a multi-module project and dependencies between modules?',
+      options: [
+        'Modules are listed in settings.gradle (include), and a dependency is via project(":module")',
+        'Each module is built fully independently, without a shared task graph',
+        'The module makeup is detected automatically from folder names with no configuration',
+        'A dependency between modules is set by copying JARs by hand',
+      ],
+    },
+  ],
 };

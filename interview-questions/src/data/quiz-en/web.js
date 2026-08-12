@@ -75,4 +75,48 @@ export const web = {
       ],
     },
   ],
+  'same-origin-policy': [
+    {
+      question: 'What is the Same-Origin Policy (SOP)?',
+      options: [
+        'A browser rule: a script from one origin cannot by default read responses to another origin',
+        'A server setting that encrypts all responses',
+        'A load-balancing mechanism between domains',
+        'A caching policy for static resources',
+      ],
+    },
+  ],
+  'cors': [
+    {
+      question: 'What does CORS do?',
+      options: [
+        'Lets the server, via headers, allow the browser to read responses to cross-origin requests',
+        'Protects the server from any cross-origin requests at the network level',
+        'Encrypts cookies when transferred between domains',
+        'Speeds up requests by merging them into one',
+      ],
+    },
+  ],
+  'cors-preflight': [
+    {
+      question: 'What is a preflight request in CORS?',
+      options: [
+        'A preliminary OPTIONS request by which the browser asks the server for permission before a "non-simple" request',
+        'The first GET request when loading the page',
+        'A resend of the request on a 500 error',
+        'A request to warm up the server cache',
+      ],
+    },
+  ],
+  'cors-credentials': [
+    {
+      question: 'Why can a wildcard "*" not be used with Access-Control-Allow-Credentials: true?',
+      options: [
+        'For security the browser requires an exact origin, otherwise any site could access data with the user\'s cookies',
+        'Because a wildcard slows down request processing',
+        'Because "*" is not supported by old browsers',
+        'Because credentials work only over HTTP, not HTTPS',
+      ],
+    },
+  ],
 };

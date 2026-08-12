@@ -249,4 +249,59 @@ export const microservices = {
       options: ['End-to-end', 'Unit tests', 'Integration', 'Contract'],
     },
   ],
+  'api-gateway': [
+    {
+      question: 'Why is an API Gateway needed in a microservice system?',
+      options: [
+        'A single entry point: routing to services and cross-cutting concerns (auth, rate limiting, TLS, CORS)',
+        'Storing the main business logic of all services in one place',
+        'Replacing the database for all microservices',
+        'Compiling and building services at deploy time',
+      ],
+    },
+  ],
+  'service-discovery': [
+    {
+      question: 'What does Service Discovery solve?',
+      options: [
+        'Lets services dynamically find each other\'s addresses via a registry, without hardcoded IPs',
+        'Encrypts traffic between services',
+        'Automatically writes unit tests for services',
+        'Limits the number of requests per second',
+      ],
+    },
+  ],
+  'circuit-breaker': [
+    {
+      question: 'What does the Circuit Breaker pattern do?',
+      options: [
+        'Stops sending requests to a faulty dependency (fail fast), preventing a cascading failure',
+        'Retries the request forever until the service responds',
+        'Balances load across service instances',
+        'Caches all of a service\'s responses forever',
+      ],
+    },
+  ],
+  'saga-pattern': [
+    {
+      question: 'How does the Saga pattern ensure consistency in a distributed transaction?',
+      options: [
+        'A sequence of local transactions with compensating actions on failure (eventual consistency)',
+        'A single ACID transaction across all services via 2PC',
+        'Locking all databases until the operation completes',
+        'Forbidding data changes in more than one service entirely',
+      ],
+    },
+  ],
+  'cqrs': [
+    {
+      question: 'What is the essence of the CQRS pattern?',
+      options: [
+        'Separating the model into commands (write) and queries (read) with separate optimized models',
+        'Merging reads and writes into one universal model',
+        'Encrypting commands sent to a service',
+        'A message queue between a producer and a consumer',
+      ],
+    },
+  ],
 };

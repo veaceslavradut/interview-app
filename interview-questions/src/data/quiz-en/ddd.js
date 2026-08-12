@@ -220,4 +220,15 @@ export const ddd = {
       ],
     },
   ],
+  'domain-events': [
+    {
+      question: 'What is a Domain Event?',
+      options: [
+        'An immutable object recording a business-significant fact that already happened (in past tense)',
+        'A command telling an aggregate to change its state',
+        'An exception thrown when an invariant is violated',
+        'A query to read data from the aggregate',
+      ],
+    },
+  ],
 };
