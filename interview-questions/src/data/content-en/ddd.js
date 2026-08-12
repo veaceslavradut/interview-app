@@ -334,5 +334,63 @@ record OrderPlaced(OrderId orderId, CustomerId customerId, Instant occurredAt) {
 
 A distinction is drawn between **internal** domain events (within one context, often dispatched synchronously) and **integration** events (outward, via a broker, with reliable publishing — see the outbox). Typically an event is born inside an aggregate and published after the transaction commits.`,
     },
+    'entity-aggregate-context': {
+      question: 'What is the difference between an entity, an aggregate, and a bounded context?',
+      answer: `These are three **different levels of abstraction** in DDD — often confused:
+
+- **Entity** — a domain **object with identity** that persists over time, even as its attributes change. The smallest level. Example: \`Order\`, \`User\`.
+- **Aggregate** — a **consistency boundary**: a cluster of Entities and Value Objects changed as a whole through the root, with invariant protection and the "one aggregate per transaction" rule. The middle level. Example: \`Order\` + its \`OrderLine\`s.
+- **Bounded Context** — the **boundary of a whole model, language and responsibility**: inside it terms and rules are unambiguous; outside a different model applies. The largest, strategic level. Example: the *Sales* context vs *Warehouse*.
+
+\`\`\`text
+Bounded Context  (model/language boundary)       ← strategic
+   └── Aggregate (consistency boundary)           ← tactical
+          └── Entity / Value Object (objects)     ← building blocks
+\`\`\`
+
+The key: **Entity** — "what this object is", **Aggregate** — "what is consistent atomically", **Bounded Context** — "where this model applies at all". One Bounded Context holds many aggregates; an aggregate holds several Entities/VOs.`,
+    },
+    'separate-domain-decision': {
+      question: 'How do you decide whether something should be a separate domain or part of an existing one?',
+      answer: `The decision is made by **cohesion** and **coupling**, not by size or coding convenience.
+
+Arguments **for a separate** domain/context:
+
+- **different language and meaning of terms** — one word means different things (\`user\` in Identity vs in Access Control) → a boundary signal;
+- **different reasons to change** — the parts change for independent business reasons (akin to SRP at the system level);
+- **different invariants and lifecycle** of the data;
+- **different owners/experts** (different departments own the parts).
+
+Arguments to **keep it in the existing** one:
+
+- strong **semantic cohesion** — the concepts almost always change and are used together;
+- an artificial split would breed **chatty integration** and shared data.
+
+Guiding examples:
+
+- **Identity ≠ Access Control**: "who you are" (authentication, profile) and "what you may do" (permissions, roles) change for different reasons and have different models → different contexts;
+- **Organisation ≠ Allocation**: structure/org units and resource allocation are different responsibilities;
+- **Integration must not leak into the domain**: the code that talks to external systems is kept separate (ACL) so a foreign model does not pollute the domain one.
+
+Rule: **high cohesion inside, low coupling outside**. If a split increases coupling (constant synchronous calls, shared data), the boundary is wrong.`,
+    },
+    'clean-boundaries-in-code': {
+      question: 'How do you keep domain boundaries clean in code?',
+      answer: `Logical boundaries (Bounded Contexts) must be **visible and protected in code**, otherwise they blur. The main techniques (also relevant for a modular monolith):
+
+- **Explicit modules/packages per context** — each domain = a separate module with clear boundaries; cross-domain access **only through a public contract**;
+- **Communication via interfaces/contracts (ports)** — a module publishes an API (a port), consumers depend on the abstraction, not the implementation;
+- **Encapsulating internals** — one domain's internal classes/entities are **not** visible to others (package-private, module-info, ArchUnit rules). You cannot "pull" a foreign internal model into yours;
+- **Dependency direction control** — dependencies flow one way (e.g. toward a more stable core); cycles between domains are forbidden;
+- **Separating domain and integration** — integration code with foreign contexts is isolated behind a translation layer (**ACL**), so foreign terms do not leak into the domain model;
+- **Data belongs to the domain** — another module does not reach directly into foreign tables, only via the API.
+
+\`\`\`text
+[Orders] ──(port/interface)──▶ [Billing API]   ✔ via a contract
+[Orders] ──▶ internal Billing class             ✘ forbidden
+\`\`\`
+
+Enforcing this automatically is helped by **ArchUnit** (tests for architectural rules) and static analysis. Clean boundaries in code are what later makes **painless extraction** of a module into a separate service possible.`,
+    },
   },
 };
