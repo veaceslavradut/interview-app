@@ -142,5 +142,108 @@ Gradle configuration difference: \`implementation\` (does not leak into consumer
 
 **Choosing**: Maven — simplicity, stability, team-wide uniformity; Gradle — build speed, flexibility, large projects. Functionally both solve the same problem and work with the same repositories.`,
       },
+      'gradle-basics': {
+        question: 'What are the basics of Gradle: build, tasks, phases?',
+        answer: `**Gradle** is a build system based on a **task graph**; scripts are written in **Groovy** (\`build.gradle\`) or the **Kotlin DSL** (\`build.gradle.kts\`). Unlike Maven's declarative \`pom.xml\`, a Gradle script is programmable configuration.
+
+The unit of work is a **task**: \`compileJava\`, \`test\`, \`jar\`, \`build\`. Tasks are linked by dependencies and form a **DAG**; Gradle runs only what is needed, in the correct order.
+
+A build runs in **three phases**:
+
+1. **Initialization** — the projects are determined (which modules participate, \`settings.gradle\`);
+2. **Configuration** — scripts run, the task graph is built (**all** tasks are configured, even ones not executed);
+3. **Execution** — the selected tasks and their dependencies run.
+
+\`\`\`groovy
+plugins { id 'java' }
+group = 'com.example'
+dependencies { testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0' }
+\`\`\`
+
+Key advantages: **incremental builds** and a **build cache** (does not rebuild unchanged parts), and a **daemon** (a warm JVM process) — hence the speed. The \`java\`/\`application\` plugin brings the standard tasks and layout (\`src/main/java\`).`,
+      },
+      'gradle-dependencies': {
+        question: 'How are dependencies and configurations (implementation, api, …) managed in Gradle?',
+        answer: `Dependencies are declared in the \`dependencies\` block, bound to a **configuration** — a named set of dependencies for a specific purpose. The \`java\` plugin provides the main ones:
+
+\`\`\`groovy
+dependencies {
+    implementation 'org.apache.commons:commons-lang3:3.14.0'   // needed for compile and runtime
+    api 'com.google.guava:guava:33.0.0-jre'                    // + "leaks" into the module's API
+    compileOnly 'org.projectlombok:lombok:1.18.30'             // compile only (not at runtime)
+    runtimeOnly 'com.h2database:h2:2.2.224'                    // runtime only
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+}
+\`\`\`
+
+The key difference **\`implementation\` vs \`api\`**:
+
+- **\`implementation\`** — the dependency is **not** visible to the module's consumers (does not enter their compile classpath). Change its version and dependent modules are **not** recompiled → faster builds, better encapsulation;
+- **\`api\`** — the dependency is **transitively** visible to consumers (needed if its types appear in the module's public API).
+
+Maven-scope analogy: \`implementation/api\`≈compile, \`compileOnly\`≈provided, \`runtimeOnly\`≈runtime, \`testImplementation\`≈test. Version conflicts are resolved by a single resolution strategy (by default — the **highest** version); you can pin via \`constraints\`/a platform (BOM).`,
+      },
+      'gradle-plugins': {
+        question: 'What are Gradle plugins and how do they extend the build?',
+        answer: `A **Gradle plugin** is a reusable package of configuration that adds **tasks, conventions, configurations and extensions** to the project. Almost all of Gradle's functionality comes from plugins.
+
+\`\`\`groovy
+plugins {
+    id 'java'                                   // core plugin: compileJava/test/jar tasks, src/main/java layout
+    id 'org.springframework.boot' version '3.2.0'  // community plugin: bootJar, bootRun
+    id 'application'                            // a run task + distribution build
+}
+\`\`\`
+
+Kinds:
+
+- **core plugins** (built in: \`java\`, \`java-library\`, \`application\`, \`maven-publish\`) — applied by id with no version;
+- **community/third-party** — from the **Gradle Plugin Portal**, with a version;
+- **your own** — \`buildSrc\` or **convention plugins** to reuse configuration across modules.
+
+A plugin usually provides an **extension** for configuration:
+
+\`\`\`groovy
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+\`\`\`
+
+Plugins implement "convention over configuration": apply \`java\` — get a standard set of tasks and structure without describing them by hand.`,
+      },
+      'gradle-multimodule': {
+        question: 'How is a multi-module project structured in Gradle?',
+        answer: `A multi-module (multi-project) build is a **root project** plus several subprojects; the makeup is defined in **\`settings.gradle\`**:
+
+\`\`\`groovy
+// settings.gradle (root)
+rootProject.name = 'shop'
+include 'domain', 'service', 'web'
+\`\`\`
+
+Structure:
+
+\`\`\`text
+shop/
+├── settings.gradle        // the list of modules
+├── build.gradle           // shared configuration (subprojects/allprojects)
+├── domain/build.gradle
+├── service/build.gradle
+└── web/build.gradle
+\`\`\`
+
+Key points:
+
+- **a dependency between modules** — via \`project(...)\`:
+
+\`\`\`groovy
+// web/build.gradle
+dependencies { implementation project(':service') }
+\`\`\`
+
+- **shared configuration** is moved to the root (\`subprojects { ... }\`) or, preferably, into **convention plugins** (\`buildSrc\`) to avoid duplication;
+- Gradle builds a **single task graph** across all modules and builds them in the correct order, **in parallel** and **incrementally** (rebuilding only what is affected);
+- \`implementation project(':service')\` does **not** leak transitively into consumers of \`web\` — use \`api\` for such "leaking".
+
+This gives a fast, cacheable build of large codebases with clear module boundaries.`,
+      },
     },
   };

@@ -214,5 +214,101 @@ Additionally: **health checks** (\`/actuator/health\`) for the orchestrator, ale
 
 The idea: keep expensive e2e tests to a minimum, and verify service compatibility with fast contract tests.`,
       },
+      'api-gateway': {
+        question: 'What is an API Gateway and why is it needed?',
+        answer: `An **API Gateway** is a single entry point for external clients into a microservice system. The client talks to the gateway, which routes requests to the right services.
+
+Why it is needed:
+
+- **a single entry point** — the client does not need to know the addresses of dozens of services or track their changes;
+- **cross-cutting concerns** in one place: authentication/authorization, rate limiting, CORS, TLS termination, logging, caching;
+- **routing and composition** — direct a request to the right service; sometimes **aggregate** several calls into one response;
+- **decoupling** the external API from the internal service decomposition (the internal split changes, the external contract stays stable);
+- **protocol translation** — REST/GraphQL outside, gRPC inside.
+
+\`\`\`text
+Client → [API Gateway] → Auth service
+                       → Orders service
+                       → Catalog service
+\`\`\`
+
+The **BFF (Backend for Frontend)** pattern — a separate gateway per client type (web, mobile).
+
+Risks: the gateway can become a **bottleneck** and a single point of failure — it is kept stateless and scaled horizontally; no business logic goes into it (only routing and cross-cutting). Examples: Spring Cloud Gateway, Kong, NGINX, AWS API Gateway.`,
+      },
+      'service-discovery': {
+        question: 'What is Service Discovery?',
+        answer: `**Service Discovery** is a mechanism that lets services **find each other's network addresses** dynamically, without hardcoding IPs/ports. In the cloud instances come and go and change addresses (autoscaling, restarts), so static configuration does not work.
+
+Components:
+
+- a **Service Registry** — a registry where instances **register** at startup and send heartbeats (Eureka, Consul, etcd, Zookeeper);
+- **discovery** — a consumer asks the registry for current addresses and picks an instance.
+
+Two models:
+
+- **client-side discovery** — the client itself queries the registry and load-balances (e.g. the old Netflix Eureka + Ribbon);
+- **server-side discovery** — the client goes to a load balancer/gateway that looks into the registry (e.g. a Kubernetes Service + kube-dns/kube-proxy).
+
+In **Kubernetes** discovery is built in: a \`Service\` provides a stable DNS name and virtual IP behind the changing \`Pod\`s; so a separate Eureka is often unnecessary.
+
+Tied to balancing: given the list of live instances, requests are spread among them (round-robin, etc.), and unhealthy ones are excluded via health checks.`,
+      },
+      'circuit-breaker': {
+        question: 'What is a Circuit Breaker?',
+        answer: `A **Circuit Breaker** is a resilience pattern that **stops sending requests to a faulty dependency**, so as not to pile up hung calls and bring the whole system down in a cascade.
+
+The analogy is an electrical fuse. Three states:
+
+- **Closed** — requests flow normally; failures are counted. When the failure threshold is exceeded → transition to Open;
+- **Open** — requests are **rejected immediately** (fail fast), not loading the sick service; often a **fallback** is returned (cache, stub). After a timeout → Half-Open;
+- **Half-Open** — a trial batch of requests is let through: success → Closed, failures again → Open.
+
+\`\`\`text
+Closed ──(many errors)──▶ Open ──(timeout)──▶ Half-Open ──(success)──▶ Closed
+                                                    └──(error)──▶ Open
+\`\`\`
+
+Why: without a breaker, calls to a downed service **pile up**, exhaust the caller's threads/connections and take it down too — a **cascading failure**. The circuit breaker localizes the failure and gives the dependency time to recover.
+
+Usually combined with **timeout**, **retry (with backoff)**, **bulkhead** (pool isolation) and a fallback. Implementations: Resilience4j (current), Netflix Hystrix (deprecated), a service mesh (Istio).`,
+      },
+      'saga-pattern': {
+        question: 'What is the Saga pattern and how does it ensure consistency?',
+        answer: `A **Saga** is a pattern for managing a **distributed business transaction** across several services (each with its own DB), where an ordinary ACID transaction and 2PC do not apply.
+
+The idea: split the operation into a sequence of **local transactions**, each in its own service. If a step fails, **compensating transactions** run to undo the already-done steps (a semantic rollback, not a DB rollback).
+
+\`\`\`text
+Order:  create order → charge payment → reserve stock → ship
+Failure at reserve → compensations: refund payment → cancel order
+\`\`\`
+
+Two coordination styles:
+
+- **choreography** — services react to each other's events without a central conductor; simpler, but the logic is spread out and harder to trace;
+- **orchestration** — a central **saga orchestrator** explicitly drives the steps and compensations; the logic is in one place, but a coordinator appears.
+
+Notes: consistency is **eventual** (not instant); steps and compensations must be **idempotent**; compensation is not always physically possible (the email was already sent) — then it is designed semantically. Often combined with the **outbox** for reliable event publishing.`,
+      },
+      'cqrs': {
+        question: 'What is CQRS?',
+        answer: `**CQRS (Command Query Responsibility Segregation)** is the separation of the model into **commands** (change state: create/update/delete) and **queries** (read only). Instead of one "does-everything" model — separate write and read models.
+
+\`\`\`text
+Commands → Write model (normalized, invariants) → write DB
+Queries  → Read model (denormalized for queries) → read DB/projections
+\`\`\`
+
+Why:
+
+- **independent scaling** of reads and writes (reads are usually many times more frequent);
+- **task-specific optimization** — the write model guards invariants (often together with DDD aggregates), the read model is denormalized for specific screens/reports and answers fast;
+- combines nicely with **event sourcing** and event-driven integration.
+
+Synchronization: the read model is updated from write events → it is **eventually consistent** (may lag slightly).
+
+Important: CQRS is **not free complexity** (two models, synchronization, lag). Apply it selectively, in subsystems with heavy read load or complex reporting, and **not** everywhere. For simple CRUD it is overkill.`,
+      },
     },
   };

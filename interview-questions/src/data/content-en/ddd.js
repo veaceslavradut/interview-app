@@ -311,5 +311,28 @@ Upside: changing the external system only affects the ACL. Downside: extra code 
 
 Better — each context has **its own model**, with translation at the boundaries (ACL) and exchange via **contracts/events** (a Published Language) rather than a shared domain type. The only narrow exception is a deliberate **Shared Kernel** with tight coordination.`,
     },
+    'domain-events': {
+      question: 'What is a Domain Event?',
+      answer: `A **Domain Event** is an object that records a **business-significant fact that has already happened** in the domain: \`OrderPlaced\`, \`PaymentReceived\`, \`OrderShipped\`.
+
+Properties:
+
+- **past tense** in the name — an event describes something that already occurred; it cannot be "undone", only compensated;
+- **immutable** — a snapshot of a fact at a point in time (with \`occurredAt\`);
+- carries the identifiers and data that subscribers need, not the whole aggregate;
+- part of the **Ubiquitous Language** — domain experts recognize these events.
+
+Why they are needed:
+
+- **decoupling** — an aggregate publishes an event without knowing who will react to it (audit, notifications, analytics);
+- **consistency between aggregates/contexts** — instead of changing two aggregates in one transaction, the first changes and publishes an event, the second reacts (eventual consistency);
+- the basis of **event-driven** integration and **event sourcing**.
+
+\`\`\`java
+record OrderPlaced(OrderId orderId, CustomerId customerId, Instant occurredAt) {}
+\`\`\`
+
+A distinction is drawn between **internal** domain events (within one context, often dispatched synchronously) and **integration** events (outward, via a broker, with reliable publishing — see the outbox). Typically an event is born inside an aggregate and published after the transaction commits.`,
+    },
   },
 };
