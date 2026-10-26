@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-"Java Interview Hub" — a static React SPA of Java interview questions/answers plus per-topic quizzes, bilingual (Russian source, English overrides), deployed to GitHub Pages. Content is the product: ~13.5k lines of `src/`, of which ~12k is question/quiz data. Almost all work here is data editing, not app logic.
+"Java Interview Hub" — a static React SPA of Java interview questions/answers plus per-topic quizzes, bilingual (Russian source, English overrides), deployed to GitHub Pages as an offline-capable PWA. Content is the product: the vast majority of `src/` is question/quiz data, and most work here is data editing, not app logic.
 
 ## Commands
 
@@ -32,7 +32,7 @@ The git root is the **parent** directory (`interview-app/`), but the app is a si
 
 ## Architecture
 
-**Routing** (`App.jsx`): react-router v7 `BrowserRouter` with `basename={import.meta.env.BASE_URL}`. Four routes — home, `/category/:categoryId`, `/category/:categoryId/question/:questionId`, `/category/:categoryId/quiz` — with `*` redirecting home. Pages `<Navigate to="/" replace />` on unknown ids rather than 404ing.
+**Routing** (`App.jsx`): react-router v7 `BrowserRouter` with `basename={import.meta.env.BASE_URL}`. Content routes — home, `/category/:categoryId`, `/category/:categoryId/question/:questionId`, `/category/:categoryId/quiz` — plus study tools (`/bookmarks` and `/review` both render `StudyListPage` with a `mode` prop, `/review/session`, `/random`, `/interview` mock interview) and `/suggest` + `/suggestions`; `*` redirects home. Pages `<Navigate to="/" replace />` on unknown ids rather than 404ing.
 
 **`categoryId` is the join key across the whole app.** The same string identifies a category in `questions.js`, its English overrides in `content.en.js`, and its quiz bank in `quizzes.js`. Get it wrong and content silently falls back or the quiz link disappears (`hasQuiz` gates it).
 
@@ -53,7 +53,7 @@ Russian is the source of truth; English is an override layer that degrades grace
 
 ### Quizzes (`src/data/quiz/*.js` → `quizzes.js`)
 
-Per-topic banks are grouped by subject area into files (`jvm.js`, `frameworks.js` = Spring + Hibernate, `infra.js` = Kafka + microservices + AWS, `toolsQuality.js` = testing/logging/UML/XML/build/git, etc.), then mapped to category ids in `quizzes.js`. The `oop` bank is defined inline in `quizzes.js` rather than extracted — the odd one out.
+Per-topic RU banks are grouped by subject area into files (`jvm.js`, `frameworks.js` = Spring + Hibernate, `infra.js` = Kafka + microservices + AWS, `toolsQuality.js` = testing/logging/UML/XML/build/git, etc.), then mapped to category ids in `quizzes.js` as `{ questions: bank }` (`claude-certified-developer` concatenates two banks). The `oop` bank is defined inline in `quizzes.js` rather than extracted — the odd one out.
 
 The shape is a **slot/variant** model:
 
@@ -63,7 +63,9 @@ The shape is a **slot/variant** model:
 
 `buildQuiz(categoryId)` picks one random variant per slot, shuffles slot order, and shuffles each variant's options into `{ text, isCorrect }`. So `correct` is an index into the *authored* `options` array and is meaningless after shuffling — always read `isCorrect`, never a stored index. Authored data conventionally puts the right answer at index 0; that's fine and invisible to users.
 
-Quizzes are **Russian-only** — they don't go through `localized.js` and ignore the language setting.
+**Quiz i18n** does *not* go through `localized.js`. English lives in `src/data/quiz-en/<categoryId>.js`, wired by the `quizzes.en.js` barrel, shaped `{ [slotId]: [ { question, options }, ... ] }` — one entry per RU variant, **in the same variant order and the same option order**, because `buildQuiz(categoryId, lang)` picks a variant index and reuses the RU `correct` index against the EN options. Reordering EN options silently marks the wrong answer correct. Untranslated slots/categories fall back to Russian.
+
+**Mock interview** (`/interview`): `buildMockInterview` draws from the quiz banks weighted by `INTERVIEW_WEIGHTS` in `quizzes.js` (max 3 per topic). A topic with no weight never appears there; `claude-certified-developer` is excluded on purpose.
 
 ### i18n (`src/i18n/`)
 
@@ -77,12 +79,26 @@ Reads answers aloud via the Web Speech API; returns `null` when unsupported. Two
 
 - **Question**: add to the `questions` array in `src/data/questions/<categoryId>.js`. Optionally add the same `questionId` under `questions` in `src/data/content-en/<categoryId>.js` (the English override); skipping it is fine — untranslated is a normal state.
 - **Optional taxonomy (item 14)**: a question may carry `difficulty` (`'easy'|'medium'|'hard'`), `tags: []` (lowercase tokens), and `related: []` (each a bare question id = same category, or `'categoryId/questionId'` = cross‑category). All optional and language‑neutral (authored on the RU source, carried through the light manifest like `subtopic`); untagged questions stay valid and just show no badge / no filter bar. Allowed difficulty values live in `src/data/taxonomy.js`; the data‑integrity test guards the shape. Only `oop` is backfilled so far.
-- **Quiz slot**: add to the topic's bank in `src/data/quiz/`. 2+ variants per slot is the norm; each variant needs 4 options and a `correct` index.
-- **New topic**: create `src/data/questions/<id>.js` (exporting the category object), wire it into the `questions.js` barrel (import + a slot in the `categories` array at the desired position). Optionally add `src/data/content-en/<id>.js` wired into the `content.en.js` barrel, and a quiz bank in `src/data/quiz/` wired into the `quizzes` map — all under the identical `<id>`. Without the barrel wiring the category is invisible; without the `quizzes` entry the topic simply has no quiz link.
+- **Quiz slot**: add to the topic's bank in `src/data/quiz/`. 2+ variants per slot is the norm; each variant needs 4 options and a `correct` index. Add the matching EN entry in `src/data/quiz-en/<categoryId>.js` (same variant + option order).
+- **New topic**: create `src/data/questions/<id>.js` (exporting the category object), wire it into the `questions.js` barrel (import + a slot in the `categories` array at the desired position). Optionally add `src/data/content-en/<id>.js` wired into the `content.en.js` barrel, a quiz bank in `src/data/quiz/` wired into the `quizzes` map, its EN translation in `quiz-en/` wired into `quizzes.en.js`, and an `INTERVIEW_WEIGHTS` entry if it should appear in the mock interview — all under the identical `<id>`. Without the barrel wiring the category is invisible; without the `quizzes` entry the topic simply has no quiz link.
+
+### Generated Claude Certified Developer data
+
+Part of the `claude-certified-developer` category is generated from committed JSON — edit the inputs, then rerun the script; never hand-edit the outputs:
+- `node scripts/apply-ccdv-ru.mjs` — `quiz/ccdvImported.en.json` (master, owns `correct`) + `quiz/ccdvImported.ru.json` (RU translations, filled in batches) → `quiz/ccdvImported.js`.
+- `node scripts/apply-ccdv-study.mjs` — `ccdvStudy.en.json` + `ccdvStudy.why-ru.json` + `quiz/ccdvImported.ru.json` → `ccdvStudy-questions.js` / `ccdvStudy-questions-en.js`. A study card is emitted only once its `why` has a RU translation; duplicate question texts are dropped to keep the data-integrity test green.
+
+## Suggestions (Firestore)
+
+The one deliberate exception to "static, `localStorage` only": `src/data/suggestions.js` talks to Firestore project `java-interview-app` over **REST** (no Firebase SDK, on purpose). The API key in the bundle is public by design; the real defense is `firestore.rules` (read only `approved == true`, create only well-formed docs with `approved == false`, no client update/delete; moderation = flipping the flag in the Firebase console). Because Firestore rules are not filters, `getSuggestions` must keep its server-side `runQuery` filter on `approved == true` — a plain collection list is denied. The rules are **not** deployed by CI — `firebase deploy --only firestore:rules` manually. Keep `SUGGEST_LIMITS` in `suggestions.js` in sync with the size checks in `firestore.rules`.
 
 ## Deployment
 
-`.github/workflows/deploy.yml` builds on push to `main` with `GITHUB_PAGES=true`, which switches Vite's `base` to `/interview-app/` (see `vite.config.js`). It then copies `dist/index.html` to `dist/404.html` as the SPA fallback, since Pages has no server-side rewrite — that copy is what makes *un-prerendered* deep links work. `ci.yml` runs lint + build on PRs to `main`.
+`.github/workflows/deploy.yml` builds on push to `main` with `GITHUB_PAGES=true`, which switches Vite's `base` to `/interview-app/` (see `vite.config.js`). It then copies `dist/index.html` to `dist/404.html` as the SPA fallback, since Pages has no server-side rewrite — that copy is what makes *un-prerendered* deep links work. `ci.yml` runs lint, test and build (with `GITHUB_PAGES=true`) on PRs to `main`. Branch flow per `IMPROVEMENTS.md`: feature branch → PR into `develop` → `develop` merged to `main` to deploy.
+
+`IMPROVEMENTS.md` is the roadmap; the "item N" references throughout this file and the code point at its numbered items. Its definition of done: lint + test + build pass and the change is verified in `npm run preview`.
+
+**PWA:** `vite-plugin-pwa` (`registerType: 'autoUpdate'`) precaches the whole build, including every lazy answer chunk, so the app works offline. The service worker is disabled in `npm run dev` — verify SW/offline behavior with `npm run build && npm run preview`.
 
 **Prerender (item 11):** `npm run build` runs `scripts/prerender.mjs` as its `postbuild` step (so `npm run build` in CI/deploy triggers it automatically — no workflow change). It's a **meta-only** prerender: for the home page, every category, and every question it writes a static `dist/<route>/index.html` — a copy of the built shell with a route-specific `<title>` + description + Open Graph / Twitter / canonical tags (titles/descriptions come from `src/data/pageMeta.js`, shared with the client). The React body still hydrates client-side, so **item 9's lazy answers are untouched** — the answer markdown is *not* in the static HTML. GitHub Pages serves `dist/<route>/index.html` at `/<base><route>/`, so a fresh fetch (crawler, link-preview bot) gets correct meta; `useDocumentTitle` keeps `document.title` right across client-side navigation. Note: `vite preview` reads `base` from `vite.config` at preview time, so to smoke-test a `GITHUB_PAGES=true` build locally you must also run preview with `GITHUB_PAGES=true` (otherwise base mismatches and assets 404 into the SPA fallback).
 
