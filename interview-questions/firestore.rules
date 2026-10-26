@@ -11,16 +11,20 @@ rules_version = '2';
 // src/data/suggestions.js). A spammer can POST straight to the REST endpoint and
 // skip the React form entirely, so no client-side check can actually stop abuse —
 // only these server-side rules can. They:
-//   * let anyone READ suggestions (the list is public);
+//   * let anyone READ only APPROVED suggestions (approved == true) — pending and
+//     spam entries are not readable even straight through the REST API. Because
+//     "rules are not filters", every list query must itself filter on
+//     approved == true (getSuggestions uses runQuery for that), or it is denied;
 //   * let anyone CREATE one ONLY if it is well-formed AND carries approved == false,
 //     so nothing a stranger writes can appear in the app until a moderator flips
-//     the flag (the app shows only approved / legacy items);
+//     the flag to true (the app shows only approved items);
 //   * forbid UPDATE and DELETE from clients — moderation runs in the Firebase
 //     console or via the Admin SDK, both of which bypass these rules.
 //
-// One-time transition note: existing documents created before this change have no
-// `approved` field. The app treats a missing flag as visible (legacy), so the live
-// list does not go blank. Optionally backfill them to approved:true in the console.
+// Documents without an `approved` field are treated as not approved (hidden).
+// Rate limiting is not possible here without auth; cap abuse with Firebase App
+// Check and GCP quotas. Spam can no longer crowd approved items out of the list,
+// since the approved filter runs server-side.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -40,7 +44,7 @@ service cloud.firestore {
     }
 
     match /suggestions/{id} {
-      allow read: if true;
+      allow read: if resource.data.approved == true;
       allow create: if isValidNewSuggestion(request.resource.data);
       allow update, delete: if false;
     }

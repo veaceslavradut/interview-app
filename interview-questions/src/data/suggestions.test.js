@@ -60,8 +60,8 @@ test('canSubmitNow enforces the cooldown window', () => {
   assert.equal(canSubmitNow(now, now - 1), false); // just submitted
 });
 
-test('isVisibleSuggestion hides only explicitly rejected items', () => {
+test('isVisibleSuggestion shows only moderator-approved items', () => {
   assert.equal(isVisibleSuggestion({ approved: true }), true);
-  assert.equal(isVisibleSuggestion({ approved: null }), true); // legacy, pre-moderation
+  assert.equal(isVisibleSuggestion({ approved: null }), false); // no flag = not approved
   assert.equal(isVisibleSuggestion({ approved: false }), false);
 });
