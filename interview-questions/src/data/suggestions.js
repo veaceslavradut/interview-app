@@ -7,18 +7,21 @@
 //
 // apiKey ниже — не секрет. У Firebase это идентификатор проекта, он и должен
 // лежать в бандле; доступ режут правила на стороне Firestore (см. firestore.rules:
-// читать может любой, создавать — любой с валидной формой и approved:false,
-// менять и удалять — никто). Именно правила — настоящая защита от спама: ключ
+// читать можно только одобренные, создавать — любой с валидной формой и
+// approved:false, менять и удалять — никто). Именно правила — настоящая защита от спама: ключ
 // публичный, поэтому клиентские проверки ниже лишь отсекают ботов, бьющих по
 // форме, а не по REST-эндпоинту напрямую.
 //
 // Премодерация: новые записи создаются с approved:false и не показываются, пока
-// модератор не переключит флаг (в консоли Firebase). Старые записи без поля
-// считаем видимыми (legacy), чтобы живой список не опустел при переходе.
+// модератор не переключит флаг на true (в консоли Firebase). Фильтр по approved
+// выполняется на сервере (runQuery), а не на клиенте: иначе поток неодобренного
+// спама вытеснял бы одобренные записи из выдачи с лимитом.
 
 const PROJECT_ID = 'java-interview-app';
 const API_KEY = 'AIzaSyDCw796wRGzwRcXJMHJa6ivzv0AkTEnjr0';
-const BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/suggestions`;
+const DOCUMENTS_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+const BASE_URL = `${DOCUMENTS_URL}/suggestions`;
+const MAX_SUGGESTIONS = 300;
 
 // Лимиты и эвристики анти-спама. Держим здесь, чтобы правила Firestore и клиент
 // опирались на одни и те же числа (question.size 10..500 совпадает с правилами).
@@ -53,10 +56,11 @@ export function canSubmitNow(now, lastTs) {
   return !lastTs || now - lastTs >= SUGGEST_LIMITS.cooldownMs;
 }
 
-// Видима ли запись в списке: скрываем только явно отклонённые премодерацией
-// (approved === false); true и legacy-null показываем.
+// Видима ли запись в списке: только одобренные модератором (approved === true).
+// Сервер и так отдаёт только их (см. getSuggestions и firestore.rules) — это
+// страховка на клиенте на случай рассинхрона.
 export function isVisibleSuggestion(s) {
-  return s.approved !== false;
+  return s.approved === true;
 }
 
 // Firestore отдаёт и принимает значения в типизированной обёртке
@@ -80,23 +84,40 @@ function fromDocument(doc) {
     customTopic: fields.customTopic?.stringValue ?? '',
     question: fields.question?.stringValue ?? '',
     createdAt: fields.createdAt?.stringValue ?? '',
-    // старые записи без поля — legacy; null отличаем от false в isVisibleSuggestion
     approved: fields.approved?.booleanValue ?? null,
   };
 }
 
-// Новые предложения — сверху. Сортируем на клиенте: список небольшой, а
-// orderBy в Firestore потребовал бы заводить индекс. Отклонённые премодерацией
-// (approved:false) в список не попадают.
+// Только одобренные (approved == true), новые — сверху. Фильтр — в запросе:
+// правила Firestore разрешают чтение лишь одобренных, а «rules are not filters» —
+// запрос без этого условия сервер отклонит целиком. Сортируем на клиенте:
+// orderBy по другому полю вместе с фильтром потребовал бы составной индекс.
 export async function getSuggestions() {
-  const response = await fetch(`${BASE_URL}?key=${API_KEY}&pageSize=300`);
+  const response = await fetch(`${DOCUMENTS_URL}:runQuery?key=${API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: 'suggestions' }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath: 'approved' },
+            op: 'EQUAL',
+            value: { booleanValue: true },
+          },
+        },
+        limit: MAX_SUGGESTIONS,
+      },
+    }),
+  });
   if (!response.ok) {
     throw new Error(`Firestore ответил ${response.status}`);
   }
-  const data = await response.json();
-  // пустая коллекция — это ответ без ключа documents вообще
-  return (data.documents ?? [])
-    .map(fromDocument)
+  const rows = await response.json();
+  // runQuery отдаёт массив; пустой результат — элемент только с readTime
+  return rows
+    .filter((row) => row.document)
+    .map((row) => fromDocument(row.document))
     .filter(isVisibleSuggestion)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
